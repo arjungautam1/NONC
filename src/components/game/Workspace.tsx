@@ -4,6 +4,7 @@ import { ComponentRenderer } from './components/ComponentRenderer';
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
 import { Info, Download } from 'lucide-react';
+import { soundManager } from '../../audio/soundManager';
 
 export const Workspace: React.FC = () => {
   const {
@@ -12,7 +13,6 @@ export const Workspace: React.FC = () => {
     isRunning,
     simulation,
     updateComponentPosition,
-    removeComponent,
     addWire,
     removeWire,
     multimeter,
@@ -132,7 +132,7 @@ export const Workspace: React.FC = () => {
     if (term) {
       if (term.type === 'pos') {
         setActiveColor('red');
-      } else if (term.type === 'neg' || term.type === 'neutral') {
+      } else if (term.type === 'neg') {
         setActiveColor('black');
       } else if (term.type === 'gnd') {
         setActiveColor('green');
