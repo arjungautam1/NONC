@@ -3,7 +3,7 @@ import { useGameStore } from '../../store/useGameStore';
 import { ComponentRenderer } from './components/ComponentRenderer';
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
-import { Info } from 'lucide-react';
+import { Info, Download } from 'lucide-react';
 
 export const Workspace: React.FC = () => {
   const {
@@ -18,7 +18,8 @@ export const Workspace: React.FC = () => {
     multimeter,
     setProbe,
     probeMode,
-    setProbeMode
+    setProbeMode,
+    currentLevelIndex
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
@@ -29,6 +30,8 @@ export const Workspace: React.FC = () => {
   const [drawingWireStart, setDrawingWireStart] = useState<{ componentId: string; terminalId: string } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [hoveredTerminal, setHoveredTerminal] = useState<{ componentId: string; terminalId: string } | null>(null);
+  const [tempWaypoints, setTempWaypoints] = useState<{ x: number; y: number }[]>([]);
+  const [pointerDownCoords, setPointerDownCoords] = useState<{ x: number; y: number } | null>(null);
 
   // Selected wire state for deletion
   const [selectedWireId, setSelectedWireId] = useState<string | null>(null);
@@ -37,9 +40,9 @@ export const Workspace: React.FC = () => {
   const [wireSize, setWireSize] = useState<'normal' | 'thin'>('normal');
 
   const svgRef = useRef<SVGSVGElement | null>(null);
-  // Probe lead anchor points at bottom-left corner of canvas SVG
-  const RED_ANCHOR = { x: 90, y: 498 };
-  const BLK_ANCHOR = { x: 150, y: 498 };
+  // Probe lead anchor points aligning with the yellow DMM box below the canvas
+  const RED_ANCHOR = { x: 405, y: 558 };
+  const BLK_ANCHOR = { x: 441, y: 558 };
 
   // Convert screen coordinates to SVG coordinates
   const getSVGCoords = (e: React.PointerEvent | MouseEvent) => {
@@ -49,6 +52,36 @@ export const Workspace: React.FC = () => {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     };
+  };
+
+  const handleDownloadSchematic = () => {
+    if (!svgRef.current) return;
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svgRef.current);
+    if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    if (!source.match(/^<svg[^>]+xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+    }
+    
+    // Inject a solid dark background rect as the first element inside <svg ...>
+    const svgTagMatch = source.match(/^<svg[^>]*>/);
+    if (svgTagMatch) {
+      const svgTag = svgTagMatch[0];
+      const bgRect = '<rect width="100%" height="100%" fill="#15171e" />';
+      const styleNode = '<style>text { font-family: monospace, sans-serif; }</style>';
+      source = source.replace(svgTag, `${svgTag}\n${bgRect}\n${styleNode}`);
+    }
+
+    source = '<?xml version="1.0" encoding="utf-8"?>\n' + source;
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `schematic_level_${currentLevelIndex + 1}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Component Dragging — blocked in probe mode
@@ -87,9 +120,28 @@ export const Workspace: React.FC = () => {
   const handleTerminalPointerDown = (e: React.PointerEvent, componentId: string, terminalId: string) => {
     if (probeMode) return;
     e.stopPropagation();
+    if (drawingWireStart) {
+      // Already routing, let pointerup on the terminal complete it
+      return;
+    }
     const coords = getSVGCoords(e);
+    
+    // Auto-select color based on terminal type by default:
+    const comp = components.find(c => c.id === componentId);
+    const term = comp?.terminals.find(t => t.id === terminalId);
+    if (term) {
+      if (term.type === 'pos') {
+        setActiveColor('red');
+      } else if (term.type === 'neg' || term.type === 'neutral') {
+        setActiveColor('black');
+      } else if (term.type === 'gnd') {
+        setActiveColor('green');
+      }
+    }
+    
     setDrawingWireStart({ componentId, terminalId });
     setMousePos(coords);
+    setPointerDownCoords(coords);
   };
 
   const handleTerminalPointerUp = (e: React.PointerEvent, componentId: string, terminalId: string) => {
@@ -98,9 +150,10 @@ export const Workspace: React.FC = () => {
     if (drawingWireStart) {
       const from = drawingWireStart;
       if (from.componentId !== componentId || from.terminalId !== terminalId) {
-        addWire(from.componentId, from.terminalId, componentId, terminalId, activeColor);
+        addWire(from.componentId, from.terminalId, componentId, terminalId, activeColor, tempWaypoints);
       }
       setDrawingWireStart(null);
+      setTempWaypoints([]);
     }
   };
 
@@ -122,18 +175,53 @@ export const Workspace: React.FC = () => {
     if (drawingWireStart) {
       const coords = getSVGCoords(e);
       setMousePos(coords);
+
+      const elem = document.elementFromPoint(e.clientX, e.clientY);
+      const terminalHitbox = elem?.closest('.terminal-hitbox');
+      if (terminalHitbox) {
+        const compId = terminalHitbox.getAttribute('data-component-id');
+        const termId = terminalHitbox.getAttribute('data-terminal-id');
+        if (compId && termId) {
+          if (hoveredTerminal?.componentId !== compId || hoveredTerminal?.terminalId !== termId) {
+            setHoveredTerminal({ componentId: compId, terminalId: termId });
+          }
+          return;
+        }
+      }
+      if (hoveredTerminal) {
+        setHoveredTerminal(null);
+      }
     }
   };
 
-  const handleWorkspacePointerUp = () => {
+  const handleWorkspacePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as SVGElement;
+    if (target.closest('.cursor-grab') || probeMode) return;
+    const coords = getSVGCoords(e);
+    setPointerDownCoords(coords);
+  };
+
+  const handleWorkspacePointerUp = (e: React.PointerEvent) => {
+    setPointerDownCoords(null);
     if (drawingWireStart) {
       if (hoveredTerminal) {
         const from = drawingWireStart;
         if (from.componentId !== hoveredTerminal.componentId || from.terminalId !== hoveredTerminal.terminalId) {
-          addWire(from.componentId, from.terminalId, hoveredTerminal.componentId, hoveredTerminal.terminalId, activeColor);
+          addWire(from.componentId, from.terminalId, hoveredTerminal.componentId, hoveredTerminal.terminalId, activeColor, tempWaypoints);
+        }
+        setDrawingWireStart(null);
+        setTempWaypoints([]);
+      } else {
+        // Drag release on empty space: check if it's a click to add waypoint
+        const coords = getSVGCoords(e);
+        if (pointerDownCoords) {
+          const dist = Math.sqrt(Math.pow(coords.x - pointerDownCoords.x, 2) + Math.pow(coords.y - pointerDownCoords.y, 2));
+          if (dist < 6) {
+            setTempWaypoints(prev => [...prev, coords]);
+            soundManager.playClick();
+          }
         }
       }
-      setDrawingWireStart(null);
     }
   };
 
@@ -169,6 +257,308 @@ export const Workspace: React.FC = () => {
     const sag = Math.max(30, Math.min(100, (dx + dy) * 0.15));
     // Bezier control points sagging downwards
     return `M ${x1} ${y1} C ${x1} ${y1 + sag}, ${x2} ${y2 + sag}, ${x2} ${y2}`;
+  };
+
+  const getTerminalExtOffset = (compId: string, termId: string) => {
+    const comp = components.find(c => c.id === compId);
+    if (!comp) return 0;
+    const term = comp.terminals.find(t => t.id === termId);
+    if (!term) return 0;
+    const local = getTerminalLocalPos(comp.type, term);
+    if (local.x > 5) return 22;
+    if (local.x < -5) return -22;
+    return 0;
+  };
+
+  // Helper to extract relative terminal offsets and compute exit guide path points
+  const getWireSegmentsPoints = (wire: Wire) => {
+    const p1 = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
+    const p2 = getTerminalPos(wire.toComponentId, wire.toTerminalId);
+
+    const ext1 = getTerminalExtOffset(wire.fromComponentId, wire.fromTerminalId);
+    const ext2 = getTerminalExtOffset(wire.toComponentId, wire.toTerminalId);
+
+    const p1_ext = { x: p1.x + ext1, y: p1.y };
+    const p2_ext = { x: p2.x + ext2, y: p2.y };
+
+    const R = 8; // Fillet radius
+    const STEPS = 20;
+    const points: { x: number; y: number }[] = [];
+
+    // Push starting point
+    points.push(p1);
+
+    if (wire.waypoints && wire.waypoints.length > 0) {
+      let A0 = p1_ext;
+      if (ext1 !== 0) {
+        const dir1 = Math.sign(ext1);
+        const w0 = wire.waypoints[0];
+        const dirY1 = w0.y >= p1.y ? 1 : -1;
+        const filletStart = { x: p1_ext.x - dir1 * R, y: p1.y };
+        const filletEnd = { x: p1_ext.x, y: p1.y + dirY1 * R };
+        
+        points.push(filletStart);
+
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          points.push({
+            x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
+            y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
+          });
+        }
+        
+        A0 = filletEnd;
+      }
+
+      let AN = p2_ext;
+      const filletPoints2: { x: number; y: number }[] = [];
+      if (ext2 !== 0) {
+        const dir2 = Math.sign(ext2);
+        const wLast = wire.waypoints[wire.waypoints.length - 1];
+        const dirY2 = wLast.y >= p2.y ? 1 : -1;
+        const filletStart = { x: p2_ext.x, y: p2.y + dirY2 * R };
+        const filletEnd = { x: p2_ext.x - dir2 * R, y: p2.y };
+
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          filletPoints2.push({
+            x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
+            y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
+          });
+        }
+        
+        filletPoints2.push(filletEnd);
+        AN = filletStart;
+      }
+
+      // Build the list of nodes: [A0, ...waypoints, AN]
+      const nodes = [A0, ...wire.waypoints, AN];
+      
+      // Trace path through these nodes, rounding corners at each waypoint W
+      for (let j = 1; j < nodes.length - 1; j++) {
+        const W = nodes[j];
+        const prev = nodes[j-1];
+        const next = nodes[j+1];
+
+        // Incoming vector
+        const vIn = { x: W.x - prev.x, y: W.y - prev.y };
+        const lIn = Math.sqrt(vIn.x * vIn.x + vIn.y * vIn.y) || 1;
+        const uIn = { x: vIn.x / lIn, y: vIn.y / lIn };
+
+        // Outgoing vector
+        const vOut = { x: next.x - W.x, y: next.y - W.y };
+        const lOut = Math.sqrt(vOut.x * vOut.x + vOut.y * vOut.y) || 1;
+        const uOut = { x: vOut.x / lOut, y: vOut.y / lOut };
+
+        // Corner radius
+        const r = Math.min(15, lIn / 2.1, lOut / 2.1);
+        const pStart = { x: W.x - r * uIn.x, y: W.y - r * uIn.y };
+        const pEnd = { x: W.x + r * uOut.x, y: W.y + r * uOut.y };
+
+        // 1. Line from previous point to pStart
+        points.push(pStart);
+
+        // 2. Quadratic curve around W from pStart to pEnd
+        for (let i = 1; i <= 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          points.push({
+            x: mt * mt * pStart.x + 2 * mt * t * W.x + t * t * pEnd.x,
+            y: mt * mt * pStart.y + 2 * mt * t * W.y + t * t * pEnd.y
+          });
+        }
+      }
+
+      // Line to AN
+      points.push(AN);
+
+      // Append terminal entry fillet
+      points.push(...filletPoints2);
+      points.push(p2);
+
+    } else {
+      // Standard direct path with exit/entry horizontal offsets and corners
+      let startT = p1_ext;
+      if (ext1 !== 0) {
+        const dir1 = Math.sign(ext1);
+        const dirY1 = p2.y >= p1.y ? 1 : -1;
+        const filletStart = { x: p1_ext.x - dir1 * R, y: p1.y };
+        const filletEnd = { x: p1_ext.x, y: p1.y + dirY1 * R };
+        
+        points.push(filletStart);
+
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          points.push({
+            x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
+            y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
+          });
+        }
+        
+        startT = filletEnd;
+      }
+
+      let endT = p2_ext;
+      const filletPoints2: { x: number; y: number }[] = [];
+      if (ext2 !== 0) {
+        const dir2 = Math.sign(ext2);
+        const dirY2 = p1.y >= p2.y ? 1 : -1;
+        const filletStart = { x: p2_ext.x, y: p2.y + dirY2 * R };
+        const filletEnd = { x: p2_ext.x - dir2 * R, y: p2.y };
+
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          filletPoints2.push({
+            x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
+            y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
+          });
+        }
+        
+        filletPoints2.push(filletEnd);
+        endT = filletStart;
+      }
+
+      const dx = Math.abs(endT.x - startT.x);
+      const dy = Math.abs(endT.y - startT.y);
+      const sag = Math.max(30, Math.min(100, (dx + dy) * 0.15));
+      const cp1x = startT.x;
+      const cp1y = startT.y + sag;
+      const cp2x = endT.x;
+      const cp2y = endT.y + sag;
+
+      for (let i = 0; i <= STEPS; i++) {
+        const t = i / STEPS;
+        const mt = 1 - t;
+        const w1 = mt * mt * mt;
+        const w2 = 3 * mt * mt * t;
+        const w3 = 3 * mt * t * t;
+        const w4 = t * t * t;
+        points.push({
+          x: w1 * startT.x + w2 * cp1x + w3 * cp2x + w4 * endT.x,
+          y: w1 * startT.y + w2 * cp1y + w3 * cp2y + w4 * endT.y
+        });
+      }
+
+      points.push(...filletPoints2);
+      points.push(p2);
+    }
+
+    return points;
+  };
+
+  // Compute detailed path with arches/bridges for intersecting wires
+  const getWirePathWithCrossings = (wireIndex: number, currentWires: Wire[]) => {
+    const wire = currentWires[wireIndex];
+    const p1 = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
+    const myPoints = getWireSegmentsPoints(wire);
+
+    const myMinX = Math.min(...myPoints.map(p => p.x));
+    const myMaxX = Math.max(...myPoints.map(p => p.x));
+    const myMinY = Math.min(...myPoints.map(p => p.y));
+    const myMaxY = Math.max(...myPoints.map(p => p.y));
+
+    const getLineIntersection = (
+      x1: number, y1: number, x2: number, y2: number,
+      x3: number, y3: number, x4: number, y4: number
+    ) => {
+      const denom = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3);
+      if (denom === 0) return null;
+      const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+      const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+      if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+        return {
+          x: x1 + ua * (x2 - x1),
+          y: y1 + ua * (y2 - y1),
+          ratio: ua
+        };
+      }
+      return null;
+    };
+
+    interface IntersectionPoint {
+      x: number;
+      y: number;
+      segmentIndex: number;
+      ratio: number;
+    }
+    const intersections: IntersectionPoint[] = [];
+
+    for (let j = 0; j < wireIndex; j++) {
+      const otherWire = currentWires[j];
+      const otherPoints = getWireSegmentsPoints(otherWire);
+
+      const oMinX = Math.min(...otherPoints.map(p => p.x));
+      const oMaxX = Math.max(...otherPoints.map(p => p.x));
+      const oMinY = Math.min(...otherPoints.map(p => p.y));
+      const oMaxY = Math.max(...otherPoints.map(p => p.y));
+
+      const overlap = !(myMaxX < oMinX || myMinX > oMaxX || myMaxY < oMinY || myMinY > oMaxY);
+      if (!overlap) continue;
+
+      for (let k = 0; k < myPoints.length - 1; k++) {
+        const ax = myPoints[k].x;
+        const ay = myPoints[k].y;
+        const bx = myPoints[k+1].x;
+        const by = myPoints[k+1].y;
+
+        for (let l = 0; l < otherPoints.length - 1; l++) {
+          const cx = otherPoints[l].x;
+          const cy = otherPoints[l].y;
+          const dx = otherPoints[l+1].x;
+          const dy = otherPoints[l+1].y;
+
+          const inter = getLineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
+          if (inter) {
+            intersections.push({
+              x: inter.x,
+              y: inter.y,
+              segmentIndex: k,
+              ratio: inter.ratio
+            });
+          }
+        }
+      }
+    }
+
+    intersections.sort((a, b) => {
+      if (a.segmentIndex !== b.segmentIndex) return a.segmentIndex - b.segmentIndex;
+      return a.ratio - b.ratio;
+    });
+
+    let path = `M ${p1.x} ${p1.y}`;
+    const BRIDGE_R = 4.5; // radius of bridge arc
+
+    for (let k = 0; k < myPoints.length - 1; k++) {
+      const A = myPoints[k];
+      const B = myPoints[k+1];
+      const segInters = intersections.filter(inter => inter.segmentIndex === k);
+
+      if (segInters.length === 0) {
+        path += ` L ${B.x} ${B.y}`;
+      } else {
+        const sDx = B.x - A.x;
+        const sDy = B.y - A.y;
+        const len = Math.sqrt(sDx * sDx + sDy * sDy);
+        const ux = sDx / (len || 1);
+        const uy = sDy / (len || 1);
+
+        segInters.forEach(inter => {
+          const sx = inter.x - BRIDGE_R * ux;
+          const sy = inter.y - BRIDGE_R * uy;
+          const ex = inter.x + BRIDGE_R * ux;
+          const ey = inter.y + BRIDGE_R * uy;
+          path += ` L ${sx} ${sy} A ${BRIDGE_R} ${BRIDGE_R} 0 0 1 ${ex} ${ey}`;
+        });
+
+        path += ` L ${B.x} ${B.y}`;
+      }
+    }
+
+    return path;
   };
 
   // Determine color coding
@@ -224,6 +614,14 @@ export const Workspace: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={handleDownloadSchematic}
+            className="px-2.5 py-1 text-[10px] font-extrabold tracking-wider bg-emerald-600/80 hover:bg-emerald-700 text-white rounded border border-[#2a2e39] cursor-pointer uppercase transition-all flex items-center gap-1.5"
+            title="Download Schematic SVG File"
+          >
+            <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
+            <span>Schematic</span>
+          </button>
+          <button
             onClick={() => setWireSize(prev => prev === 'normal' ? 'thin' : 'normal')}
             className="px-2.5 py-1 text-[10px] font-extrabold tracking-wider bg-[#2d303a] hover:bg-[#3c4252] text-slate-300 rounded border border-[#2a2e39] cursor-pointer uppercase transition-colors"
           >
@@ -231,27 +629,35 @@ export const Workspace: React.FC = () => {
           </button>
           <div className="flex items-center gap-1.5 text-xs text-yellow-500 bg-yellow-500/10 px-2.5 py-1 rounded border border-yellow-500/20">
             <Info className="w-3.5 h-3.5" />
-            <span>Triple-click component to delete. Click wire to select & delete.</span>
+            <span>Click wire to select & delete.</span>
           </div>
         </div>
       </div>
 
-      {/* === PROBE PLACEMENT BANNER === visible when probe mode is active */}
-      {probeMode && (
+      {/* === PROBE / WIRE DRAWING BANNER === */}
+      {(probeMode || drawingWireStart) && (
         <div
           className={`absolute top-12 left-0 right-0 z-30 flex items-center justify-between px-5 py-2.5 font-black tracking-wide text-sm pointer-events-auto ${
             probeMode === 'red'
               ? 'bg-red-600 text-white border-b-2 border-red-300'
-              : 'bg-slate-600 text-white border-b-2 border-slate-300'
+              : probeMode === 'black'
+              ? 'bg-slate-600 text-white border-b-2 border-slate-300'
+              : 'bg-indigo-600 text-white border-b-2 border-indigo-400'
           }`}
         >
           <span>
             {probeMode === 'red'
               ? '🔴 RED PROBE ACTIVE — Click any terminal on the canvas to attach'
-              : '⚫ BLACK PROBE ACTIVE — Click any terminal on the canvas to attach'}
+              : probeMode === 'black'
+              ? '⚫ BLACK PROBE ACTIVE — Click any terminal on the canvas to attach'
+              : `🔌 ROUTING WIRE (${tempWaypoints.length} waypoints) — Click empty canvas to route / bend, click destination terminal to complete`}
           </span>
           <button
-            onClick={() => setProbeMode(null)}
+            onClick={() => {
+              setProbeMode(null);
+              setDrawingWireStart(null);
+              setTempWaypoints([]);
+            }}
             className="bg-black/30 hover:bg-black/50 px-3 py-1 rounded text-xs cursor-pointer transition-colors ml-4 font-bold"
           >
             ✕ Cancel
@@ -263,9 +669,16 @@ export const Workspace: React.FC = () => {
       <svg
         ref={svgRef}
         className={`workspace-grid w-full flex-grow relative touch-none ${probeMode ? 'cursor-cell' : 'cursor-crosshair'}`}
+        onPointerDown={handleWorkspacePointerDown}
         onPointerMove={handleWorkspacePointerMove}
         onPointerUp={handleWorkspacePointerUp}
         onClick={() => { if (probeMode) setProbeMode(null); }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setDrawingWireStart(null);
+          setProbeMode(null);
+          setTempWaypoints([]);
+        }}
         style={{ touchAction: 'none' }}
       >
         {/* Glow Filters */}
@@ -279,11 +692,63 @@ export const Workspace: React.FC = () => {
           </filter>
         </defs>
 
-        {/* 1. Wire connections layer */}
-        {wires.map(wire => {
+        {/* 1. Placed components casing layer */}
+        {components.map(comp => {
+          const isEnergized = simulation.energizedComponents.has(comp.id);
+          const isFaulty = simulation.faultLocation?.split(':')[0] === comp.id;
+
+          return (
+            <g
+              key={comp.id}
+              transform={`translate(${comp.x}, ${comp.y})`}
+              onPointerDown={(e) => handleCompPointerDown(e, comp)}
+              onPointerMove={handleCompPointerMove}
+              onPointerUp={handleCompPointerUp}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="cursor-grab active:cursor-grabbing group"
+            >
+              {/* Highlight bounding box if diagnostic fault is here */}
+              {isFaulty && (
+                <rect
+                  x="-55"
+                  y="-55"
+                  width="110"
+                  height="110"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="3.5"
+                  strokeDasharray="4,4"
+                  rx="6"
+                  className="animate-pulse"
+                />
+              )}
+
+              {/* Highlight selection glow */}
+              <rect
+                x="-52"
+                y="-52"
+                width="104"
+                height="104"
+                fill="transparent"
+                stroke="rgba(99, 102, 241, 0.25)"
+                strokeWidth="1.5"
+                rx="6"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              />
+
+              {/* Specific component graphic */}
+              <ComponentRenderer component={comp} isEnergized={isEnergized} />
+            </g>
+          );
+        })}
+
+        {/* 2. Wire connections layer */}
+        {wires.map((wire, index) => {
           const p1 = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
           const p2 = getTerminalPos(wire.toComponentId, wire.toTerminalId);
-          const pathD = getWirePath(p1.x, p1.y, p2.x, p2.y);
+          const pathD = getWirePathWithCrossings(index, wires);
           const isSelected = selectedWireId === wire.id;
           const isAnimating = isWireAnimating(wire);
           const hexColor = getWireColorHex(wire.color);
@@ -322,30 +787,31 @@ export const Workspace: React.FC = () => {
                   stroke="#fbbf24"
                   strokeWidth={wireSize === 'normal' ? 5.5 : 3.5}
                   strokeLinecap="round"
-                  opacity="0.8"
+                  className="glow-yellow animate-pulse"
                 />
               )}
 
-              {/* Core wire body - turns dashed and dim if no voltage is flowing to/through it */}
+              {/* Main colored wire body */}
               <path
                 d={pathD}
                 fill="none"
                 stroke={hexColor}
-                strokeWidth={wireSize === 'normal' ? 3 : 1.8}
+                strokeWidth={wireSize === 'normal' ? 3.5 : 1.8}
                 strokeLinecap="round"
-                strokeDasharray={isWireDead ? "5,5" : "none"}
-                opacity={isWireDead ? 0.45 : 1.0}
-                filter={isSelected ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' : 'none'}
-                style={{ transition: 'opacity 0.25s ease, stroke-dasharray 0.25s ease' }}
+                className={`transition-all duration-300 ${
+                  isWireDead ? 'opacity-40 brightness-[0.4] saturate-[0.2]' :
+                  isBlocked ? 'brightness-[0.9] saturate-[0.8]' :
+                  'brightness-110'
+                }`}
               />
 
-              {/* Hot but blocked voltage indicator overlay (static yellow dots) */}
-              {isBlocked && (
+              {/* Voltage presence pulsing ring under glowing wires */}
+              {isRunning && !isWireDead && (
                 <path
                   d={pathD}
                   fill="none"
-                  stroke="#facc15"
-                  strokeWidth={wireSize === 'normal' ? 2 : 1.2}
+                  stroke={hexColor}
+                  strokeWidth={wireSize === 'normal' ? 5.5 : 2.5}
                   strokeLinecap="round"
                   strokeDasharray="2,6"
                   opacity="0.75"
@@ -383,82 +849,86 @@ export const Workspace: React.FC = () => {
                   <line x1="4" y1="-4" x2="-4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
                 </g>
               )}
+
+              {/* Waypoint markers for selected wire */}
+              {isSelected && wire.waypoints && wire.waypoints.map((wp, idx) => (
+                <circle
+                  key={`wp-${wire.id}-${idx}`}
+                  cx={wp.x}
+                  cy={wp.y}
+                  r="3.5"
+                  fill="#ffffff"
+                  stroke="#6366f1"
+                  strokeWidth="1.5"
+                  opacity="0.8"
+                  pointerEvents="none"
+                />
+              ))}
             </g>
           );
         })}
 
-        {/* 2. Live wire drawing overlay */}
-        {drawingWireStart && (
-          <path
-            d={getWirePath(
-              getTerminalPos(drawingWireStart.componentId, drawingWireStart.terminalId).x,
-              getTerminalPos(drawingWireStart.componentId, drawingWireStart.terminalId).y,
-              mousePos.x,
-              mousePos.y
-            )}
-            fill="none"
-            stroke={getWireColorHex(activeColor)}
-            strokeWidth="3.5"
-            strokeDasharray="4,4"
-            opacity="0.8"
-          />
-        )}
+        {/* 3. Live wire drawing overlay */}
+        {drawingWireStart && (() => {
+          const mockWire: Wire = {
+            id: 'temp-live-wire',
+            fromComponentId: drawingWireStart.componentId,
+            fromTerminalId: drawingWireStart.terminalId,
+            toComponentId: hoveredTerminal ? hoveredTerminal.componentId : '',
+            toTerminalId: hoveredTerminal ? hoveredTerminal.terminalId : '',
+            color: activeColor,
+            waypoints: tempWaypoints
+          };
+          
+          let pts: { x: number; y: number }[];
+          if (!hoveredTerminal) {
+            const tempWire: Wire = {
+              ...mockWire,
+              waypoints: [...tempWaypoints, mousePos]
+            };
+            pts = getWireSegmentsPoints(tempWire);
+          } else {
+            pts = getWireSegmentsPoints(mockWire);
+          }
+          
+          const path = `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+          
+          return (
+            <g>
+              <path
+                d={path}
+                fill="none"
+                stroke={getWireColorHex(activeColor)}
+                strokeWidth="3.5"
+                strokeDasharray="4,4"
+                opacity="0.8"
+              />
+              {/* Waypoint markers for drawing wire */}
+              {tempWaypoints.map((wp, idx) => (
+                <circle
+                  key={`temp-wp-${idx}`}
+                  cx={wp.x}
+                  cy={wp.y}
+                  r="4"
+                  fill="#ffffff"
+                  stroke={getWireColorHex(activeColor)}
+                  strokeWidth="2"
+                  opacity="0.9"
+                  pointerEvents="none"
+                />
+              ))}
+            </g>
+          );
+        })()}
 
-        {/* 3. Placed components layer */}
+        {/* 4. Terminals and Interactive Overlay Layer */}
         {components.map(comp => {
-          const isEnergized = simulation.energizedComponents.has(comp.id);
-          const isFaulty = simulation.faultLocation?.split(':')[0] === comp.id;
-
           return (
             <g
-              key={comp.id}
+              key={`terminals-${comp.id}`}
               transform={`translate(${comp.x}, ${comp.y})`}
-              onPointerDown={(e) => handleCompPointerDown(e, comp)}
-              onPointerMove={handleCompPointerMove}
-              onPointerUp={handleCompPointerUp}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (e.detail === 3) {
-                  const confirmDelete = window.confirm(`Are you sure you want to remove the component: ${comp.label}?`);
-                  if (confirmDelete) {
-                    removeComponent(comp.id);
-                  }
-                }
-              }}
-              className="cursor-grab active:cursor-grabbing group"
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* Highlight bounding box if diagnostic fault is here */}
-              {isFaulty && (
-                <rect
-                  x="-55"
-                  y="-55"
-                  width="110"
-                  height="110"
-                  fill="none"
-                  stroke="#ef4444"
-                  strokeWidth="3.5"
-                  strokeDasharray="4,4"
-                  rx="6"
-                  className="animate-pulse"
-                />
-              )}
-
-              {/* Highlight selection glow */}
-              <rect
-                x="-52"
-                y="-52"
-                width="104"
-                height="104"
-                fill="transparent"
-                stroke="rgba(99, 102, 241, 0.25)"
-                strokeWidth="1.5"
-                rx="6"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-
-              {/* Specific component graphic */}
-              <ComponentRenderer component={comp} isEnergized={isEnergized} />
-
               {/* Terminals overlay */}
               {comp.terminals.map(term => {
                 const termKey = getTerminalKey(comp.id, term.id);
@@ -529,7 +999,15 @@ export const Workspace: React.FC = () => {
                       )}
 
                       {/* Snap zone hitbox */}
-                      <circle cx="0" cy="0" r="16" fill="transparent" className="terminal-hitbox" />
+                      <circle 
+                        cx="0" 
+                        cy="0" 
+                        r="16" 
+                        fill="transparent" 
+                        className="terminal-hitbox" 
+                        data-component-id={comp.id}
+                        data-terminal-id={term.id}
+                      />
 
                       {/* Metal ring */}
                       <circle cx="0" cy="0" r="6" fill="#cbd5e1" stroke="#334155" strokeWidth="1.5" />
@@ -602,14 +1080,6 @@ export const Workspace: React.FC = () => {
             />
           );
         })()}
-
-        {/* Probe anchor indicator dots at bottom-left */}
-        <g>
-          <circle cx={RED_ANCHOR.x} cy={RED_ANCHOR.y} r="8" fill={multimeter.redProbe ? '#ef4444' : '#7f1d1d'} stroke="#b91c1c" strokeWidth="1.5" opacity="0.85" />
-          <text x={RED_ANCHOR.x} y={RED_ANCHOR.y + 4} fill="white" fontSize="9" fontWeight="900" textAnchor="middle">R</text>
-          <circle cx={BLK_ANCHOR.x} cy={BLK_ANCHOR.y} r="8" fill={multimeter.blackProbe ? '#475569' : '#1e293b'} stroke="#334155" strokeWidth="1.5" opacity="0.85" />
-          <text x={BLK_ANCHOR.x} y={BLK_ANCHOR.y + 4} fill="#94a3b8" fontSize="9" fontWeight="900" textAnchor="middle">B</text>
-        </g>
       </svg>
     </div>
   );

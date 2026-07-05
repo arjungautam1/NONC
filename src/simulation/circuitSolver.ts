@@ -108,6 +108,11 @@ export function solveCircuit(
         // terminal blocks connect terminal pairs: t1-t2, t3-t4, etc.
         addConnection(getTerminalKey(c.id, 't1'), getTerminalKey(c.id, 't2'));
         addConnection(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
+      } else if (c.type === 'card_reader') {
+        const isActive = c.state.active || false;
+        if (isActive) {
+          addConnection(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+        }
       }
       // Note: loads (bulb, led, motor, buzzer, coil) are NOT shorted internally. They act as resistance loads.
     });
@@ -448,6 +453,7 @@ export function queryMultimeter(
       else if (c.type === 'buzzer') resistance += 150.0;
       else if (c.type === 'relay' || c.type === 'timer_relay') resistance += 80.0;
       else if (c.type === 'maglock') resistance += 120.0;
+      else if (c.type === 'card_reader') resistance += 100.0;
     });
     
     return `${resistance.toFixed(1)} Ω`;
@@ -513,6 +519,11 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+    } else if (c.type === 'card_reader') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      if (c.state.active) {
+        addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+      }
     }
   });
 
@@ -581,6 +592,13 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+    } else if (c.type === 'card_reader') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      if (c.state.active) {
+        addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+      }
     }
   });
 

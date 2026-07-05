@@ -68,6 +68,7 @@ export interface Wire {
   toComponentId: string;
   toTerminalId: string;
   color: 'red' | 'black' | 'green' | 'orange';
+  waypoints?: { x: number; y: number }[];
 }
 
 export type MultimeterMode = 'OFF' | 'VOLTAGE' | 'CONTINUITY' | 'RESISTANCE';

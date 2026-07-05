@@ -7,11 +7,33 @@ import { HelpOverlay } from './components/game/HelpOverlay';
 
 function App() {
   const initLevel = useGameStore(state => state.initLevel);
+  const useHint = useGameStore(state => state.useHint);
 
   // Initialize first level on mount
   useEffect(() => {
     initLevel(0);
   }, [initLevel]);
+
+  // Shortcut key listener: 'h'/'H' for next hint
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+      if (e.key === 'h' || e.key === 'H') {
+        useHint();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [useHint]);
 
   return (
     <div className="min-h-screen flex flex-col bg-industrial-gray-900 text-slate-200 overflow-hidden font-sans select-none">

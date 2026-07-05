@@ -1,17 +1,110 @@
 import React, { useEffect } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { levels } from '../../levels/levelData';
-import { 
-  CheckCircle2, 
-  AlertCircle, 
+import {
+  CheckCircle2,
+  AlertCircle,
   HelpCircle,
-  ArrowRight, 
+  ArrowRight,
   Award,
   Star,
   Activity,
-  Gauge
+  Gauge,
+  Briefcase,
+  Download
 } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
+import { RealWorldVisual } from './components/RealWorldVisual';
+
+const getRealWorldApplication = (levelId: number) => {
+  switch (levelId) {
+    case 1:
+      return {
+        title: "Basic Flashlight",
+        desc: "A battery supplying continuous current to a bulb through wires, simulating a simple handheld torch."
+      };
+    case 2:
+      return {
+        title: "Home Light Switch",
+        desc: "A manual switch closing and opening a single hot path to turn a ceiling light bulb on or off."
+      };
+    case 3:
+      return {
+        title: "Doorbell System",
+        desc: "A Normally Open push button. Pressing it closes the circuit momentarily, sending current to ring the doorbell chime."
+      };
+    case 4:
+      return {
+        title: "Refrigerator Door Light",
+        desc: "A Normally Closed push button switch. When the door is closed, it pushes the button open, turning off the light to save energy."
+      };
+    case 5:
+      return {
+        title: "Low-Voltage Lighting Relay",
+        desc: "Using a safe, low-voltage control circuit switch to magnetically close a relay contact, switching high-voltage lights."
+      };
+    case 6:
+      return {
+        title: "Car Horn Relay Control",
+        desc: "Using a low-current horn button on the steering wheel to energize a relay, closing contacts to power the loud, high-current horn."
+      };
+    case 7:
+      return {
+        title: "Security Wire Cut-off Alarm",
+        desc: "A Normally Closed circuit. If an intruder cuts the window sensor wire, the relay coil drops, opening the circuit to sound the alarm siren."
+      };
+    case 8:
+      return {
+        title: "Industrial E-Stop Safety Loop",
+        desc: "A safety emergency-stop button connected in series with a fuse to instantly kill power to the machine if pulled/pressed."
+      };
+    case 9:
+      return {
+        title: "Secure Office Badge Entry",
+        desc: "An RFID reader. Scanning a valid badge triggers a relay to break power to the magnetic lock (Maglock), letting you open the door."
+      };
+    case 10:
+      return {
+        title: "Traffic Light Switcher",
+        desc: "A selector switch alternating control signals between red and green road lamps to safely direct traffic lanes."
+      };
+    case 11:
+      return {
+        title: "Bathroom GFCI Ground Protection",
+        desc: "A grounded electrical outlet. If current leaks to the ground loop, it immediately trips the circuit protection to prevent shock."
+      };
+    case 12:
+      return {
+        title: "Machinery Start/Stop Station",
+        desc: "A latching control circuit. The START button triggers a relay coil which seals itself ON. The STOP button breaks the latch."
+      };
+    case 13:
+      return {
+        title: "HVAC Fan Time-Delay",
+        desc: "A time-delay relay. When the heating system switches on, it waits 2 seconds for the furnace to warm up before starting the fan."
+      };
+    case 14:
+      return {
+        title: "Elevator Safety Limit Switch",
+        desc: "An NC roller limit switch. If the elevator cabin travels too high, it physically pushes the limit switch open, cutting the hoist motor."
+      };
+    case 15:
+      return {
+        title: "Automatic Driveway Gate / Car Window",
+        desc: "An H-bridge motor reverser. Powering Relay 1 drives the gate open, and powering Relay 2 reverses voltage polarity to drive it closed."
+      };
+    case 16:
+      return {
+        title: "Integrated Access Control System",
+        desc: "A complete security cabinet stepping down high AC voltage to 12V DC power to safely run card readers and maglocks."
+      };
+    default:
+      return {
+        title: "Industrial Control Circuit",
+        desc: "Applying relays, switches, and load logic to safely manage electricity in commercial applications."
+      };
+  }
+};
 
 export const HelpOverlay: React.FC = () => {
   const {
@@ -33,6 +126,43 @@ export const HelpOverlay: React.FC = () => {
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
+
+  const [isDismissed, setIsDismissed] = React.useState(false);
+
+  useEffect(() => {
+    setIsDismissed(false);
+  }, [currentLevelIndex]);
+
+  const handleDownloadVisual = () => {
+    const svgEl = document.querySelector('.real-world-visual-container svg');
+    if (!svgEl) return;
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svgEl);
+    if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    if (!source.match(/^<svg[^>]+xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+    }
+
+    // Inject a solid dark background rect as the first element inside <svg ...>
+    const svgTagMatch = source.match(/^<svg[^>]*>/);
+    if (svgTagMatch) {
+      const svgTag = svgTagMatch[0];
+      const bgRect = '<rect width="100%" height="100%" fill="#18181b" />';
+      const styleNode = '<style>text { font-family: monospace, sans-serif; }</style>';
+      source = source.replace(svgTag, `${svgTag}\n${bgRect}\n${styleNode}`);
+    }
+
+    source = '<?xml version="1.0" encoding="utf-8"?>\n' + source;
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `real_world_layout_level_${currentLevelIndex + 1}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Auto-dismiss achievement notifications after 4 seconds
   useEffect(() => {
@@ -95,11 +225,11 @@ export const HelpOverlay: React.FC = () => {
       if (simulation.faultLocation) {
         const [cId] = simulation.faultLocation.split(':');
         const comp = useGameStore.getState().components.find(c => c.id === cId);
-        
+
         if (comp) {
           let reason = `Current reached [${comp.label}] but stopped because the contact is open.`;
           let fix = 'Make sure the button is pressed or switches are closed to complete the path.';
-          
+
           if (comp.type === 'button_no') {
             reason = `Current reached [${comp.label}] COM/IN terminal but is blocked because Normally Open contacts are open at rest.`;
             fix = 'Hold down the green push button to close the contact and let current flow.';
@@ -145,7 +275,7 @@ export const HelpOverlay: React.FC = () => {
 
   return (
     <div className="select-none pointer-events-none">
-      
+
       {/* 1. Career Achievement Unlock Alert (Bottom-Right Slide-in) */}
       {recentAchievement && (
         <div className="fixed bottom-6 right-6 w-80 bg-industrial-gray-900 border-2 border-amber-500 rounded-xl p-4 shadow-2xl z-50 pointer-events-auto flex items-start gap-3 animate-bounce">
@@ -171,8 +301,8 @@ export const HelpOverlay: React.FC = () => {
       )}
 
       {/* 2. Interactive Diagnostic Console (Panel) */}
-      <div className="fixed bottom-0 left-[380px] right-0 h-44 bg-industrial-gray-950 border-t border-[#2a2e39] flex p-4 gap-6 pointer-events-auto z-10">
-        
+      <div className="fixed bottom-0 left-[380px] right-0 h-52 bg-industrial-gray-950 border-t border-[#2a2e39] flex p-3 gap-4 pointer-events-auto z-10">
+
         {/* Diagnostic Status Box */}
         <div className="w-80 border border-[#2a2e39] bg-industrial-gray-900/50 rounded-lg p-3.5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -181,19 +311,18 @@ export const HelpOverlay: React.FC = () => {
             </span>
             <Activity className={`w-4 h-4 ${isRunning ? 'text-emerald-400 animate-pulse' : 'text-industrial-gray-500'}`} />
           </div>
-          
+
           <div className="flex-1 flex flex-col justify-center">
             <div className="flex items-center gap-2">
               {diag.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               {diag.type === 'warning' && <AlertCircle className="w-4 h-4 text-yellow-400" />}
               {diag.type === 'danger' && <AlertCircle className="w-4 h-4 text-red-500" />}
               {diag.type === 'info' && <HelpCircle className="w-4 h-4 text-sky-400" />}
-              <span className={`text-xs font-black ${
-                diag.type === 'success' ? 'text-emerald-400' :
-                diag.type === 'danger' ? 'text-red-500 animate-pulse' :
-                diag.type === 'warning' ? 'text-yellow-400' :
-                'text-sky-400'
-              }`}>
+              <span className={`text-xs font-black ${diag.type === 'success' ? 'text-emerald-400' :
+                  diag.type === 'danger' ? 'text-red-500 animate-pulse' :
+                    diag.type === 'warning' ? 'text-yellow-400' :
+                      'text-sky-400'
+                }`}>
                 {diag.title}
               </span>
             </div>
@@ -204,17 +333,16 @@ export const HelpOverlay: React.FC = () => {
         </div>
 
         {/* 3. DMM Troubleshooting Multimeter Panel */}
-        <div className="w-[400px] border border-[#2a2e39] bg-industrial-gray-900/50 rounded-lg p-3.5 flex gap-3 select-none shrink-0">
+        <div className="w-[400px] h-full border border-[#2a2e39] bg-industrial-gray-900/50 rounded-lg p-2.5 flex gap-3 select-none shrink-0 overflow-hidden">
           {/* DMM Yellow Housing */}
-          <div className="w-[150px] bg-yellow-500 p-2 rounded border-2 border-yellow-600 shadow-md flex flex-col gap-1.5 shrink-0">
+          <div className="w-[150px] h-full bg-yellow-500 p-1.5 rounded border-2 border-yellow-600 shadow-md flex flex-col gap-1 shrink-0">
             {/* LCD Screen */}
-            <div className="bg-[#c7f7e5] border-2 border-yellow-700 px-1.5 py-1 rounded shadow-inner flex items-center justify-between font-mono text-slate-900">
+            <div className="bg-[#c7f7e5] border-2 border-yellow-700 px-1.5 py-0.5 rounded shadow-inner flex items-center justify-between font-mono text-slate-900">
               <span className="text-[7px] font-bold text-slate-600 tracking-wider">DMM-40</span>
-              <span className={`text-[11px] font-black tracking-wider px-1 rounded ${
-                multimeter.mode === 'OFF' ? 'text-slate-500' :
-                multimeter.reading === '---' ? 'text-slate-600' :
-                'text-emerald-700 bg-emerald-100/50'
-              }`}>
+              <span className={`text-[11px] font-black tracking-wider px-1 rounded ${multimeter.mode === 'OFF' ? 'text-slate-500' :
+                  multimeter.reading === '---' ? 'text-slate-600' :
+                    'text-emerald-700 bg-emerald-100/50'
+                }`}>
                 {multimeter.mode === 'OFF' ? 'OFF' : multimeter.reading}
               </span>
             </div>
@@ -228,11 +356,10 @@ export const HelpOverlay: React.FC = () => {
                   <button
                     key={mode}
                     onClick={() => setMultimeterMode(mode)}
-                    className={`py-1 rounded border font-black cursor-pointer uppercase transition-all ${
-                      active 
-                        ? 'bg-slate-900 text-yellow-300 border-slate-700 shadow-inner' 
+                    className={`py-0.5 rounded border font-black cursor-pointer uppercase transition-all ${active
+                        ? 'bg-slate-900 text-yellow-300 border-slate-700 shadow-inner'
                         : 'bg-yellow-600 text-slate-950 border-yellow-700 hover:bg-yellow-400'
-                    }`}
+                      }`}
                   >
                     {label}
                   </button>
@@ -241,24 +368,22 @@ export const HelpOverlay: React.FC = () => {
             </div>
 
             {/* Probe Attach Buttons */}
-            <div className="flex flex-col gap-1 border-t border-yellow-600/40 pt-1.5">
+            <div className="flex flex-col gap-1 border-t border-yellow-600/40 pt-1">
               <button
                 onClick={() => setProbeMode(multimeter.redProbe ? null : 'red')}
-                className={`w-full py-1 rounded text-[8px] font-black uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${
-                  multimeter.redProbe
+                className={`w-full py-0.5 rounded text-[8px] font-black uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.redProbe
                     ? 'bg-red-700 text-white border border-red-500'
                     : 'bg-red-500 hover:bg-red-400 text-white border border-red-700'
-                }`}
+                  }`}
               >
                 🔴 {multimeter.redProbe ? '✔ RED ON' : 'ATTACH RED'}
               </button>
               <button
                 onClick={() => setProbeMode(multimeter.blackProbe ? null : 'black')}
-                className={`w-full py-1 rounded text-[8px] font-black uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${
-                  multimeter.blackProbe
+                className={`w-full py-0.5 rounded text-[8px] font-black uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.blackProbe
                     ? 'bg-slate-600 text-white border border-slate-400'
                     : 'bg-slate-500 hover:bg-slate-400 text-white border border-slate-700'
-                }`}
+                  }`}
               >
                 ⚫ {multimeter.blackProbe ? '✔ BLK ON' : 'ATTACH BLK'}
               </button>
@@ -274,14 +399,14 @@ export const HelpOverlay: React.FC = () => {
           </div>
 
           {/* DMM Guide Instructions */}
-          <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden">
             <div className="flex items-center gap-1">
               <Gauge className="w-3.5 h-3.5 text-yellow-500" />
               <span className="text-[10px] font-extrabold text-industrial-gray-400 tracking-wider font-mono">
                 HOW TO USE DMM
               </span>
             </div>
-            <ol className="text-[9px] text-zinc-300 font-semibold pl-3 list-decimal leading-relaxed mt-1 flex-grow">
+            <ol className="text-[9px] text-zinc-300 font-semibold pl-3 list-decimal leading-snug mt-1 flex-grow overflow-hidden">
               <li>Pick a mode: <b>V</b>=Voltage, <b>OHM</b>=Resistance, <b>CONT</b>=Continuity.</li>
               <li>Click <b>ATTACH RED</b> — then click any terminal on the canvas.</li>
               <li>Click <b>ATTACH BLK</b> — click another terminal.</li>
@@ -290,75 +415,124 @@ export const HelpOverlay: React.FC = () => {
           </div>
         </div>
 
-        {/* Dynamic Hints Panel */}
-        <div className="flex-1 border border-[#2a2e39] bg-industrial-gray-900/60 rounded-lg p-4 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold tracking-widest text-yellow-500 uppercase font-mono">
-              HINTS & DIAGRAMS
-            </span>
-            <span className="text-[9px] font-bold text-industrial-gray-400 bg-industrial-gray-800 px-1.5 py-0.5 rounded border border-[#2a2e39] uppercase font-mono">
-              Hint {score.hintsUsed % level.hints.length + 1} of {level.hints.length}
-            </span>
-          </div>
-          
-          <div className="flex-grow overflow-y-auto pr-1 flex items-center">
-            <p className="text-xs text-zinc-100 leading-relaxed font-medium">
-              {level.hints[score.hintsUsed % level.hints.length]}
-            </p>
+        {/* Dynamic Hints & Real World Application Panel */}
+        <div className="flex-1 border border-[#2a2e39] bg-industrial-gray-900/60 rounded-lg p-2.5 flex flex-col gap-2">
+          {/* Upper Section: Hints */}
+          <div className="flex-1 flex flex-col gap-1 min-h-0">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold tracking-widest text-yellow-500 uppercase font-mono">
+                HINTS & DIAGRAMS
+              </span>
+              <span className="text-[9px] font-bold text-industrial-gray-400 bg-industrial-gray-800 px-1.5 py-0.5 rounded border border-[#2a2e39] uppercase font-mono">
+                Hint {score.hintsUsed % level.hints.length + 1} of {level.hints.length}
+              </span>
+            </div>
+            
+            <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1">
+              <p className="text-[10px] text-zinc-200 leading-normal font-semibold">
+                {level.hints[score.hintsUsed % level.hints.length]}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                useHint();
+              }}
+              className="self-end text-[8px] font-extrabold text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 px-2 py-0.5 rounded border border-yellow-500/30 cursor-pointer transition-colors uppercase tracking-wider font-mono"
+            >
+              NEXT HINT
+            </button>
           </div>
 
-          <button
-            onClick={() => {
-              soundManager.playClick();
-              useHint();
-            }}
-            className="self-end text-[9px] font-extrabold text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 px-3 py-1 rounded border border-yellow-500/30 cursor-pointer transition-colors"
-          >
-            NEXT HINT
-          </button>
+          {/* Divider */}
+          <div className="border-t border-[#2a2e39]/65 my-0.5" />
+
+          {/* Lower Section: Real-World Application with SVG visual */}
+          {(() => {
+            const app = getRealWorldApplication(level.id);
+            return (
+              <div className="h-16 shrink-0 flex gap-3 text-left items-center justify-between">
+                <div className="flex-grow min-w-0 flex flex-col gap-0.5">
+                  <div className="flex items-center justify-between text-emerald-400">
+                    <div className="flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5" />
+                      <span className="text-[9px] font-extrabold tracking-wider uppercase font-mono">
+                        REAL-WORLD APP: {app.title}
+                      </span>
+                    </div>
+                    {/* Download SVG button */}
+                    <button
+                      onClick={handleDownloadVisual}
+                      className="text-[8px] font-extrabold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 cursor-pointer transition-colors uppercase tracking-wider font-mono flex items-center gap-1"
+                      title="Download Vector SVG Diagram"
+                    >
+                      <Download className="w-2.5 h-2.5" />
+                      <span>SVG</span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-zinc-300 leading-normal font-semibold overflow-y-auto max-h-[44px] pr-1">
+                    {app.desc}
+                  </p>
+                </div>
+                {/* SVG Visual illustration of equivalent application - scaled to 56px */}
+                <div className="shrink-0 w-14 h-14 real-world-visual-container">
+                  <RealWorldVisual levelId={level.id} isActive={isRunning} />
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
-      {/* 3. Level Complete Modal Overlay */}
-      {levelCompleted && (
-        <div className="fixed inset-0 bg-[#000000]/85 z-50 flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto">
-          <div className="w-[450px] bg-industrial-gray-900 border-2 border-emerald-500 rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center animate-fade-in">
+      {/* 3. Level Complete Floating Notification Card */}
+      {levelCompleted && !isDismissed && (
+        <div className="fixed bottom-6 right-6 z-50 pointer-events-auto">
+          <div className="relative w-[360px] bg-industrial-gray-950/95 border-2 border-emerald-500 rounded-2xl shadow-2xl p-5 flex flex-col items-center text-center animate-fade-in backdrop-blur-md">
             
-            {/* Crown/Success icon */}
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center glow-green mb-4">
-              <CheckCircle2 className="w-10 h-10" />
+            {/* Close / Dismiss button */}
+            <button
+              onClick={() => setIsDismissed(true)}
+              className="absolute top-3.5 right-3.5 w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40 transition-all cursor-pointer font-bold text-xs"
+              title="Dismiss Notification"
+            >
+              ✕
+            </button>
+
+            {/* Success icon */}
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center glow-green mb-3">
+              <CheckCircle2 className="w-7 h-7" />
             </div>
 
-            <span className="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase font-mono">
+            <span className="text-[9px] font-extrabold tracking-widest text-emerald-400 uppercase font-mono">
               TRAINING MODULE CLEARED
             </span>
-            <h2 className="text-xl font-black text-white mt-1 uppercase font-mono">{level.title}</h2>
-            <p className="text-[11px] text-industrial-gray-300 mt-2 px-4 leading-relaxed font-semibold">
+            <h2 className="text-lg font-black text-white mt-0.5 uppercase font-mono">{level.title}</h2>
+            <p className="text-[10px] text-zinc-400 mt-1 px-2 leading-normal font-medium">
               Excellent! You have successfully wired this circuit and met all engineering criteria.
             </p>
 
             {/* Stars evaluation rating */}
-            <div className="flex gap-2.5 my-5">
+            <div className="flex gap-2 my-3">
               {[1, 2, 3].map(num => (
                 <Star
                   key={num}
-                  className={`w-7 h-7 ${
-                    num <= stars 
-                      ? 'text-yellow-400 fill-yellow-400 drop-shadow(0 0 4px rgba(250,204,21,0.5))' 
-                      : 'text-industrial-gray-700'
-                  }`}
+                  className={`w-6 h-6 ${num <= stars
+                      ? 'text-yellow-400 fill-yellow-400 drop-shadow(0 0 3px rgba(250,204,21,0.5))'
+                      : 'text-zinc-700'
+                    }`}
                 />
               ))}
             </div>
 
             {/* Statistics */}
-            <div className="grid grid-cols-2 gap-3 w-full border-t border-b border-[#2a2e39] py-3.5 my-2 text-xs font-mono">
-              <div className="text-left pl-4 border-r border-[#2a2e39]">
-                <span className="text-[9px] text-industrial-gray-400 block uppercase font-bold">Time Taken:</span>
+            <div className="grid grid-cols-2 gap-2 w-full border-t border-b border-[#2a2e39]/60 py-2.5 my-1 text-[11px] font-mono">
+              <div className="text-left pl-3 border-r border-[#2a2e39]/60">
+                <span className="text-[8px] text-zinc-500 block uppercase font-bold">Time Taken:</span>
                 <span className="text-white font-extrabold text-sm">{formatTime(timeElapsed)}</span>
               </div>
-              <div className="text-left pl-4">
-                <span className="text-[9px] text-industrial-gray-400 block uppercase font-bold">Hints Consulted:</span>
+              <div className="text-left pl-3">
+                <span className="text-[8px] text-zinc-500 block uppercase font-bold">Hints Used:</span>
                 <span className="text-white font-extrabold text-sm">{score.hintsUsed}</span>
               </div>
             </div>
@@ -369,10 +543,10 @@ export const HelpOverlay: React.FC = () => {
                 soundManager.playButton();
                 nextLevel();
               }}
-              className="mt-6 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all uppercase hover:glow-green"
+              className="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all uppercase hover:glow-green"
             >
               <span>Next Training Module</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

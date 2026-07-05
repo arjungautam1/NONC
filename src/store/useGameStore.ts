@@ -46,7 +46,14 @@ interface GameState {
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
   
-  addWire: (fromCId: string, fromTId: string, toCId: string, toTId: string, color: 'red' | 'black' | 'green' | 'orange') => void;
+  addWire: (
+    fromCId: string, 
+    fromTId: string, 
+    toCId: string, 
+    toTId: string, 
+    color: 'red' | 'black' | 'green' | 'orange', 
+    waypoints?: { x: number; y: number }[]
+  ) => void;
   removeWire: (id: string) => void;
   
   undo: () => void;
@@ -420,7 +427,7 @@ export const useGameStore = create<GameState>((set, get) => {
       }, 3000);
     },
 
-    addWire: (fromCId, fromTId, toCId, toTId, color) => {
+    addWire: (fromCId, fromTId, toCId, toTId, color, waypoints) => {
       // Prevent duplicates or connecting to the same terminal
       if (fromCId === toCId && fromTId === toTId) return;
 
@@ -439,7 +446,8 @@ export const useGameStore = create<GameState>((set, get) => {
         fromTerminalId: fromTId,
         toComponentId: toCId,
         toTerminalId: toTId,
-        color
+        color,
+        waypoints
       };
 
       const newWires = [...get().wires, newWire];
@@ -565,10 +573,6 @@ export const useGameStore = create<GameState>((set, get) => {
         clearInterval(timerIntervalId);
         set({ timerIntervalId: null });
       }
-      if (motionIntervalId) {
-        clearInterval(motionIntervalId);
-        motionIntervalId = null;
-      }
     },
 
     tickTimer: () => {
@@ -600,10 +604,13 @@ export const useGameStore = create<GameState>((set, get) => {
 
           if (newTravel !== currentTravel) {
             hasChanges = true;
+            soundManager.startHum(c.id, 'motor');
             return {
               ...c,
               state: { ...c.state, travel: newTravel }
             };
+          } else {
+            soundManager.stopHum(c.id);
           }
         }
         return c;
