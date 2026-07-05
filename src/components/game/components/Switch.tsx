@@ -1,0 +1,337 @@
+import React from 'react';
+import type { CircuitComponent } from '../../../types/game';
+import { useGameStore } from '../../../store/useGameStore';
+import { getTerminalKey } from '../../../simulation/circuitSolver';
+
+interface ComponentProps {
+  component: CircuitComponent;
+}
+
+export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
+  const pressButton = useGameStore(state => state.pressButton);
+  const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const isRunning = useGameStore(state => state.isRunning);
+  
+  const isPressed = component.state.pressed || false;
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    // @ts-ignore
+    e.target.setPointerCapture(e.pointerId);
+    pressButton(component.id, true);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    pressButton(component.id, false);
+  };
+
+  // Determine voltage presence at switch terminals
+  const inKey = getTerminalKey(component.id, 'in');
+  const outKey = getTerminalKey(component.id, 'out');
+  const hasVoltage = isRunning && (nodeVoltages[inKey] > 0 || nodeVoltages[outKey] > 0);
+
+  return (
+    <g 
+      transform="translate(-40, -40)"
+      className="cursor-pointer select-none"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+    >
+      {/* DIN Rail mounting plate */}
+      <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
+      <rect x="15" y="1" width="50" height="4" fill="#78829a" opacity="0.6" />
+      <rect x="15" y="75" width="50" height="4" fill="#78829a" opacity="0.6" />
+
+      {/* Button collar */}
+      <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
+
+      {/* The actual button plunger */}
+      <circle
+        cx="40"
+        cy="40"
+        r={isPressed ? 15 : 18}
+        fill="url(#btnNOGrad)"
+        stroke={isPressed ? '#166534' : '#22c55e'}
+        strokeWidth="2.5"
+        filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
+        style={{ transition: 'all 0.1s ease' }}
+      />
+
+      {/* Contact terminal internally schematic overlay - connects exactly to X=10 and X=70 */}
+      <path d="M10 40 L25 40 M55 40 L70 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      
+      {isPressed ? (
+        // Connected (Closed contact)
+        <path d="M25 40 L55 40" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
+      ) : (
+        // Blocked contact: draw angled armature and dotted connection gap
+        <g>
+          {/* Angled open arm */}
+          <line x1="25" y1="40" x2="52" y2="28" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+          
+          {/* Dotted bridge path showing current is blocked here */}
+          <line 
+            x1="25" 
+            y1="40" 
+            x2="55" 
+            y2="40" 
+            stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
+            strokeWidth={hasVoltage ? 2.5 : 1.5}
+            strokeDasharray="2,3" 
+            filter={hasVoltage ? "url(#yellow-glow)" : "none"}
+            opacity={hasVoltage ? 0.95 : 0.4} 
+          />
+        </g>
+      )}
+
+      {/* Terminal anchor dots */}
+      <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      <circle cx="55" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+
+      {/* Text label */}
+      <text x="40" y="93" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
+      <defs>
+        <radialGradient id="btnNOGrad" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#4ade80" />
+          <stop offset="60%" stopColor="#22c55e" />
+          <stop offset="100%" stopColor="#15803d" />
+        </radialGradient>
+      </defs>
+    </g>
+  );
+};
+
+export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
+  const pressButton = useGameStore(state => state.pressButton);
+  const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const isRunning = useGameStore(state => state.isRunning);
+  
+  const isPressed = component.state.pressed || false;
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    // @ts-ignore
+    e.target.setPointerCapture(e.pointerId);
+    pressButton(component.id, true);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    pressButton(component.id, false);
+  };
+
+  // Determine voltage presence at switch terminals
+  const inKey = getTerminalKey(component.id, 'in');
+  const outKey = getTerminalKey(component.id, 'out');
+  const hasVoltage = isRunning && (nodeVoltages[inKey] > 0 || nodeVoltages[outKey] > 0);
+
+  return (
+    <g 
+      transform="translate(-40, -40)"
+      className="cursor-pointer select-none"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+    >
+      {/* DIN Rail mounting plate */}
+      <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
+      <rect x="15" y="1" width="50" height="4" fill="#78829a" opacity="0.6" />
+      <rect x="15" y="75" width="50" height="4" fill="#78829a" opacity="0.6" />
+
+      {/* Button collar */}
+      <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
+
+      {/* The actual button plunger */}
+      <circle
+        cx="40"
+        cy="40"
+        r={isPressed ? 15 : 18}
+        fill="url(#btnNCGrad)"
+        stroke={isPressed ? '#991b1b' : '#ef4444'}
+        strokeWidth="2.5"
+        filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
+        style={{ transition: 'all 0.1s ease' }}
+      />
+
+      {/* Contact terminal internally schematic overlay - connects exactly to X=10 and X=70 */}
+      <path d="M10 40 L25 40 M55 40 L70 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      
+      {isPressed ? (
+        // Pressed is Open contact for NC switch
+        <g>
+          {/* Angled open arm */}
+          <line x1="25" y1="40" x2="52" y2="52" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+          
+          {/* Dotted bridge path showing current is blocked here */}
+          <line 
+            x1="25" 
+            y1="40" 
+            x2="55" 
+            y2="40" 
+            stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
+            strokeWidth={hasVoltage ? 2.5 : 1.5}
+            strokeDasharray="2,3" 
+            filter={hasVoltage ? "url(#yellow-glow)" : "none"}
+            opacity={hasVoltage ? 0.95 : 0.4} 
+          />
+        </g>
+      ) : (
+        // Unpressed is Closed (Default)
+        <path d="M25 40 L55 40" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
+      )}
+      
+      <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      <circle cx="55" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+
+      {/* Text label */}
+      <text x="40" y="93" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
+      <defs>
+        <radialGradient id="btnNCGrad" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#fca5a5" />
+          <stop offset="60%" stopColor="#ef4444" />
+          <stop offset="100%" stopColor="#b91c1c" />
+        </radialGradient>
+      </defs>
+    </g>
+  );
+};
+
+export const SelectorSwitch: React.FC<ComponentProps> = ({ component }) => {
+  const toggleSwitch = useGameStore(state => state.toggleSwitch);
+  const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const isRunning = useGameStore(state => state.isRunning);
+  
+  const isToggled = component.state.toggled || false;
+
+  const handleTogglePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleTogglePointerUp = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    toggleSwitch(component.id);
+  };
+
+  // Determine voltage presence at selector input
+  const inKey = getTerminalKey(component.id, 'in');
+  const hasVoltage = isRunning && nodeVoltages[inKey] > 0;
+
+  return (
+    <g 
+      transform="translate(-45, -45)"
+      className="select-none"
+    >
+      {/* Industrial case */}
+      <rect x="5" y="5" width="80" height="80" rx="6" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
+      <rect x="20" y="1" width="50" height="4" fill="#78829a" opacity="0.6" />
+      <rect x="20" y="85" width="50" height="4" fill="#78829a" opacity="0.6" />
+
+      {/* Mode tick indicators */}
+      <line x1="26" y1="26" x2="31" y2="31" stroke="#cbd5e1" strokeWidth="2.5" />
+      <line x1="64" y1="26" x2="59" y2="31" stroke="#cbd5e1" strokeWidth="2.5" />
+      <text x="22" y="20" fill="#a4b0cb" fontSize="8" fontWeight="bold" textAnchor="middle">A</text>
+      <text x="68" y="20" fill="#a4b0cb" fontSize="8" fontWeight="bold" textAnchor="middle">B</text>
+
+      {/* Interactive toggle knob zone */}
+      <g 
+        className="cursor-pointer"
+        onPointerDown={handleTogglePointerDown}
+        onPointerUp={handleTogglePointerUp}
+      >
+        {/* Rotary switch bezel */}
+        <circle cx="45" cy="45" r="25" fill="#1b1e25" stroke="#3c4252" strokeWidth="2.5" />
+
+        {/* Rotary Knob Switch Handle */}
+        <g transform={`rotate(${isToggled ? 45 : -45}, 45, 45)`} style={{ transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+          {/* Knob shaft */}
+          <rect x="37" y="23" width="16" height="44" rx="3" fill="url(#knobGrad)" stroke="#111827" strokeWidth="1.5" />
+          {/* Colored pointer strip */}
+          <rect x="43" y="25" width="4" height="15" rx="1" fill="#ef4444" />
+        </g>
+      </g>
+
+      {/* Internal Schematic visual overlay linking exactly to terminals X=10 and X=80 */}
+      {/* Input lead trace */}
+      <line x1="10" y1="45" x2="25" y2="45" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      
+      {/* Output A lead trace */}
+      <line x1="55" y1="30" x2="80" y2="30" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      
+      {/* Output B lead trace */}
+      {component.terminals.some(t => t.id === 'out_b') && (
+        <line x1="55" y1="60" x2="80" y2="60" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      )}
+
+      {/* Dynamic arm path connecting to selected channel */}
+      {!isToggled ? (
+        // Connected to A, B is open/blocked
+        <g>
+          {/* Arm closed to A */}
+          <line x1="25" y1="45" x2="55" y2="30" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" />
+          
+          {/* Dotted path to B showing it is open */}
+          {component.terminals.some(t => t.id === 'out_b') && (
+            <line 
+              x1="25" 
+              y1="45" 
+              x2="55" 
+              y2="60" 
+              stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
+              strokeWidth={hasVoltage ? 2 : 1.2}
+              strokeDasharray="2,3" 
+              filter={hasVoltage ? "url(#yellow-glow)" : "none"}
+              opacity={hasVoltage ? 0.95 : 0.4} 
+            />
+          )}
+        </g>
+      ) : (
+        // Connected to B, A is open/blocked
+        <g>
+          {/* Arm closed to B */}
+          {component.terminals.some(t => t.id === 'out_b') && (
+            <line x1="25" y1="45" x2="55" y2="60" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" />
+          )}
+          
+          {/* Dotted path to A showing it is open */}
+          <line 
+            x1="25" 
+            y1="45" 
+            x2="55" 
+            y2="30" 
+            stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
+            strokeWidth={hasVoltage ? 2 : 1.2}
+            strokeDasharray="2,3" 
+            filter={hasVoltage ? "url(#yellow-glow)" : "none"}
+            opacity={hasVoltage ? 0.95 : 0.4} 
+          />
+        </g>
+      )}
+
+      {/* Terminal circles on schematic */}
+      <circle cx="25" cy="45" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      <circle cx="55" cy="30" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      {component.terminals.some(t => t.id === 'out_b') && (
+        <circle cx="55" cy="60" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      )}
+
+      {/* Schematic details inside */}
+      <text x="45" y="103" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
+      <defs>
+        <linearGradient id="knobGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#374151" />
+          <stop offset="50%" stopColor="#1f2937" />
+          <stop offset="100%" stopColor="#111827" />
+        </linearGradient>
+      </defs>
+    </g>
+  );
+};

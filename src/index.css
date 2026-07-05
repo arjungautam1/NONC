@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/* Custom theme colors & styles for industrial look */
+@theme {
+  --color-industrial-gray-900: #0f1015;
+  --color-industrial-gray-800: #1b1e25;
+  --color-industrial-gray-700: #2a2e39;
+  --color-industrial-gray-600: #3c4252;
+  --color-industrial-gray-500: #555d71;
+  --color-industrial-gray-400: #78829a;
+  --color-industrial-gray-300: #a4b0cb;
+  --color-industrial-gray-200: #cbd5e1;
+  --color-industrial-blue: #1e3a8a;
+  --color-industrial-orange: #d97706;
+  --color-industrial-yellow: #facc15;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #0f1015;
+  color: #cbd5e1;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Grid background for schematic workspace */
+.workspace-grid {
+  background-image: 
+    radial-gradient(#2a2e39 1px, transparent 1px), 
+    radial-gradient(#2a2e39 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  background-color: #15171e;
+}
+
+/* Glassmorphism panel styles */
+.glass-panel {
+  background: rgba(27, 30, 37, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Animated current flow particles */
+.current-flow-dot {
+  animation: flow 2s linear infinite;
+}
+
+@keyframes flow {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Glow effects */
+.glow-yellow {
+  box-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+  filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.7));
+}
+
+.glow-red {
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.7));
+}
+
+.glow-green {
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.7));
+}
+
+.glow-orange {
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
+  filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.7));
+}
+
+.glow-blue {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.7));
+}
+
+/* Rotating animations for motors */
+@keyframes spin-clockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-fast {
+  animation: spin-clockwise 0.8s linear infinite;
+  transform-origin: center;
+}
+
+.animate-motor-spin {
+  animation: spin-clockwise 0.6s linear infinite;
+  transform-origin: 0px 0px;
+}
+
+/* Vibrating animations for buzzer */
+@keyframes vibrate {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(-2px, -1px); }
+  60% { transform: translate(2px, 1px); }
+  80% { transform: translate(2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.animate-vibrate {
+  animation: vibrate 0.15s linear infinite;
+}
+
+/* Pulse animation for coils/magnetic fields */
+@keyframes pulse-magnetic {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+.animate-pulse-magnetic {
+  animation: pulse-magnetic 1s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* LED blink animation */
+@keyframes led-blink {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.animate-led-blink {
+  animation: led-blink 1s infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f1015;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2e39;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3c4252;
+}
+
+/* Hide defaults on number inputs */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
