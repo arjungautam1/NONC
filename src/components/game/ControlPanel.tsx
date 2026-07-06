@@ -27,7 +27,9 @@ export const ControlPanel: React.FC = () => {
   const [audioMuted, setAudioMuted] = useState(false);
 
   const toggleMute = () => {
-    setAudioMuted(!audioMuted);
+    const nextMuted = !audioMuted;
+    soundManager.setMuted(nextMuted);
+    setAudioMuted(nextMuted);
   };
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
@@ -104,8 +106,7 @@ export const ControlPanel: React.FC = () => {
           className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-slate-300 cursor-pointer transition-colors"
         >
           <Award className="w-4 h-4" />
-          <span className="hidden sm:inline">ACHIEVEMENTS ({unlockedCount}/{achievements.length})</span>
-          <span className="sm:hidden">{unlockedCount}/{achievements.length}</span>
+          <span>Badges {unlockedCount}/{achievements.length}</span>
         </button>
 
         {/* Score stars */}
@@ -142,7 +143,7 @@ export const ControlPanel: React.FC = () => {
                       : 'bg-industrial-gray-800/40 border-[#2a2e39] opacity-60'
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                  <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
                     ach.unlocked ? 'bg-amber-500/20 text-amber-400' : 'bg-industrial-gray-700 text-industrial-gray-500'
                   }`}>
                     <Zap className="w-5 h-5" />
@@ -151,7 +152,7 @@ export const ControlPanel: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-white leading-none">{ach.title}</h4>
                       {ach.unlocked && (
-                        <span className="text-[8px] font-extrabold text-amber-500 uppercase tracking-widest font-mono">
+                        <span className="text-[8px] font-semibold text-amber-400 uppercase tracking-wide">
                           UNLOCKED {ach.unlockedAt}
                         </span>
                       )}

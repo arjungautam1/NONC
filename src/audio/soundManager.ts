@@ -1,6 +1,18 @@
 class SoundManager {
   private ctx: AudioContext | null = null;
   private humOscillators: Map<string, { osc: OscillatorNode; oscs?: OscillatorNode[]; gain: GainNode }> = new Map();
+  private muted = false;
+
+  setMuted(muted: boolean) {
+    this.muted = muted;
+    if (muted) {
+      this.stopAllHums();
+    }
+  }
+
+  isMuted() {
+    return this.muted;
+  }
 
   private getContext(): AudioContext {
     if (!this.ctx) {
@@ -15,6 +27,7 @@ class SoundManager {
   }
 
   playClick() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;
@@ -63,6 +76,7 @@ class SoundManager {
   }
 
   playButton() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;
@@ -91,6 +105,7 @@ class SoundManager {
   }
 
   playWire() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;
@@ -124,6 +139,7 @@ class SoundManager {
   }
 
   playSpark() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;
@@ -173,6 +189,7 @@ class SoundManager {
   }
 
   playSuccess() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;
@@ -201,6 +218,7 @@ class SoundManager {
   }
 
   playFailure() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;
@@ -239,6 +257,7 @@ class SoundManager {
   }
 
   startHum(id: string, type: 'motor' | 'bulb' | 'buzzer' = 'bulb') {
+    if (this.muted) return;
     try {
       if (this.humOscillators.has(id)) return;
 
@@ -318,6 +337,7 @@ class SoundManager {
   }
 
   playCardScan() {
+    if (this.muted) return;
     try {
       const ctx = this.getContext();
       const now = ctx.currentTime;

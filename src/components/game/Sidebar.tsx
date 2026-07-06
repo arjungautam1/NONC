@@ -87,9 +87,10 @@ export const Sidebar: React.FC = () => {
     }
     if (currentLevelIndex === 17 || currentLevelIndex === 18) { // Level 18 & 19
       const btn = useGameStore.getState().components.find(c => c.id === 'btn2');
-      if (goalIndex === 0) return simulation.nodeVoltages['relay_open:coil_a'] > 0;
-      if (goalIndex === 1) return simulation.nodeVoltages['limit_top:in'] > 0 && simulation.nodeVoltages['limit_bottom:in'] > 0;
-      if (goalIndex === 2) return btn?.state.pressed || simulation.nodeVoltages['relay_close:coil_a'] > 0;
+      if (goalIndex === 0) return simulation.nodeVoltages['relay_open:coil_a'] > 0 || simulation.nodeVoltages['timer_open:coil_a'] > 0;
+      if (goalIndex === 1) return simulation.nodeVoltages['timer_open:com'] > 0 && simulation.nodeVoltages['relay_open:com'] > 0;
+      if (goalIndex === 2) return btn?.state.pressed || simulation.nodeVoltages['relay_close:coil_a'] > 0 || simulation.nodeVoltages['timer_close:coil_a'] > 0;
+      if (goalIndex === 3) return simulation.nodeVoltages['timer_close:com'] > 0 && simulation.nodeVoltages['relay_close:com'] > 0;
     }
     
     return false;

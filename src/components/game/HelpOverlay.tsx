@@ -11,7 +11,8 @@ import {
   Activity,
   Gauge,
   Briefcase,
-  Download
+  Download,
+  X
 } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
 import { RealWorldVisual } from './components/RealWorldVisual';
@@ -285,24 +286,25 @@ export const HelpOverlay: React.FC = () => {
 
       {/* 1. Career Achievement Unlock Alert (Bottom-Right Slide-in) */}
       {recentAchievement && (
-        <div className="fixed bottom-6 right-6 w-80 bg-industrial-gray-900 border-2 border-amber-500 rounded-xl p-4 shadow-2xl z-50 pointer-events-auto flex items-start gap-3 animate-bounce">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-            <Award className="w-6 h-6" />
+        <div className="fixed bottom-6 right-6 w-80 max-w-[calc(100vw-2rem)] bg-[#0b1018]/96 border border-white/10 rounded-lg p-4 shadow-2xl z-50 pointer-events-auto flex items-start gap-3 animate-fade-in backdrop-blur-xl">
+          <div className="w-10 h-10 rounded-md bg-white/[0.06] text-slate-200 border border-white/10 flex items-center justify-center shrink-0">
+            <Award className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="text-[9px] font-extrabold tracking-wider text-amber-500 uppercase font-mono">
-              ACHIEVEMENT UNLOCKED!
+            <span className="text-[9px] font-semibold tracking-wide text-slate-400 uppercase">
+              Badge unlocked
             </span>
-            <h4 className="text-xs font-black text-white mt-0.5">{recentAchievement.title}</h4>
-            <p className="text-[10px] text-industrial-gray-400 leading-tight mt-1 font-semibold">
+            <h4 className="text-xs font-semibold text-white mt-0.5">{recentAchievement.title}</h4>
+            <p className="text-[10px] text-slate-400 leading-tight mt-1 font-medium">
               {recentAchievement.description}
             </p>
           </div>
           <button
             onClick={dismissAchievement}
-            className="text-industrial-gray-400 hover:text-white cursor-pointer font-bold text-xs"
+            className="text-slate-500 hover:text-white cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+            title="Dismiss"
           >
-            ×
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -500,28 +502,28 @@ export const HelpOverlay: React.FC = () => {
       {/* 3. Level Complete Floating Notification Card */}
       {levelCompleted && !isDismissed && (
         <div className="fixed bottom-6 right-6 z-50 pointer-events-auto">
-          <div className="relative w-[360px] bg-industrial-gray-950/95 border-2 border-emerald-500 rounded-2xl shadow-2xl p-5 flex flex-col items-center text-center animate-fade-in backdrop-blur-md">
+          <div className="relative w-[360px] max-w-[calc(100vw-2rem)] bg-[#0b1018]/96 border border-white/10 rounded-lg shadow-2xl p-5 flex flex-col items-center text-center animate-fade-in backdrop-blur-xl">
             
             {/* Close / Dismiss button */}
             <button
               onClick={() => setIsDismissed(true)}
-              className="absolute top-3.5 right-3.5 w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40 transition-all cursor-pointer font-bold text-xs"
+              className="absolute top-3 right-3 p-1 rounded-md flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
               title="Dismiss Notification"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
 
             {/* Success icon */}
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center glow-green mb-3">
+            <div className="w-12 h-12 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 flex items-center justify-center mb-3">
               <CheckCircle2 className="w-7 h-7" />
             </div>
 
-            <span className="text-[9px] font-extrabold tracking-widest text-emerald-400 uppercase font-mono">
-              TRAINING MODULE CLEARED
+            <span className="text-[9px] font-semibold tracking-wide text-emerald-300 uppercase">
+              Module complete
             </span>
-            <h2 className="text-lg font-black text-white mt-0.5 uppercase font-mono">{level.title}</h2>
-            <p className="text-[10px] text-zinc-400 mt-1 px-2 leading-normal font-medium">
-              Excellent! You have successfully wired this circuit and met all engineering criteria.
+            <h2 className="text-lg font-semibold text-white mt-0.5">{level.title}</h2>
+            <p className="text-[10px] text-slate-400 mt-1 px-2 leading-normal font-medium">
+              Circuit verified. Your wiring meets the module criteria.
             </p>
 
             {/* Stars evaluation rating */}
@@ -530,7 +532,7 @@ export const HelpOverlay: React.FC = () => {
                 <Star
                   key={num}
                   className={`w-6 h-6 ${num <= stars
-                      ? 'text-yellow-400 fill-yellow-400 drop-shadow(0 0 3px rgba(250,204,21,0.5))'
+                      ? 'text-slate-100 fill-slate-100'
                       : 'text-zinc-700'
                     }`}
                 />
@@ -538,14 +540,14 @@ export const HelpOverlay: React.FC = () => {
             </div>
 
             {/* Statistics */}
-            <div className="grid grid-cols-2 gap-2 w-full border-t border-b border-[#2a2e39]/60 py-2.5 my-1 text-[11px] font-mono">
-              <div className="text-left pl-3 border-r border-[#2a2e39]/60">
-                <span className="text-[8px] text-zinc-500 block uppercase font-bold">Time Taken:</span>
-                <span className="text-white font-extrabold text-sm">{formatTime(timeElapsed)}</span>
+            <div className="grid grid-cols-2 gap-2 w-full border-t border-b border-white/10 py-2.5 my-1 text-[11px]">
+              <div className="text-left pl-3 border-r border-white/10">
+                <span className="text-[8px] text-slate-500 block uppercase font-semibold tracking-wide">Time</span>
+                <span className="text-white font-semibold text-sm">{formatTime(timeElapsed)}</span>
               </div>
               <div className="text-left pl-3">
-                <span className="text-[8px] text-zinc-500 block uppercase font-bold">Hints Used:</span>
-                <span className="text-white font-extrabold text-sm">{score.hintsUsed}</span>
+                <span className="text-[8px] text-slate-500 block uppercase font-semibold tracking-wide">Hints</span>
+                <span className="text-white font-semibold text-sm">{score.hintsUsed}</span>
               </div>
             </div>
 
@@ -555,7 +557,7 @@ export const HelpOverlay: React.FC = () => {
                 soundManager.playButton();
                 nextLevel();
               }}
-              className="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all uppercase hover:glow-green"
+              className="mt-4 w-full py-2.5 bg-white text-slate-950 hover:bg-slate-200 rounded-md font-semibold text-xs tracking-wide flex items-center justify-center gap-2 cursor-pointer transition-all uppercase"
             >
               <span>Next Training Module</span>
               <ArrowRight className="w-3.5 h-3.5" />
