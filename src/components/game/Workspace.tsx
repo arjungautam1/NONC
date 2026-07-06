@@ -1249,15 +1249,35 @@ export const Workspace: React.FC = () => {
                 40% { opacity: 0.3; }
                 100% { transform: translate(-3px, -160px) scale(3.2) rotate(40deg); opacity: 0; }
               }
-              @keyframes streak-out {
-                0% { stroke-dashoffset: 18; opacity: 1; stroke: #ffffff; }
-                15% { stroke-dashoffset: 0; stroke: #fffbeb; }
-                40% { stroke: #ff7a3b; }
-                100% { stroke-dashoffset: -140; opacity: 0; stroke: #ef4444; }
+              @keyframes spark-shoot {
+                0% {
+                  stroke-dasharray: 0, 160;
+                  stroke-dashoffset: 0;
+                  opacity: 1;
+                  stroke: #ffffff;
+                }
+                15% {
+                  stroke-dasharray: 24, 160;
+                  stroke-dashoffset: -5;
+                  stroke: #fffbeb;
+                }
+                45% {
+                  stroke-dasharray: 18, 160;
+                  stroke: #ff7a3b;
+                }
+                100% {
+                  stroke-dasharray: 1, 160;
+                  stroke-dashoffset: -140;
+                  opacity: 0;
+                  stroke: #ef4444;
+                }
               }
               @keyframes core-flicker {
                 0% { transform: scale(1); opacity: 1; }
-                80% { transform: scale(0.9) rotate(45deg); opacity: 0.8; }
+                20% { transform: scale(0.8); opacity: 0.7; }
+                40% { transform: scale(1.1); opacity: 0.95; }
+                60% { transform: scale(0.7); opacity: 0.5; }
+                80% { transform: scale(0.9); opacity: 0.8; }
                 95% { transform: scale(0.4); opacity: 0.3; }
                 100% { transform: scale(0); opacity: 0; }
               }
@@ -1311,10 +1331,10 @@ export const Workspace: React.FC = () => {
                   stroke="#ff6b35"
                   strokeWidth="1.2"
                   strokeLinecap="round"
-                  transform={`rotate(${angle})`}
                   style={{
-                    strokeDasharray: '18, 150',
-                    animation: `streak-out ${duration}s cubic-bezier(0.1, 0.8, 0.25, 1) ${delay}s forwards`,
+                    transform: `rotate(${angle}deg)`,
+                    transformOrigin: '0px 0px',
+                    animation: `spark-shoot ${duration}s cubic-bezier(0.25, 1, 0.5, 1) ${delay}s forwards`,
                   }}
                 />
               );
