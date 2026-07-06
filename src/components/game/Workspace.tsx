@@ -270,8 +270,8 @@ export const Workspace: React.FC = () => {
       // Battery terminals are on top, exit upwards
       return { x: 0, y: -22 };
     }
-    if (comp.type === 'power_supply') {
-      // Power supply terminals are on bottom, exit downwards
+    if (comp.type === 'power_supply' || comp.type === 'timer_relay') {
+      // Power supply and timer relay terminals are on bottom, exit downwards
       return { x: 0, y: 22 };
     }
 
@@ -1113,9 +1113,12 @@ export const Workspace: React.FC = () => {
                           }
                         </text>
                       ) : (
-                        <text y="-10" fill="#a4b0cb" fontSize="7" fontWeight="bold" textAnchor="middle" opacity="0.6">
-                          {term.name}
-                        </text>
+                        // Don't show static label for timer_relay – board SVG already prints labels on the PCB
+                        comp.type !== 'timer_relay' && (
+                          <text y="-10" fill="#a4b0cb" fontSize="7" fontWeight="bold" textAnchor="middle" opacity="0.6">
+                            {term.name}
+                          </text>
+                        )
                       )}
                     </g>
                   </g>
