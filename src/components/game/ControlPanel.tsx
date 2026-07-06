@@ -47,7 +47,7 @@ export const ControlPanel: React.FC = () => {
         </div>
         <div>
           <h1 className="text-sm font-black tracking-widest text-white uppercase font-mono leading-none m-0">
-            DELMI ELECTRONICS PROJECT
+            DELMI ELECTRONICS LAB
           </h1>
           <span className="text-[9px] font-extrabold text-industrial-gray-400 tracking-wider font-mono">
             VIRTUAL TRAINING SIMULATOR
