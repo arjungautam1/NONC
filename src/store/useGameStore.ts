@@ -34,6 +34,7 @@ interface GameState {
   timerIntervalId: any | null;
   shortCircuitPopup: { show: boolean; quote: string } | null;
   dismissShortCircuitPopup: () => void;
+  shortCircuitSmoke: { active: boolean; x: number; y: number } | null;
   
   // Actions
   initLevel: (index: number, skipViewTransition?: boolean) => void;
@@ -251,6 +252,21 @@ export const useGameStore = create<GameState>((set, get) => {
         soundManager.playPuff();
         currentIsRunning = false;
 
+        // Calculate center coordinate of components
+        let sumX = 0;
+        let sumY = 0;
+        if (updatedComponents.length > 0) {
+          updatedComponents.forEach(c => {
+            sumX += c.x;
+            sumY += c.y;
+          });
+          sumX /= updatedComponents.length;
+          sumY /= updatedComponents.length;
+        } else {
+          sumX = 400;
+          sumY = 300;
+        }
+
         const FUNNY_SHORT_QUOTES = [
           "💥 POP! You just let the magic smoke out of the wires!",
           "🔥 ZAP! Quick, blow on the components before they melt!",
@@ -260,12 +276,19 @@ export const useGameStore = create<GameState>((set, get) => {
         ];
         const randomQuote = FUNNY_SHORT_QUOTES[Math.floor(Math.random() * FUNNY_SHORT_QUOTES.length)];
 
+        // Set smoke active and turn off simulation power instantly
+        set({
+          shortCircuitSmoke: { active: true, x: sumX + 50, y: sumY + 30 },
+          isRunning: false
+        });
+
+        // Delay the pop-up modal until the smoke animation completes
         setTimeout(() => {
           set({
-            shortCircuitPopup: { show: true, quote: randomQuote },
-            isRunning: false
+            shortCircuitSmoke: null,
+            shortCircuitPopup: { show: true, quote: randomQuote }
           });
-        }, 10);
+        }, 1500);
       }
     }
 
@@ -335,6 +358,7 @@ export const useGameStore = create<GameState>((set, get) => {
     setViewMode: (mode) => set({ viewMode: mode }),
     shortCircuitPopup: null,
     dismissShortCircuitPopup: () => set({ shortCircuitPopup: null }),
+    shortCircuitSmoke: null,
 
     initLevel: (index, skipViewTransition = false) => {
       const level = levels[index];
@@ -358,6 +382,7 @@ export const useGameStore = create<GameState>((set, get) => {
         levelCompleted: false,
         successFeedback: '',
         shortCircuitPopup: null,
+        shortCircuitSmoke: null,
         timeElapsed: 0,
         multimeter: {
           mode: 'OFF',

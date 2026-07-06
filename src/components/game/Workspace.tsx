@@ -21,7 +21,8 @@ export const Workspace: React.FC = () => {
     probeMode,
     setProbeMode,
     currentLevelIndex,
-    sidebarOpen
+    sidebarOpen,
+    shortCircuitSmoke
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
@@ -1243,6 +1244,66 @@ export const Workspace: React.FC = () => {
             </g>
           );
         })}
+
+        {/* 4.5. Funny Electrical POP & Smoke Sizzle Animation Overlay */}
+        {shortCircuitSmoke?.active && (
+          <g transform={`translate(${shortCircuitSmoke.x}, ${shortCircuitSmoke.y})`} pointerEvents="none" className="select-none z-40">
+            <style>{`
+              @keyframes billow-smoke-1 {
+                0% { transform: translate(0, 10px) scale(0.5); opacity: 0; filter: blur(2px); }
+                15% { opacity: 0.75; filter: blur(4px); }
+                100% { transform: translate(-35px, -115px) scale(3.0); opacity: 0; filter: blur(16px); }
+              }
+              @keyframes billow-smoke-2 {
+                0% { transform: translate(0, 10px) scale(0.4); opacity: 0; filter: blur(2px); }
+                20% { opacity: 0.8; filter: blur(5px); }
+                100% { transform: translate(30px, -130px) scale(3.5); opacity: 0; filter: blur(20px); }
+              }
+              @keyframes billow-smoke-3 {
+                0% { transform: translate(0, 10px) scale(0.6); opacity: 0; filter: blur(2px); }
+                10% { opacity: 0.7; filter: blur(3px); }
+                100% { transform: translate(-8px, -100px) scale(2.6); opacity: 0; filter: blur(14px); }
+              }
+              @keyframes spark-fly {
+                0% { transform: translate(0, 0) scale(1); opacity: 1; }
+                100% { transform: translate(var(--spark-x), var(--spark-y)) scale(0.2); opacity: 0; }
+              }
+              .smoke-p1 { animation: billow-smoke-1 1.4s ease-out forwards; }
+              .smoke-p2 { animation: billow-smoke-2 1.6s ease-out forwards; }
+              .smoke-p3 { animation: billow-smoke-3 1.2s ease-out forwards; }
+              .spark-particle { animation: spark-fly 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+            `}</style>
+            
+            {/* Bright radial flash behind the smoke */}
+            <circle r="70" fill="url(#flash-glow)" className="opacity-90 animate-ping" style={{ animationDuration: '0.25s', animationIterationCount: 1 }} />
+            <circle r="30" fill="#fca5a5" className="opacity-95 animate-pulse" style={{ animationDuration: '0.15s', animationIterationCount: 1 }} />
+            
+            {/* Billowing smoke circles */}
+            <circle cx="-5" cy="5" r="16" fill="#cbd5e1" className="smoke-p1" />
+            <circle cx="8" cy="-2" r="14" fill="#94a3b8" className="smoke-p2" />
+            <circle cx="-10" cy="-6" r="18" fill="#e2e8f0" className="smoke-p3" />
+            <circle cx="2" cy="-12" r="20" fill="#cbd5e1" className="smoke-p1" style={{ animationDelay: '0.12s' }} />
+            <circle cx="-12" cy="0" r="15" fill="#94a3b8" className="smoke-p2" style={{ animationDelay: '0.06s' }} />
+            <circle cx="10" cy="8" r="17" fill="#e2e8f0" className="smoke-p3" style={{ animationDelay: '0.18s' }} />
+            <circle cx="-3" cy="-4" r="22" fill="#cbd5e1" className="smoke-p1" style={{ animationDelay: '0.22s' }} />
+            <circle cx="5" cy="4" r="19" fill="#94a3b8" className="smoke-p2" style={{ animationDelay: '0.1s' }} />
+
+            {/* Spark particles */}
+            <circle r="3.5" fill="#fde047" className="spark-particle" style={{ '--spark-x': '-55px', '--spark-y': '-65px' } as any} />
+            <circle r="3" fill="#f97316" className="spark-particle" style={{ '--spark-x': '45px', '--spark-y': '-85px', animationDelay: '0.04s' } as any} />
+            <circle r="4" fill="#fde047" className="spark-particle" style={{ '--spark-x': '-25px', '--spark-y': '-115px', animationDelay: '0.08s' } as any} />
+            <circle r="2" fill="#ef4444" className="spark-particle" style={{ '--spark-x': '65px', '--spark-y': '-45px', animationDelay: '0.06s' } as any} />
+            <circle r="3" fill="#fde047" className="spark-particle" style={{ '--spark-x': '-65px', '--spark-y': '-25px', animationDelay: '0.1s' } as any} />
+            
+            <defs>
+              <radialGradient id="flash-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#fee2e2" stopOpacity="1" />
+                <stop offset="40%" stopColor="#ef4444" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+          </g>
+        )}
 
         </g>
 
