@@ -3,7 +3,7 @@ import { useGameStore } from '../../store/useGameStore';
 import { ComponentRenderer } from './components/ComponentRenderer';
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
-import { Info, Download } from 'lucide-react';
+import { Info, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
 
 export const Workspace: React.FC = () => {
@@ -23,6 +23,7 @@ export const Workspace: React.FC = () => {
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
+  const [zoomScale, setZoomScale] = useState<number>(1.0);
   const [draggedCompId, setDraggedCompId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
@@ -49,8 +50,8 @@ export const Workspace: React.FC = () => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) / zoomScale,
+      y: (e.clientY - rect.top) / zoomScale
     };
   };
 
@@ -686,6 +687,36 @@ export const Workspace: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Zoom controls */}
+          <div className="flex items-center gap-0.5 bg-white/[0.04] p-0.5 rounded-md border border-white/10">
+            <button
+              onClick={() => setZoomScale(prev => Math.max(0.6, parseFloat((prev - 0.1).toFixed(1))))}
+              className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <span className="px-1 text-[10px] font-mono font-semibold text-slate-400 select-none min-w-[32px] text-center">
+              {Math.round(zoomScale * 100)}%
+            </span>
+            <button
+              onClick={() => setZoomScale(prev => Math.min(2.0, parseFloat((prev + 0.1).toFixed(1))))}
+              className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+            {zoomScale !== 1.0 && (
+              <button
+                onClick={() => setZoomScale(1.0)}
+                className="px-1.5 h-5 flex items-center justify-center text-[9px] font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded cursor-pointer transition-colors border-l border-white/10 ml-0.5"
+                title="Reset Zoom to 100%"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
           <button
             onClick={handleDownloadSchematic}
             className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/[0.06] hover:bg-white/[0.11] text-slate-300 rounded-md border border-white/10 cursor-pointer transition-all flex items-center gap-1.5"
@@ -702,7 +733,7 @@ export const Workspace: React.FC = () => {
           </button>
           <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-400 bg-white/[0.03] px-2.5 py-1 rounded-md border border-white/10">
             <Info className="w-3.5 h-3.5" />
-            <span>Click wire to select & delete.</span>
+            <span>Select a wire to delete.</span>
           </div>
         </div>
       </div>
@@ -765,8 +796,10 @@ export const Workspace: React.FC = () => {
           </filter>
         </defs>
 
-        {/* 1. Placed components casing layer */}
-        {components.map(comp => {
+        {/* Zoomed content group wrapper */}
+        <g transform={`scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
+          {/* 1. Placed components casing layer */}
+          {components.map(comp => {
           const isEnergized = simulation.energizedComponents.has(comp.id);
           const isFaulty = simulation.faultLocation?.split(':')[0] === comp.id;
 
@@ -1128,12 +1161,14 @@ export const Workspace: React.FC = () => {
           );
         })}
 
-        {/* 4. Probe lead wires — draw from anchor dots to connected terminals */}
+        </g>
+
+        {/* 5. Probe lead wires — draw from anchor dots to connected terminals (outside zoom scale group) */}
         {multimeter.redProbe && (() => {
           const pos = getTerminalPos(multimeter.redProbe.componentId, multimeter.redProbe.terminalId);
           return (
             <path
-              d={getWirePath(RED_ANCHOR.x, RED_ANCHOR.y, pos.x, pos.y)}
+              d={getWirePath(RED_ANCHOR.x, RED_ANCHOR.y, pos.x * zoomScale, pos.y * zoomScale)}
               fill="none"
               stroke="#ef4444"
               strokeWidth="3"
@@ -1147,7 +1182,7 @@ export const Workspace: React.FC = () => {
           const pos = getTerminalPos(multimeter.blackProbe.componentId, multimeter.blackProbe.terminalId);
           return (
             <path
-              d={getWirePath(BLK_ANCHOR.x, BLK_ANCHOR.y, pos.x, pos.y)}
+              d={getWirePath(BLK_ANCHOR.x, BLK_ANCHOR.y, pos.x * zoomScale, pos.y * zoomScale)}
               fill="none"
               stroke="#475569"
               strokeWidth="3"

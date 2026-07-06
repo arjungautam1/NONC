@@ -119,7 +119,6 @@ export const HelpOverlay: React.FC = () => {
     nextLevel,
     recentAchievement,
     dismissAchievement,
-    useHint,
     multimeter,
     setMultimeterMode,
     setProbe,
@@ -128,7 +127,6 @@ export const HelpOverlay: React.FC = () => {
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
-  const currentHintIndex = score.hintsUsed % level.hints.length;
   const multimeterModeLabel =
     multimeter.mode === 'VOLTAGE' ? 'V' :
       multimeter.mode === 'CONTINUITY' ? 'CONT' :
@@ -207,7 +205,7 @@ export const HelpOverlay: React.FC = () => {
     if (!isRunning) {
       return {
         title: 'Simulator Inactive',
-        detail: 'The electrical simulator is turned OFF. Click the green "Power Circuit" switch to test your wiring paths.',
+        detail: 'The electrical simulator is turned OFF. Turn on circuit power to test your wiring paths.',
         type: 'info'
       };
     }
@@ -344,7 +342,7 @@ export const HelpOverlay: React.FC = () => {
         {/* 3. DMM Troubleshooting Multimeter Panel */}
         <div className="w-full md:w-[360px] xl:w-[390px] h-auto md:h-full border border-white/10 bg-white/[0.035] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden">
           {/* DMM Yellow Housing */}
-          <div className="w-[152px] h-full min-h-[122px] bg-[#d6b24a] p-2 rounded-md border border-[#9b7a24] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_18px_rgba(0,0,0,0.22)] flex flex-col gap-1.5 shrink-0">
+          <div className="w-[164px] h-full min-h-[122px] bg-[#d6b24a] p-2 rounded-md border border-[#9b7a24] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_18px_rgba(0,0,0,0.22)] flex flex-col gap-1.5 shrink-0">
             {/* LCD Screen */}
             <div className="bg-[#d7eadf] border border-[#80651e] px-2 py-1 rounded-sm shadow-inner font-mono text-slate-900">
               <div className="flex items-center justify-between leading-none">
@@ -360,7 +358,7 @@ export const HelpOverlay: React.FC = () => {
             </div>
 
             {/* Mode Buttons */}
-            <div className="grid grid-cols-4 gap-1 text-[7px] font-bold">
+            <div className="grid grid-cols-4 gap-1 font-bold">
               {(['OFF', 'VOLTAGE', 'CONTINUITY', 'RESISTANCE'] as const).map(mode => {
                 const label = mode === 'VOLTAGE' ? 'V' : mode === 'CONTINUITY' ? 'CONT' : mode === 'RESISTANCE' ? 'OHM' : 'OFF';
                 const active = multimeter.mode === mode;
@@ -368,7 +366,7 @@ export const HelpOverlay: React.FC = () => {
                   <button
                     key={mode}
                     onClick={() => setMultimeterMode(mode)}
-                    className={`h-6 rounded-sm border font-bold cursor-pointer uppercase transition-all ${active
+                    className={`h-6 rounded-sm border font-bold cursor-pointer uppercase transition-all flex items-center justify-center whitespace-nowrap px-0.5 text-[8px] tracking-tighter ${active
                         ? 'bg-slate-900 text-white border-slate-700 shadow-inner'
                         : 'bg-[#bd9830] text-slate-950 border-[#8f711f] hover:bg-[#e0bd55]'
                       }`}
@@ -399,7 +397,7 @@ export const HelpOverlay: React.FC = () => {
                   }`}
               >
                 <span className="w-2 h-2 rounded-full bg-slate-200 shadow-inner" />
-                {multimeter.blackProbe ? 'BLK ON' : 'BLACK'}
+                {multimeter.blackProbe ? 'BLACK ON' : 'BLACK'}
               </button>
               {(multimeter.redProbe || multimeter.blackProbe) && (
                 <button
@@ -429,49 +427,17 @@ export const HelpOverlay: React.FC = () => {
         </div>
 
         {/* Dynamic Hints & Real World Application Panel */}
-        <div className="flex-1 border border-white/10 bg-white/[0.035] rounded-md p-2.5 flex flex-col gap-2 min-w-0">
-          {/* Upper Section: Hints */}
-          <div className="flex-1 flex flex-col gap-1 min-h-0">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
-                Hints
-              </span>
-              <span className="text-[9px] font-semibold text-slate-400 bg-black/20 px-1.5 py-0.5 rounded border border-white/10 uppercase">
-                Hint {currentHintIndex + 1} of {level.hints.length}
-              </span>
-            </div>
-            
-            <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1">
-              <div key={`${currentLevelIndex}-${currentHintIndex}`} className="text-[10px] text-slate-200 leading-normal font-medium animate-fade-in">
-                <span className="text-slate-400 font-semibold text-[9px] uppercase tracking-wide">Hint {currentHintIndex + 1}: </span>
-                {level.hints[currentHintIndex]}
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                soundManager.playClick();
-                useHint();
-              }}
-              className="self-end text-[8px] font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded border border-white/10 cursor-pointer transition-colors uppercase tracking-wide"
-            >
-              NEXT HINT
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-white/10 my-0.5" />
-
+        <div className="flex-1 border border-white/10 bg-white/[0.035] rounded-md p-2.5 flex flex-col justify-center min-w-0">
           {/* Lower Section: Real-World Application with SVG visual */}
           {(() => {
             const app = getRealWorldApplication(level.id);
             return (
-              <div className="h-12 shrink-0 flex gap-3 text-left items-center justify-between">
-                <div className="flex-grow min-w-0 flex flex-col gap-0.5">
+              <div className="h-full shrink-0 flex gap-3 text-left items-center justify-between">
+                <div className="flex-grow min-w-0 flex flex-col gap-1 justify-center">
                   <div className="flex items-center justify-between text-slate-300">
                     <div className="flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5" />
-                      <span className="text-[9px] font-semibold tracking-wide uppercase">
+                      <span className="text-[10px] font-semibold tracking-wide uppercase">
                         Real-world: {app.title}
                       </span>
                     </div>
@@ -485,12 +451,12 @@ export const HelpOverlay: React.FC = () => {
                       <span>SVG</span>
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-400 leading-normal font-medium overflow-y-auto max-h-[32px] pr-1">
+                  <p className="text-[10.5px] text-slate-400 leading-normal font-medium overflow-y-auto max-h-[80px] pr-1">
                     {app.desc}
                   </p>
                 </div>
                 {/* SVG Visual illustration of equivalent application - scaled to 56px */}
-                <div className="shrink-0 w-11 h-11 real-world-visual-container">
+                <div className="shrink-0 w-16 h-16 real-world-visual-container bg-black/25 rounded-md border border-white/5 p-1 flex items-center justify-center">
                   <RealWorldVisual levelId={level.id} isActive={isRunning} />
                 </div>
               </div>

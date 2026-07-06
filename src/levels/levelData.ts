@@ -48,7 +48,7 @@ export const levels: Level[] = [
     hints: [
       'Make sure you connect the Positive (+) red terminal on the battery to the Bulb IN terminal.',
       'Connect the Bulb OUT terminal back to the Negative (-) black terminal on the battery.',
-      'Click the green "Power Circuit" switch in the top panel to test!'
+      'Turn on circuit power to test your wiring.'
     ],
     successCriteria: (_components, _wires, _nodeVoltages, isEnergized) => {
       if (isEnergized('bulb1')) {
@@ -128,9 +128,10 @@ export const levels: Level[] = [
   {
     id: 3,
     title: 'Normally Open (NO) Push Button',
-    description: 'Learn how a Normally Open contact controls electricity.',
+    description: 'Use an SPST normally-open push button to control power flow.',
     instructions: [
-      'A Normally Open (NO) push button is open at rest. No electricity flows through it.',
+      'A Normally Open (NO) push button is an SPST switch: one input, one output, and one controlled path.',
+      'It is open at rest. No electricity flows through it.',
       'When you press it, the internal contacts close, completing the circuit.',
       'Wire the push button in series: Battery (+) to Button IN, and Button OUT to Bulb IN.',
       'Don\'t forget to connect Bulb OUT to Battery (-) to complete the return path!',
@@ -206,9 +207,10 @@ export const levels: Level[] = [
   {
     id: 4,
     title: 'Normally Closed (NC) Push Button',
-    description: 'Learn the opposite behavior of Normally Closed contacts.',
+    description: 'Use an SPST normally-closed push button to break power when pressed.',
     instructions: [
-      'A Normally Closed (NC) push button is closed at rest, allowing current to flow.',
+      'A Normally Closed (NC) push button is also an SPST switch: one input, one output, and one controlled path.',
+      'It is closed at rest, allowing current to flow.',
       'When you press it, the contacts open, breaking the circuit.',
       'NC contacts are commonly used for Stop buttons and Safety Emergency Stops.',
       'Wire the NC push button in series with the battery and lightbulb.',
@@ -1050,7 +1052,7 @@ export const levels: Level[] = [
     instructions: [
       'Industrial systems use Time-Delay Relays to delay switching loads and manage in-rush currents.',
       'Wire the PSU (+) to the Main Switch (switch_selector) IN.',
-      'Wire Main Switch out_a to the Delay Timer (timer_relay) trigger terminal TRG. Wire terminal - to PSU (-).',
+      'Wire Main Switch out_a to the Delay Timer (timer_relay) trigger terminal TRIG. Wire terminal - to PSU (-).',
       'Wire PSU (+) to the Delay Timer C terminal. Wire Delay Timer NO to the Cooling Fan (motor) IN.',
       'Wire Cooling Fan OUT to PSU (-).',
       'Turn on simulation and flip the Main Switch. Watch the countdown, then see the fan spin!'
@@ -1094,7 +1096,7 @@ export const levels: Level[] = [
         y: 250,
         label: 'Delay Timer',
         terminals: [
-          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_a', name: 'TRIG', type: 'coil_a', x: -40, y: 40 },
           { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
           { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
           { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
@@ -1118,7 +1120,7 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Coil Loop: Connect PSU (+) to Switch IN. Connect Switch out_a to Timer TRG. Connect Timer - to PSU (-).',
+      'Coil Loop: Connect PSU (+) to Switch IN. Connect Switch out_a to Timer TRIG. Connect Timer - to PSU (-).',
       'Fan Loop: Connect PSU (+) to Timer C. Connect Timer NO to Fan IN. Connect Fan OUT to PSU (-).',
       'Turn on power, flip the Selector Switch, and keep it on for 2 seconds to let the timer trip!'
     ],
@@ -1243,9 +1245,9 @@ export const levels: Level[] = [
   {
     id: 15,
     title: 'Actuator Polarity Reversing',
-    description: 'Build a double-relay reversing H-bridge circuit to extend and retract a linear actuator using two separate buttons.',
+    description: 'Build a DPDT-style reversing circuit that swaps actuator polarity with two relays.',
     instructions: [
-      'A DC motor reverses direction when the positive and negative leads are swapped. We can achieve this safely using two relays.',
+      'A DPDT switch reverses a DC motor by swapping the positive and negative leads. In this simulator, two relays recreate that DPDT action for a linear actuator.',
       'Coil Wiring: Connect EXTEND Button to Relay 1 Coil A1. Connect RETRACT Button to Relay 2 Coil A1. Connect both Coil A2 terminals to PSU (-).',
       'Default Negative Path: Connect PSU (-) to Relay 1 NC and Relay 2 NC. Connect Relay 1 COM to Actuator POS (pos), and Relay 2 COM to Actuator NEG (neg). (This keeps both actuator pins grounded when idle).',
       'Positive Path: Connect PSU (+) to Relay 1 NO and Relay 2 NO.',
@@ -1579,9 +1581,9 @@ export const levels: Level[] = [
     description: 'Design an automatic control circuit for a parking barrier gate using a card reader, 6062 timer relays, and a loop detector.',
     instructions: [
       'Welcome to the parking gate module! Your task is to wire the automatic gate system.',
-      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1 and Open 6062 Timer TRG. Connect Open Relay A2 and Open 6062 Timer - to PSU (-).',
+      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1 and Open 6062 Timer TRIG. Connect Open Relay A2 and Open 6062 Timer - to PSU (-).',
       'Latching Open: Connect PSU (+) to Open 6062 Timer C. Connect Open 6062 Timer NC to Open Relay COM. Connect Open Relay NO to Open Relay A1 and Gate POS.',
-      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1 and Close 6062 Timer TRG. Connect Close Relay A2 and Close 6062 Timer - to PSU (-).',
+      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1 and Close 6062 Timer TRIG. Connect Close Relay A2 and Close 6062 Timer - to PSU (-).',
       'Latching Close: Connect PSU (+) to Close 6062 Timer C. Connect Close 6062 Timer NC to Close Relay COM. Connect Close Relay NO to Close Relay A1 and Gate NEG.',
       'Scan a card at the CDVI Reader to lift the gate, and then click the Loop Detector to lower the gate back down!'
     ],
@@ -1637,7 +1639,7 @@ export const levels: Level[] = [
         y: 150,
         label: 'Open 6062 Timer',
         terminals: [
-          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_a', name: 'TRIG', type: 'coil_a', x: -40, y: 40 },
           { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
           { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
           { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
@@ -1653,7 +1655,7 @@ export const levels: Level[] = [
         y: 350,
         label: 'Close 6062 Timer',
         terminals: [
-          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_a', name: 'TRIG', type: 'coil_a', x: -40, y: 40 },
           { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
           { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
           { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
@@ -1707,9 +1709,9 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Open Loop: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1 and Open 6062 Timer TRG. Open Relay A2 and Timer - -> PSU (-).',
+      'Open Loop: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1 and Open 6062 Timer TRIG. Open Relay A2 and Timer - -> PSU (-).',
       'Open Latch: PSU (+) -> Open 6062 Timer C. Open 6062 Timer NC -> Open Relay COM. Open Relay NO -> Open Relay A1 and Gate POS.',
-      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1 and Close 6062 Timer TRG. Close Relay A2 and Timer - -> PSU (-).',
+      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1 and Close 6062 Timer TRIG. Close Relay A2 and Timer - -> PSU (-).',
       'Close Latch: PSU (+) -> Close 6062 Timer C. Close 6062 Timer NC -> Close Relay COM. Close Relay NO -> Close Relay A1 and Gate NEG.'
     ],
     successCriteria: (components, _wires, _nodeVoltages, _isEnergized) => {
@@ -1736,9 +1738,9 @@ export const levels: Level[] = [
     description: 'Build a premium automatic parking barrier gate system using a custom Delmi smart cabinet, loop detector, and timer relays.',
     instructions: [
       'Welcome to the Smart Parking Barrier project! We are using our new premium Delmi cabinet.',
-      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1 and Open Timer A1. Connect all Coil A2 terminals to PSU (-).',
+      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1 and Open Timer TRIG. Connect Open Relay A2 and Open Timer - to PSU (-).',
       'Latching Open: Connect PSU (+) to Open Timer COM. Connect Open Timer NC to Open Relay COM. Connect Open Relay NO to Open Relay A1. Connect Open Relay NO to Gate (+) POS (in).',
-      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1 and Close Timer A1. Connect all Coil A2 terminals to PSU (-).',
+      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1 and Close Timer TRIG. Connect Close Relay A2 and Close Timer - to PSU (-).',
       'Latching Close: Connect PSU (+) to Close Timer COM. Connect Close Timer NC to Close Relay COM. Connect Close Relay NO to Close Relay A1. Connect Close Relay NO to Gate (-) NEG (out).',
       'Power the circuit and scan the CDVI Reader to watch the barrier arm swing up, and click the Loop Detector to watch it swing down!'
     ],
@@ -1794,7 +1796,7 @@ export const levels: Level[] = [
         y: 150,
         label: 'Open Timer',
         terminals: [
-          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_a', name: 'TRIG', type: 'coil_a', x: -40, y: 40 },
           { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
           { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
           { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
@@ -1810,7 +1812,7 @@ export const levels: Level[] = [
         y: 350,
         label: 'Close Timer',
         terminals: [
-          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_a', name: 'TRIG', type: 'coil_a', x: -40, y: 40 },
           { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
           { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
           { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
@@ -1864,9 +1866,9 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Open Loop: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1 & Open Timer A1. Open Relay A2 & Open Timer A2 -> PSU (-).',
+      'Open Loop: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1 and Open Timer TRIG. Open Relay A2 and Open Timer - -> PSU (-).',
       'Open Latch: PSU (+) -> Open Timer COM. Open Timer NC -> Open Relay COM. Open Relay NO -> Open Relay A1 (latch) & Gate POS.',
-      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1 & Close Timer A1. Close Relay A2 & Close Timer A2 -> PSU (-).',
+      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1 and Close Timer TRIG. Close Relay A2 and Close Timer - -> PSU (-).',
       'Close Latch: PSU (+) -> Close Timer COM. Close Timer NC -> Close Relay COM. Close Relay NO -> Close Relay A1 (latch) & Gate NEG.'
     ],
     successCriteria: (components, _wires, _nodeVoltages, _isEnergized) => {

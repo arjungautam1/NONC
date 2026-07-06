@@ -47,9 +47,9 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
       {/* 2. Top-Center Jumpers J1 and J2 */}
       <g transform="translate(6, -48)">
         {/* Texts */}
-        <text x="-4" y="-3" fill="#ffffff" fontSize="2.8" fontFamily="monospace" textAnchor="end">CUT J1 FOR REPEAT</text>
+        <text x="-4" y="-3" fill="#ffffff" fontSize="2.8" fontFamily="monospace" textAnchor="end">J1 REPEAT MODE</text>
         <text x="18" y="-3" fill="#ffffff" fontSize="2.8" fontFamily="monospace">J1</text>
-        <text x="-4" y="5" fill="#ffffff" fontSize="2.8" fontFamily="monospace" textAnchor="end">CUT J2 FOR DELAYED PULS</text>
+        <text x="-4" y="5" fill="#ffffff" fontSize="2.8" fontFamily="monospace" textAnchor="end">J2 DELAY PULSE</text>
         <text x="18" y="5" fill="#ffffff" fontSize="2.8" fontFamily="monospace">J2</text>
         
         {/* Resistors (J1 & J2) */}
@@ -234,7 +234,7 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
 
         {/* Clean white text labels printed directly on the blue board below the casing (at y=53 relative to center) */}
         <g fill="#ffffff" fontSize="4.8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif" transform="translate(0, 13)">
-          <text x="-40" y="0">TRG</text>
+          <text x="-40" y="0">TRIG</text>
           <text x="-24" y="0">-</text>
           <text x="-8" y="0">+</text>
           <text x="8" y="0">NO</text>
