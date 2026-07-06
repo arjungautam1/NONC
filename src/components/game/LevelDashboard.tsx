@@ -6,11 +6,8 @@ import {
   CheckCircle2,
   Trophy,
   Star,
-  ArrowRight,
   CircuitBoard,
-  Lock,
   Play,
-  ChevronRight,
   Cpu,
   Radio,
   BarChart3,
@@ -195,7 +192,6 @@ export const LevelDashboard: React.FC = () => {
             const index = levels.indexOf(lvl);
             const isCompleted = index < completedCount;
             const isActive    = index === completedCount;
-            const isLocked    = index > completedCount;
             const diff        = getDifficulty(lvl.id);
             const cat         = getCategory(lvl.id);
             const isHovered   = hoveredId === lvl.id;
@@ -218,35 +214,34 @@ export const LevelDashboard: React.FC = () => {
                     : isActive
                     ? `1px solid ${isHovered ? 'rgba(59,130,246,0.7)' : 'rgba(59,130,246,0.35)'}`
                     : `1px solid ${isHovered ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)'}`,
-                  transform: isHovered && !isLocked ? 'translateY(-3px)' : 'none',
-                  opacity: isLocked ? 0.5 : 1,
+                  transform: isHovered ? 'translateY(-3px)' : 'none',
+                  opacity: 1,
                   boxShadow: isActive && isHovered
                     ? '0 8px 32px rgba(37,99,235,0.20)'
                     : isCompleted && isHovered
                     ? '0 8px 32px rgba(16,185,129,0.12)'
-                    : '0 8px 24px rgba(0,0,0,0.10)',
+                    : isHovered
+                    ? '0 8px 24px rgba(0,0,0,0.30)'
+                    : 'none'
                 }}
               >
-                {/* Active "current" glow border */}
-                {isActive && (
-                  <div className="absolute inset-0 rounded-lg pointer-events-none"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(226,232,240,0.14)' }} />
-                )}
+                {/* Visual Accent top border */}
+                <div className="h-[2px] w-full"
+                  style={{
+                    background: isCompleted
+                      ? 'linear-gradient(90deg, #10b981, #34d399)'
+                      : isActive
+                      ? 'linear-gradient(90deg, #2563eb, #60a5fa)'
+                      : 'linear-gradient(90deg, #334155, #475569)'
+                  }}
+                />
 
-                {/* Category accent bar top */}
-                <div className="h-0.5 w-full shrink-0"
-                  style={{ background: isCompleted ? '#10b981' : isActive ? '#2563eb' : 'transparent' }} />
-
-                {/* Card body */}
-                <div className="p-4 flex flex-col gap-3 flex-grow">
-
-                  {/* Top row — level number + status */}
-                  <div className="flex items-start justify-between">
-                    {/* Level number */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 font-mono font-black text-sm"
+                <div className="p-3.5 flex flex-col flex-grow gap-3">
+                  {/* Top card row: Level number & Category icon */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-[11px] font-mono font-black"
                         style={{
-                          background: isCompleted ? 'rgba(16,185,129,0.15)' : isActive ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.05)',
                           color: isCompleted ? '#10b981' : isActive ? '#60a5fa' : '#475569',
                         }}>
                         {lvl.id.toString().padStart(2,'0')}
@@ -270,8 +265,6 @@ export const LevelDashboard: React.FC = () => {
                         <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
                         <span className="text-[9px] font-semibold text-slate-200 uppercase tracking-wide">Next</span>
                       </div>
-                    ) : isLocked ? (
-                      <Lock className="w-3.5 h-3.5 text-slate-600" />
                     ) : null}
                   </div>
 
@@ -306,18 +299,19 @@ export const LevelDashboard: React.FC = () => {
                       <button
                         className="flex items-center gap-1 text-[10px] font-semibold uppercase transition-all"
                         style={{
-                          color: isActive ? '#60a5fa' : '#334155',
-                          transform: isHovered && !isLocked ? 'translateX(3px)' : 'none'
+                          color: isActive ? '#60a5fa' : isHovered ? '#ffffff' : '#475569',
+                          transform: isHovered ? 'translateX(3px)' : 'none'
                         }}>
                         {isActive ? (
                           <>
-                            <Play className="w-3 h-3 fill-current" />
+                            <Play className="w-3 h-3 fill-current animate-pulse" />
                             <span>Enter Lab</span>
                           </>
-                        ) : isLocked ? (
-                          <ChevronRight className="w-3.5 h-3.5" />
                         ) : (
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <>
+                            <Play className="w-3 h-3 fill-current opacity-60" />
+                            <span>Play</span>
+                          </>
                         )}
                       </button>
                     )}
