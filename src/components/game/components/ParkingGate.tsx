@@ -90,6 +90,13 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
     };
   }, [isRunning]);
 
+  // Determine car class: animate when driving, show when gate is fully closed, hide otherwise
+  const carClass = isCarDriving
+    ? 'car-animated-rtl'
+    : isClosed
+      ? 'car-waiting-rtl'
+      : 'car-hidden-rtl';
+
   return (
     <g transform="translate(0, 0)">
       {/* Dynamic inline styles for the car driving & wheel spin animations (Right to Left) */}
@@ -111,6 +118,13 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
         .car-waiting-rtl {
           transform: translate(75px, 26px);
           opacity: 1;
+          transition: opacity 0.4s ease-in-out;
+        }
+        .car-hidden-rtl {
+          transform: translate(75px, 26px);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.4s ease-in-out;
         }
         .wheel-spinning {
           animation: wheelSpin 0.15s linear infinite;
@@ -175,7 +189,7 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
       <text x="32" y="43" fill="#64748b" fontSize="7.5" fontWeight="bold" textAnchor="middle">OUT</text>
 
       {/* Animated Mini Car (Facing Left, driving Right-to-Left) */}
-      <g className={isCarDriving ? 'car-animated-rtl' : 'car-waiting-rtl'}>
+      <g className={carClass}>
         <g transform="scale(-1, 1)">
           {/* Car body */}
           <rect x="-12" y="-8" width="24" height="8" rx="2.5" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="0.8" />
