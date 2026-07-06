@@ -65,21 +65,20 @@ export const Actuator: React.FC<ActuatorProps> = ({ component, isEnergized: _isE
       />
       <circle cx="-59" cy="-3" r="3.5" fill="#0f172a" stroke="#475569" strokeWidth="1" />
 
-      {/* Extensible Steel Piston Shaft (Moves horizontally based on travel) */}
-      <g transform={`translate(${shaftExtension}, 0)`}>
-        {/* Steel Piston Rod */}
-        <rect
-          x="35"
-          y="-8"
-          width="65"
-          height="12"
-          fill="url(#shaft-grad)"
-          stroke="#475569"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
+      {/* Steel Piston Rod - drawn outside translation group to extend from casing collar continuously */}
+      <rect
+        x="35"
+        y="-8"
+        width={65 + shaftExtension}
+        height="12"
+        fill="url(#shaft-grad)"
+        stroke="#475569"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
 
-        {/* Rod End eyelet connector (Right end) */}
+      {/* Extensible Rod End eyelet connector (Moves horizontally based on travel) */}
+      <g transform={`translate(${shaftExtension}, 0)`}>
         <circle cx="100" cy="-2" r="8" fill="url(#collar-grad)" stroke="#334155" strokeWidth="1.5" />
         <circle cx="100" cy="-2" r="3.5" fill="#0f172a" stroke="#475569" strokeWidth="1" />
       </g>
