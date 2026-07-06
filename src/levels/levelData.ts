@@ -1576,19 +1576,20 @@ export const levels: Level[] = [
   {
     id: 18,
     title: 'Automatic Parking Gate',
-    description: 'Design an automatic control circuit for a parking barrier gate using a card reader, limit switches, and a loop detector.',
+    description: 'Design an automatic control circuit for a parking barrier gate using a card reader, 6062 timer relays, and a loop detector.',
     instructions: [
       'Welcome to the parking gate module! Your task is to wire the automatic gate system.',
-      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1. Open Relay A2 to PSU (-).',
-      'Latching Open: Connect PSU (+) through the NC contact of Open Limit (limit_top) to Open Relay COM. Connect Open Relay NO to Open Relay A1. Connect Open Relay NO to Actuator (+) POS.',
-      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1. Close Relay A2 to PSU (-).',
-      'Latching Close: Connect PSU (+) through the NC contact of Closed Limit (limit_bottom) to Close Relay COM. Connect Close Relay NO to Close Relay A1. Connect Close Relay NO to Actuator (-) NEG.',
+      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1 and Open 6062 Timer TRG. Connect Open Relay A2 and Open 6062 Timer - to PSU (-).',
+      'Latching Open: Connect PSU (+) to Open 6062 Timer C. Connect Open 6062 Timer NC to Open Relay COM. Connect Open Relay NO to Open Relay A1 and Gate POS.',
+      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1 and Close 6062 Timer TRG. Connect Close Relay A2 and Close 6062 Timer - to PSU (-).',
+      'Latching Close: Connect PSU (+) to Close 6062 Timer C. Connect Close 6062 Timer NC to Close Relay COM. Connect Close Relay NO to Close Relay A1 and Gate NEG.',
       'Scan a card at the CDVI Reader to lift the gate, and then click the Loop Detector to lower the gate back down!'
     ],
     goals: [
-      'Connect CDVI Reader to raise the gate via Open Relay',
-      'Use limit switches to stop the gate at fully open and closed limits',
-      'Activate Loop Detector to lower the gate back to closed'
+      'Connect CDVI Reader to trigger the Open Relay and Open 6062 Timer',
+      'Latch the Open Relay through the Open 6062 Timer NC contact',
+      'Connect Loop Detector to trigger the Close Relay and Close 6062 Timer',
+      'Latch the Close Relay through the Close 6062 Timer NC contact'
     ],
     inventory: [],
     preplacedComponents: [
@@ -1630,9 +1631,41 @@ export const levels: Level[] = [
         state: {}
       },
       {
+        id: 'timer_open',
+        type: 'timer_relay',
+        x: 430,
+        y: 150,
+        label: 'Open 6062 Timer',
+        terminals: [
+          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
+          { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
+          { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
+          { id: 'com', name: 'C', type: 'com', x: 24, y: 40 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
+        ],
+        state: {}
+      },
+      {
+        id: 'timer_close',
+        type: 'timer_relay',
+        x: 430,
+        y: 350,
+        label: 'Close 6062 Timer',
+        terminals: [
+          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
+          { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
+          { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
+          { id: 'com', name: 'C', type: 'com', x: 24, y: 40 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
+        ],
+        state: {}
+      },
+      {
         id: 'relay_open',
         type: 'relay',
-        x: 420,
+        x: 600,
         y: 150,
         label: 'Open Relay',
         terminals: [
@@ -1647,7 +1680,7 @@ export const levels: Level[] = [
       {
         id: 'relay_close',
         type: 'relay',
-        x: 420,
+        x: 600,
         y: 350,
         label: 'Close Relay',
         terminals: [
@@ -1656,30 +1689,6 @@ export const levels: Level[] = [
           { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
           { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
           { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
-        ],
-        state: {}
-      },
-      {
-        id: 'limit_top',
-        type: 'limit_switch',
-        x: 600,
-        y: 150,
-        label: 'Open Limit Switch',
-        terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
-        ],
-        state: {}
-      },
-      {
-        id: 'limit_bottom',
-        type: 'limit_switch',
-        x: 600,
-        y: 350,
-        label: 'Closed Limit Switch',
-        terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
         ],
         state: {}
       },
@@ -1698,10 +1707,10 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Open Circuit: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1.',
-      'Open Latch: PSU (+) -> Open Limit IN. Open Limit OUT -> Open Relay COM. Open Relay NO -> Open Relay A1 (latch) & Actuator POS.',
-      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1.',
-      'Close Latch: PSU (+) -> Closed Limit IN. Closed Limit OUT -> Close Relay COM. Close Relay NO -> Close Relay A1 (latch) & Actuator NEG.'
+      'Open Loop: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1 and Open 6062 Timer TRG. Open Relay A2 and Timer - -> PSU (-).',
+      'Open Latch: PSU (+) -> Open 6062 Timer C. Open 6062 Timer NC -> Open Relay COM. Open Relay NO -> Open Relay A1 and Gate POS.',
+      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1 and Close 6062 Timer TRG. Close Relay A2 and Timer - -> PSU (-).',
+      'Close Latch: PSU (+) -> Close 6062 Timer C. Close 6062 Timer NC -> Close Relay COM. Close Relay NO -> Close Relay A1 and Gate NEG.'
     ],
     successCriteria: (components, _wires, _nodeVoltages, _isEnergized) => {
       const act = components.find(c => c.id === 'act1');

@@ -502,8 +502,7 @@ function checkPathBetween(
       }
     } else if (c.type === 'timer_relay') {
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
-      const active = c.state.active && c.state.tripped;
-      if (active) {
+      if (c.state.delayedActive) {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
@@ -581,6 +580,13 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
       const isEnergized = c.state.energized;
       if (isEnergized) {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'timer_relay') {
+      addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
+      if (c.state.delayedActive) {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
