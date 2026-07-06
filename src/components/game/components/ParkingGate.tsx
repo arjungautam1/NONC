@@ -26,19 +26,23 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   // Gate arm rotation angle: 0 degrees (horizontal) to -90 degrees (vertical/up)
   const angle = -(travel / 100) * 90;
 
+  // Stateful animation flag so the car finishes its full drive-through path
+  const [isCarDriving, setIsCarDriving] = React.useState(false);
+
   // Keep references to timeouts so we can manage them across renders safely
-  const lastOpenRef = React.useRef(false);
   const pressTimeoutRef = React.useRef<any>(null);
   const releaseTimeoutRef = React.useRef<any>(null);
+  const animTimeoutRef = React.useRef<any>(null);
 
-  // Trigger the vehicle Loop Detector when the gate opens
+  // Trigger the vehicle Loop Detector and car animation when the gate opens
   React.useEffect(() => {
-    if (isOpen && !lastOpenRef.current && isRunning) {
-      lastOpenRef.current = true;
+    if (isOpen && !isCarDriving && isRunning) {
+      setIsCarDriving(true);
 
       // Clear any pending timeouts
       if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
 
       // Simulate car driving over the Loop Detector (presses button after 1.2 seconds)
       pressTimeoutRef.current = setTimeout(() => {
@@ -49,24 +53,28 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
       releaseTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', false);
       }, 2200);
-    }
 
-    if (!isOpen) {
-      lastOpenRef.current = false;
+      // Reset the car driving state after the animation finishes (3.5 seconds)
+      animTimeoutRef.current = setTimeout(() => {
+        setIsCarDriving(false);
+      }, 3500);
     }
-  }, [isOpen, isRunning]);
+  }, [isOpen, isRunning, isCarDriving]);
 
   // Clean up timeouts and ensure the button is released when simulation stops or component unmounts
   React.useEffect(() => {
     if (!isRunning) {
       if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
       useGameStore.getState().pressButton('btn2', false);
+      setIsCarDriving(false);
     }
 
     return () => {
       if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
     };
   }, [isRunning]);
 
@@ -155,7 +163,7 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
       <text x="32" y="43" fill="#64748b" fontSize="7.5" fontWeight="bold" textAnchor="middle">OUT</text>
 
       {/* Animated Mini Car (Facing Left, driving Right-to-Left) */}
-      <g className={isOpen ? 'car-animated-rtl' : 'car-waiting-rtl'}>
+      <g className={isCarDriving ? 'car-animated-rtl' : 'car-waiting-rtl'}>
         <g transform="scale(-1, 1)">
           {/* Car body */}
           <rect x="-12" y="-8" width="24" height="8" rx="2.5" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="0.8" />
@@ -168,13 +176,13 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
           {/* Front Wheel with rotating spokes */}
           <g transform="translate(-6, 0)">
             <circle cx="0" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
-            <line x1="0" y1="0" x2="2.5" y2="0" stroke="#ffffff" strokeWidth="0.6" className={isOpen ? 'wheel-spinning' : ''} style={{ transformOrigin: '0px 0px' }} />
+            <line x1="0" y1="0" x2="2.5" y2="0" stroke="#ffffff" strokeWidth="0.6" className={isCarDriving ? 'wheel-spinning' : ''} style={{ transformOrigin: '0px 0px' }} />
           </g>
 
           {/* Rear Wheel with rotating spokes */}
           <g transform="translate(6, 0)">
             <circle cx="0" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
-            <line x1="0" y1="0" x2="2.5" y2="0" stroke="#ffffff" strokeWidth="0.6" className={isOpen ? 'wheel-spinning' : ''} style={{ transformOrigin: '0px 0px' }} />
+            <line x1="0" y1="0" x2="2.5" y2="0" stroke="#ffffff" strokeWidth="0.6" className={isCarDriving ? 'wheel-spinning' : ''} style={{ transformOrigin: '0px 0px' }} />
           </g>
 
           {/* Headlight */}
