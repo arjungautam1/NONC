@@ -863,148 +863,7 @@ export const Workspace: React.FC = () => {
 
         <g transform={`translate(${offsets.shiftX}, ${offsets.shiftY}) scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
           
-          {/* Power switch located at the top-left of the components */}
-          {components.length > 0 && (() => {
-            const hasBattery = components.some(c => c.type === 'battery');
-            const hasPowerSwitchOnly = !components.some(c => c.type === 'power_supply' || c.type === 'ac_source');
-            if (hasBattery && hasPowerSwitchOnly) {
-              return null;
-            }
 
-            let minX = Infinity;
-            let minY = Infinity;
-            components.forEach(c => {
-              minX = Math.min(minX, c.x);
-              minY = Math.min(minY, c.y);
-            });
-            const btnX = minX - 55;
-            const btnY = minY - 75;
-
-            {/* Physical maintained bat-handle toggle switch */}
-            return (
-              <g transform={`translate(${btnX}, ${btnY})`} style={{ cursor: 'pointer' }}>
-                <defs>
-                  {/* Chrome/metal gradient for switch body */}
-                  <linearGradient id="switchBodyGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%"   stopColor="#6b7280" />
-                    <stop offset="18%"  stopColor="#d1d5db" />
-                    <stop offset="45%"  stopColor="#f9fafb" />
-                    <stop offset="65%"  stopColor="#e5e7eb" />
-                    <stop offset="100%" stopColor="#9ca3af" />
-                  </linearGradient>
-                  <linearGradient id="switchBodyGradV" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#9ca3af" />
-                    <stop offset="30%"  stopColor="#f3f4f6" />
-                    <stop offset="70%"  stopColor="#e5e7eb" />
-                    <stop offset="100%" stopColor="#6b7280" />
-                  </linearGradient>
-                  {/* Bat handle gradient */}
-                  <linearGradient id="batGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%"   stopColor="#374151" />
-                    <stop offset="30%"  stopColor="#6b7280" />
-                    <stop offset="60%"  stopColor="#9ca3af" />
-                    <stop offset="100%" stopColor="#4b5563" />
-                  </linearGradient>
-                  {/* Cavity shadow */}
-                  <radialGradient id="cavityGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%"   stopColor="#111827" />
-                    <stop offset="100%" stopColor="#030712" />
-                  </radialGradient>
-                  {/* LED glow */}
-                  <radialGradient id="ledOn" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%"   stopColor="#86efac" />
-                    <stop offset="60%"  stopColor="#22c55e" />
-                    <stop offset="100%" stopColor="#15803d" />
-                  </radialGradient>
-                  <radialGradient id="ledOff" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%"   stopColor="#6b7280" />
-                    <stop offset="100%" stopColor="#374151" />
-                  </radialGradient>
-                </defs>
-
-                {/* ── Outer drop shadow ── */}
-                <rect x="3" y="5" width="54" height="86" rx="7" fill="#000" opacity="0.45" />
-
-                {/* ── Switch body / faceplate ── */}
-                <rect x="0" y="0" width="54" height="86" rx="7"
-                  fill="url(#switchBodyGrad)"
-                  stroke="#374151" strokeWidth="1"
-                />
-                {/* Vertical highlight overlay */}
-                <rect x="0" y="0" width="54" height="86" rx="7"
-                  fill="url(#switchBodyGradV)"
-                  opacity="0.45"
-                />
-                {/* Inset bevel top */}
-                <rect x="1" y="1" width="52" height="4" rx="3" fill="white" opacity="0.3" />
-
-                {/* ── LED indicator (top) ── */}
-                <circle cx="27" cy="12" r="5"
-                  fill={isRunning ? 'url(#ledOn)' : 'url(#ledOff)'}
-                  stroke={isRunning ? '#bbf7d0' : '#4b5563'}
-                  strokeWidth="0.8"
-                />
-                {/* LED shine */}
-                <circle cx="25.5" cy="10.5" r="1.5" fill="white" opacity={isRunning ? 0.7 : 0.15} />
-                {/* LED glow bloom when ON */}
-                {isRunning && (
-                  <circle cx="27" cy="12" r="8" fill="#22c55e" opacity="0.2" className="animate-pulse" />
-                )}
-
-                {/* ── Cavity (dark oval well where bat sits) ── */}
-                <ellipse cx="27" cy="48" rx="14" ry="26"
-                  fill="url(#cavityGrad)"
-                  stroke="#111827" strokeWidth="1"
-                />
-                {/* Inner cavity bevel */}
-                <ellipse cx="27" cy="48" rx="14" ry="26"
-                  fill="none"
-                  stroke="#1f2937" strokeWidth="2"
-                />
-
-                {/* ── Bat handle — pivots at centre of cavity ── */}
-                <g transform={`translate(27, 48) rotate(${isRunning ? -30 : 30})`}
-                   style={{ transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
-                  {/* Bat shaft */}
-                  <rect x="-4.5" y="-22" width="9" height="30" rx="4.5"
-                    fill="url(#batGrad)"
-                    stroke="#1f2937" strokeWidth="0.8"
-                  />
-                  {/* Bat tip bulge */}
-                  <ellipse cx="0" cy="-22" rx="5.5" ry="4"
-                    fill="#4b5563"
-                    stroke="#1f2937" strokeWidth="0.8"
-                  />
-                  {/* Bat tip shine */}
-                  <ellipse cx="-1.5" cy="-23.5" rx="2" ry="1.2"
-                    fill="white" opacity="0.35"
-                  />
-                  {/* Pivot collar */}
-                  <ellipse cx="0" cy="6" rx="6" ry="4"
-                    fill="#374151"
-                    stroke="#111827" strokeWidth="0.8"
-                  />
-                  <ellipse cx="0" cy="6" rx="4" ry="2.5"
-                    fill="#6b7280"
-                  />
-                </g>
-
-                {/* ── Labels ── */}
-                <text x="27" y="80"
-                  fontSize="7" fontWeight="900" fontFamily="monospace"
-                  fill={isRunning ? '#22c55e' : '#6b7280'}
-                  textAnchor="middle"
-                  style={{ transition: 'fill 0.2s', letterSpacing: '0.12em' }}
-                >{ isRunning ? 'ON' : 'OFF' }</text>
-
-                {/* Click target — invisible full overlay */}
-                <rect x="0" y="0" width="54" height="86" rx="7"
-                  fill="transparent"
-                  onClick={(e) => { e.stopPropagation(); toggleSimulation(); }}
-                />
-              </g>
-            );
-          })()}
 
           {/* 1. Placed components casing layer */}
           {components.map(comp => {
@@ -1462,6 +1321,121 @@ export const Workspace: React.FC = () => {
           );
         })()}
       </svg>
+
+      {/* ── Main Power Toggle Switch Overlay (Fixed at top-left of workspace area) ── */}
+      {components.length > 0 && (
+        <div className="absolute top-14 left-4 z-20 pointer-events-auto bg-[#0b0f16]/90 border border-white/10 rounded-lg p-2.5 shadow-2xl flex flex-col items-center gap-1.5 backdrop-blur-md">
+          <div className="text-[9px] font-black tracking-wider text-slate-500 uppercase select-none">System Power</div>
+          <svg width="54" height="86" viewBox="0 0 54 86" style={{ cursor: 'pointer' }}>
+            <defs>
+              <linearGradient id="switchBodyGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%"   stopColor="#6b7280" />
+                <stop offset="18%"  stopColor="#d1d5db" />
+                <stop offset="45%"  stopColor="#f9fafb" />
+                <stop offset="65%"  stopColor="#e5e7eb" />
+                <stop offset="100%" stopColor="#9ca3af" />
+              </linearGradient>
+              <linearGradient id="switchBodyGradV" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="#9ca3af" />
+                <stop offset="30%"  stopColor="#f3f4f6" />
+                <stop offset="70%"  stopColor="#e5e7eb" />
+                <stop offset="100%" stopColor="#6b7280" />
+              </linearGradient>
+              <linearGradient id="batGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%"   stopColor="#374151" />
+                <stop offset="30%"  stopColor="#6b7280" />
+                <stop offset="60%"  stopColor="#9ca3af" />
+                <stop offset="100%" stopColor="#4b5563" />
+              </linearGradient>
+              <radialGradient id="cavityGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stopColor="#111827" />
+                <stop offset="100%" stopColor="#030712" />
+              </radialGradient>
+              <radialGradient id="ledOn" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stopColor="#86efac" />
+                <stop offset="60%"  stopColor="#22c55e" />
+                <stop offset="100%" stopColor="#15803d" />
+              </radialGradient>
+              <radialGradient id="ledOff" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stopColor="#6b7280" />
+                <stop offset="100%" stopColor="#374151" />
+              </radialGradient>
+            </defs>
+
+            {/* Outer shadow */}
+            <rect x="3" y="5" width="54" height="86" rx="7" fill="#000" opacity="0.45" />
+
+            {/* Switch body */}
+            <rect x="0" y="0" width="54" height="86" rx="7"
+              fill="url(#switchBodyGrad)"
+              stroke="#374151" strokeWidth="1"
+            />
+            <rect x="0" y="0" width="54" height="86" rx="7"
+              fill="url(#switchBodyGradV)"
+              opacity="0.45"
+            />
+            <rect x="1" y="1" width="52" height="4" rx="3" fill="white" opacity="0.3" />
+
+            {/* LED */}
+            <circle cx="27" cy="12" r="5"
+              fill={isRunning ? 'url(#ledOn)' : 'url(#ledOff)'}
+              stroke={isRunning ? '#bbf7d0' : '#4b5563'}
+              strokeWidth="0.8"
+            />
+            <circle cx="25.5" cy="10.5" r="1.5" fill="white" opacity={isRunning ? 0.7 : 0.15} />
+            {isRunning && (
+              <circle cx="27" cy="12" r="8" fill="#22c55e" opacity="0.2" className="animate-pulse" />
+            )}
+
+            {/* Cavity */}
+            <ellipse cx="27" cy="48" rx="14" ry="26"
+              fill="url(#cavityGrad)"
+              stroke="#111827" strokeWidth="1"
+            />
+            <ellipse cx="27" cy="48" rx="14" ry="26"
+              fill="none"
+              stroke="#1f2937" strokeWidth="2"
+            />
+
+            {/* Bat handle */}
+            <g transform={`translate(27, 48) rotate(${isRunning ? -30 : 30})`}
+               style={{ transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
+              <rect x="-4.5" y="-22" width="9" height="30" rx="4.5"
+                fill="url(#batGrad)"
+                stroke="#1f2937" strokeWidth="0.8"
+              />
+              <ellipse cx="0" cy="-22" rx="5.5" ry="4"
+                fill="#4b5563"
+                stroke="#1f2937" strokeWidth="0.8"
+              />
+              <ellipse cx="-1.5" cy="-23.5" rx="2" ry="1.2"
+                fill="white" opacity="0.35"
+              />
+              <ellipse cx="0" cy="6" rx="6" ry="4"
+                fill="#374151"
+                stroke="#111827" strokeWidth="0.8"
+              />
+              <ellipse cx="0" cy="6" rx="4" ry="2.5"
+                fill="#6b7280"
+              />
+            </g>
+
+            {/* Labels */}
+            <text x="27" y="80"
+              fontSize="7" fontWeight="900" fontFamily="monospace"
+              fill={isRunning ? '#22c55e' : '#6b7280'}
+              textAnchor="middle"
+              style={{ transition: 'fill 0.2s', letterSpacing: '0.12em' }}
+            >{ isRunning ? 'ON' : 'OFF' }</text>
+
+            {/* Click target */}
+            <rect x="0" y="0" width="54" height="86" rx="7"
+              fill="transparent"
+              onClick={(e) => { e.stopPropagation(); toggleSimulation(); }}
+            />
+          </svg>
+        </div>
+      )}
     </div>
   );
 };
