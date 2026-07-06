@@ -34,7 +34,7 @@ interface GameState {
   timerIntervalId: any | null;
   
   // Actions
-  initLevel: (index: number) => void;
+  initLevel: (index: number, skipViewTransition?: boolean) => void;
   resetLevel: () => void;
   nextLevel: () => void;
   
@@ -74,6 +74,8 @@ interface GameState {
   unlockAchievement: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
+  viewMode: 'levels' | 'lab';
+  setViewMode: (mode: 'levels' | 'lab') => void;
 }
 
 const initialAchievements: Achievement[] = [
@@ -293,8 +295,10 @@ export const useGameStore = create<GameState>((set, get) => {
     timerIntervalId: null,
     sidebarOpen: true,
     toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
+    viewMode: 'levels',
+    setViewMode: (mode) => set({ viewMode: mode }),
 
-    initLevel: (index) => {
+    initLevel: (index, skipViewTransition = false) => {
       const level = levels[index];
       if (!level) return;
 
@@ -328,7 +332,8 @@ export const useGameStore = create<GameState>((set, get) => {
           timeElapsed: 0,
           hintsUsed: 0,
           errorsMade: 0
-        }
+        },
+        ...(skipViewTransition ? {} : { viewMode: 'lab' })
       });
 
       // Solve initial states

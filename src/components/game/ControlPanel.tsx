@@ -6,9 +6,11 @@ import {
   Award, 
   Zap,
   VolumeX,
-  Volume2
+  Volume2,
+  LayoutGrid
 } from 'lucide-react';
 import { levels } from '../../levels/levelData';
+import { soundManager } from '../../audio/soundManager';
 
 export const ControlPanel: React.FC = () => {
   const {
@@ -17,7 +19,8 @@ export const ControlPanel: React.FC = () => {
     undo,
     redo,
     currentLevelIndex,
-    achievements
+    achievements,
+    setViewMode
   } = useGameStore();
 
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
@@ -25,52 +28,58 @@ export const ControlPanel: React.FC = () => {
 
   const toggleMute = () => {
     setAudioMuted(!audioMuted);
-    // Dynamic volume adjustment
-    if (!audioMuted) {
-      // Mute audio
-      // @ts-ignore
-      if (window.AudioContext || window.webkitAudioContext) {
-        // Just general mute flag
-      }
-    }
   };
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
   return (
-    <div className="h-16 bg-[#0f1015] border-b border-[#2a2e39] flex items-center justify-between px-6 select-none shrink-0">
+    <div className="h-16 bg-[#0f172a] border-b border-[#1e293b] flex items-center justify-between px-6 select-none shrink-0 relative z-20">
       
-      {/* 1. App Title / Logo */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-yellow-500 flex items-center justify-center glow-yellow shadow-inner">
-          <Zap className="w-5 h-5 text-slate-900 fill-slate-900" />
+      {/* 1. App Title / Logo & Back to Dashboard */}
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center glow-yellow shadow-inner">
+            <Zap className="w-5 h-5 text-slate-900 fill-slate-900" />
+          </div>
+          <div>
+            <h1 className="text-sm font-black tracking-widest text-white uppercase font-mono leading-none m-0">
+              DELMI ELECTRONICS LAB
+            </h1>
+            <span className="text-[9px] font-extrabold text-blue-400 tracking-wider font-mono">
+              VIRTUAL TRAINING SIMULATOR
+            </span>
+          </div>
         </div>
-        <div>
-          <h1 className="text-sm font-black tracking-widest text-white uppercase font-mono leading-none m-0">
-            DELMI ELECTRONICS LAB
-          </h1>
-          <span className="text-[9px] font-extrabold text-industrial-gray-400 tracking-wider font-mono">
-            VIRTUAL TRAINING SIMULATOR
-          </span>
-        </div>
+
+        <button
+          onClick={() => {
+            soundManager.playButton();
+            setViewMode('levels');
+          }}
+          className="px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 text-blue-400 hover:text-blue-300 font-extrabold font-mono text-[10px] uppercase tracking-widest cursor-pointer transition-all flex items-center gap-1.5"
+          title="Return to Levels Selection"
+        >
+          <LayoutGrid className="w-3.5 h-3.5" />
+          <span>Dashboard</span>
+        </button>
       </div>
 
       {/* 2. Undo/Redo & Undo history count */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center bg-industrial-gray-800 p-0.5 rounded border border-[#2a2e39]">
+        <div className="flex items-center bg-[#080d1a] p-0.5 rounded border border-[#1e293b]">
           <button
             onClick={undo}
             disabled={history.length === 0}
-            className="p-1.5 rounded text-industrial-gray-300 hover:text-white hover:bg-industrial-gray-700 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
+            className="p-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
             title="Undo (Ctrl+Z)"
           >
             <Undo2 className="w-4 h-4" />
           </button>
-          <div className="w-[1px] h-4 bg-[#2a2e39] mx-0.5" />
+          <div className="w-[1px] h-4 bg-[#1e293b] mx-0.5" />
           <button
             onClick={redo}
             disabled={redoHistory.length === 0}
-            className="p-1.5 rounded text-industrial-gray-300 hover:text-white hover:bg-industrial-gray-700 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
+            className="p-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
             title="Redo (Ctrl+Y)"
           >
             <Redo2 className="w-4 h-4" />
@@ -80,7 +89,7 @@ export const ControlPanel: React.FC = () => {
         {/* Audio controls */}
         <button
           onClick={toggleMute}
-          className="p-2 bg-industrial-gray-800 hover:bg-industrial-gray-700 border border-[#2a2e39] rounded text-industrial-gray-300 hover:text-white cursor-pointer transition-colors"
+          className="p-2 bg-[#080d1a] hover:bg-slate-800 border border-[#1e293b] rounded text-slate-300 hover:text-white cursor-pointer transition-colors"
         >
           {audioMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
@@ -99,8 +108,8 @@ export const ControlPanel: React.FC = () => {
         </button>
 
         {/* Score stars */}
-        <div className="flex items-center gap-1 bg-industrial-gray-800 px-3 py-1.5 rounded border border-[#2a2e39]">
-          <span className="text-[10px] text-industrial-gray-400 uppercase tracking-widest mr-1">LEVELS COMPLETED:</span>
+        <div className="flex items-center gap-1 bg-[#080d1a] px-3 py-1.5 rounded border border-[#1e293b]">
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest mr-1">SOLVED:</span>
           <span className="text-white text-sm font-black">{currentLevelIndex} / {levels.length}</span>
         </div>
       </div>

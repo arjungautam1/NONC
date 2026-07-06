@@ -4,14 +4,16 @@ import { ControlPanel } from './components/game/ControlPanel';
 import { Sidebar } from './components/game/Sidebar';
 import { Workspace } from './components/game/Workspace';
 import { HelpOverlay } from './components/game/HelpOverlay';
+import { LevelDashboard } from './components/game/LevelDashboard';
 
 function App() {
   const initLevel = useGameStore(state => state.initLevel);
   const useHint = useGameStore(state => state.useHint);
+  const viewMode = useGameStore(state => state.viewMode);
 
-  // Initialize first level on mount
+  // Initialize first level on mount, skipping the view mode change so it starts at the levels screen
   useEffect(() => {
-    initLevel(0);
+    initLevel(0, true);
   }, [initLevel]);
 
   // Shortcut key listener: 'h'/'H' for next hint
@@ -35,8 +37,12 @@ function App() {
     };
   }, [useHint]);
 
+  if (viewMode === 'levels') {
+    return <LevelDashboard />;
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-industrial-gray-900 text-slate-200 overflow-hidden font-sans select-none">
+    <div className="min-h-screen flex flex-col bg-[#080d1a] text-slate-200 overflow-hidden font-sans select-none">
       {/* Top Engineering Control Bar */}
       <ControlPanel />
 
