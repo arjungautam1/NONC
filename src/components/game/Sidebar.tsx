@@ -7,10 +7,9 @@ import {
   ChevronLeft, 
   ChevronRight, 
   ChevronDown,
-  CheckCircle2,
-  HelpCircle
+  CheckCircle2
 } from 'lucide-react';
-import { soundManager } from '../../audio/soundManager';
+
 
 export const Sidebar: React.FC = () => {
   const {
@@ -23,9 +22,7 @@ export const Sidebar: React.FC = () => {
     resetLevel,
     simulation,
     sidebarOpen,
-    toggleSidebar,
-    score,
-    useHint
+    toggleSidebar
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
@@ -98,9 +95,6 @@ export const Sidebar: React.FC = () => {
     return false;
   };
 
-  // Determine which hints to show (at least the first hint is always visible, and others unlock with hintsUsed)
-  const maxHintIndex = Math.min(score.hintsUsed, level.hints.length - 1);
-  const unlockedHints = level.hints.slice(0, maxHintIndex + 1);
 
   return (
     <div className={`relative h-full transition-all duration-300 ease-in-out shrink-0 flex`}
@@ -251,34 +245,6 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* 5. Collapsible / Scrollable Hints List (Always displays all unlocked hints side by side) */}
-        <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-950/15 shrink-0 flex flex-col max-h-[190px]">
-          <div className="flex items-center justify-between mb-2 shrink-0">
-            <h3 className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 uppercase flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 text-yellow-500" />
-              <span>Level Hints ({score.hintsUsed} Unlocked)</span>
-            </h3>
-            <button
-              onClick={() => {
-                soundManager.playClick();
-                useHint();
-              }}
-              className="text-[9px] font-extrabold text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 px-2.5 py-0.5 rounded border border-yellow-500/20 cursor-pointer uppercase transition-all tracking-wide"
-            >
-              Get Hint
-            </button>
-          </div>
-          <div className="flex-grow overflow-y-auto pr-1 flex flex-col gap-2 min-h-0">
-            {unlockedHints.map((hint, idx) => (
-              <div key={idx} className="bg-yellow-500/5 p-2.5 rounded border border-yellow-500/15 text-[11px] font-semibold text-zinc-300 leading-normal animate-fade-in">
-                <span className="text-yellow-500 font-black block text-[9px] uppercase tracking-wider font-mono mb-1">
-                  Hint {idx + 1} of {level.hints.length}:
-                </span>
-                {hint}
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* 6. Attribution Footer (shrink-0) */}
         <div className="p-3 bg-industrial-gray-950/40 border-t border-[#2a2e39]/30 text-center select-none shrink-0 mt-auto">
