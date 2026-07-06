@@ -43,17 +43,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#080d1a] text-slate-200 overflow-hidden font-sans select-none">
+    <div className="h-screen flex flex-col bg-[#080b12] text-slate-200 overflow-hidden font-sans select-none">
       {/* Top Engineering Control Bar */}
       <ControlPanel />
 
       {/* Main Workspace split */}
-      <div className="flex-grow flex overflow-hidden relative">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-0">
         {/* Left Objectives & DMM Sidebar */}
         <Sidebar />
 
         {/* Center Schematic Canvas & Diagnostics */}
-        <div className="flex-grow flex flex-col overflow-hidden relative">
+        <div className="flex-1 flex flex-col overflow-hidden relative min-w-0 min-h-0">
           <Workspace />
           <HelpOverlay />
         </div>

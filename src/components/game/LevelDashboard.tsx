@@ -66,38 +66,31 @@ export const LevelDashboard: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#060b18] text-slate-100 flex flex-col select-none font-sans overflow-y-auto relative">
+    <div className="min-h-screen bg-[#080b12] text-slate-100 flex flex-col select-none font-sans overflow-y-auto relative">
 
       {/* ── Ambient background glows ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-200px] left-[-100px] w-[700px] h-[700px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-[-150px] right-[-100px] w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)' }} />
-        {/* Subtle grid overlay */}
-        <div className="absolute inset-0 workspace-grid opacity-5" />
+        <div className="absolute inset-0 workspace-grid opacity-[0.035]" />
       </div>
 
       {/* ══════════════════════════════════════════════
           HERO HEADER
       ══════════════════════════════════════════════ */}
-      <header className="relative z-10 px-8 pt-12 pb-10 max-w-7xl mx-auto w-full">
+      <header className="relative z-10 px-4 sm:px-8 pt-6 sm:pt-8 pb-7 max-w-7xl mx-auto w-full">
 
         {/* Top bar — logo + badge */}
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             {/* Delmi logo pill */}
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%)', boxShadow: '0 0 30px rgba(37,99,235,0.35)' }}>
-              <Zap className="w-6 h-6 text-white fill-white" />
-              <div className="absolute inset-0 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)' }} />
+            <div className="relative flex items-center justify-center w-11 h-11 rounded-xl overflow-hidden bg-slate-200 shadow-sm">
+              <Zap className="w-6 h-6 text-slate-950 fill-slate-950" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-black text-white tracking-wide font-mono uppercase">
+                <h1 className="text-lg font-semibold text-white tracking-wide">
                   Delmi Electronics Lab
                 </h1>
-                <span className="text-[9px] font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full tracking-widest uppercase">
+                <span className="text-[9px] font-semibold bg-white/5 text-slate-400 border border-white/10 px-2 py-0.5 rounded-full tracking-wide uppercase">
                   v2.0
                 </span>
               </div>
@@ -109,23 +102,23 @@ export const LevelDashboard: React.FC = () => {
 
           {/* Live stats chips */}
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3.5 py-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] font-bold text-emerald-400">{completedCount} Solved</span>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              <span className="text-[11px] font-semibold text-slate-300">{completedCount} Solved</span>
             </div>
-            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-3.5 py-1.5">
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[11px] font-bold text-amber-400">{unlockedCount} Badges</span>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5">
+              <Trophy className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[11px] font-semibold text-slate-300">{unlockedCount} Badges</span>
             </div>
           </div>
         </div>
 
         {/* Hero headline */}
-        <div className="mb-8">
-          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight tracking-tight mb-3">
+        <div className="mb-7">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white leading-tight tracking-tight mb-3">
             Master Electronics
             <br />
-            <span style={{ background: 'linear-gradient(90deg, #2563eb, #60a5fa, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <span className="text-slate-300">
               Circuit Design.
             </span>
           </h2>
@@ -135,28 +128,23 @@ export const LevelDashboard: React.FC = () => {
         </div>
 
         {/* ── Stats row ── */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">
           {[
             { label: 'Modules', value: totalLevels, suffix: '', icon: CircuitBoard, color: '#2563eb' },
             { label: 'Completed', value: completedCount, suffix: '', icon: CheckCircle2, color: '#10b981' },
             { label: 'Progress', value: percentComplete, suffix: '%', icon: BarChart3, color: '#8b5cf6' },
           ].map(stat => (
             <div key={stat.label}
-              className="rounded-2xl border p-4 flex items-center gap-3 relative overflow-hidden"
-              style={{ background: 'rgba(15,23,42,0.6)', borderColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${stat.color}18`, border: `1px solid ${stat.color}35` }}>
-                <stat.icon className="w-4.5 h-4.5" style={{ color: stat.color }} />
+              className="rounded-xl border border-white/10 bg-white/[0.03] p-4 flex items-center gap-3 relative overflow-hidden">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white/5 border border-white/10">
+                <stat.icon className="w-4.5 h-4.5 text-slate-400" />
               </div>
               <div>
-                <div className="text-xl font-black text-white font-mono">
+                <div className="text-xl font-semibold text-white tabular-nums">
                   <AnimatedNumber value={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{stat.label}</div>
+                <div className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">{stat.label}</div>
               </div>
-              {/* Subtle color glow */}
-              <div className="absolute right-0 top-0 w-16 h-full opacity-30 blur-xl"
-                style={{ background: stat.color }} />
             </div>
           ))}
         </div>
@@ -165,10 +153,10 @@ export const LevelDashboard: React.FC = () => {
         <div className="rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div
             className="h-full rounded-full transition-all duration-1000"
-            style={{ width: `${percentComplete}%`, background: 'linear-gradient(90deg, #1d4ed8, #3b82f6, #818cf8)' }}
+            style={{ width: `${percentComplete}%`, background: '#94a3b8' }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-slate-600 font-mono mt-1.5 font-bold">
+        <div className="flex justify-between text-[10px] text-slate-600 mt-1.5 font-medium">
           <span>START</span>
           <span>{completedCount}/{totalLevels} MODULES COMPLETE</span>
           <span>MASTER</span>
@@ -178,16 +166,16 @@ export const LevelDashboard: React.FC = () => {
       {/* ══════════════════════════════════════════════
           LEVEL GRID
       ══════════════════════════════════════════════ */}
-      <main className="relative z-10 px-8 pb-16 max-w-7xl mx-auto w-full flex-grow">
+      <main className="relative z-10 px-4 sm:px-8 pb-16 max-w-7xl mx-auto w-full flex-grow">
 
         {/* Filter tabs */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-1.5 p-1 rounded-xl" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl overflow-x-auto max-w-full" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
             {(['all', 'completed', 'available'] as const).map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className="px-4 py-1.5 rounded-lg text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer font-mono"
+                className="px-3 sm:px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all cursor-pointer whitespace-nowrap"
                 style={filter === f
                   ? { background: '#1d4ed8', color: 'white', boxShadow: '0 0 12px rgba(37,99,235,0.4)' }
                   : { color: '#64748b' }}

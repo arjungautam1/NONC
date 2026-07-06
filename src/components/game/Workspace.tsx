@@ -661,19 +661,19 @@ export const Workspace: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col relative h-[560px] bg-[#15171e] select-none border-b border-[#2a2e39]">
+    <div className="flex-1 flex flex-col relative min-h-0 bg-[#0b1018] select-none">
       
       {/* Canvas Toolbars */}
-      <div className="h-12 border-b border-[#2a2e39] bg-industrial-gray-900/60 px-4 flex items-center justify-between text-xs font-bold text-industrial-gray-300">
-        <div className="flex items-center gap-4">
-          <span className="text-industrial-gray-400">WIRE COLOR:</span>
+      <div className="h-10 border-b border-white/10 bg-[#0d1118]/80 px-4 flex items-center justify-between text-xs font-medium text-slate-300 shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-slate-500">Wire</span>
           <div className="flex gap-2">
             {(['red', 'black', 'green', 'orange'] as const).map(color => (
               <button
                 key={color}
                 onClick={() => setActiveColor(color)}
-                className={`w-5 h-5 rounded-full border-2 transition-transform cursor-pointer relative ${
-                  activeColor === color ? 'scale-110 ring-2 ring-indigo-500' : 'opacity-70'
+                className={`w-5 h-5 rounded-full border transition-transform cursor-pointer relative ${
+                  activeColor === color ? 'scale-110 ring-2 ring-slate-300/70' : 'opacity-70 hover:opacity-100'
                 }`}
                 style={{
                   backgroundColor: getWireColorHex(color),
@@ -685,10 +685,10 @@ export const Workspace: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadSchematic}
-            className="px-2.5 py-1 text-[10px] font-extrabold tracking-wider bg-emerald-600/80 hover:bg-emerald-700 text-white rounded border border-[#2a2e39] cursor-pointer uppercase transition-all flex items-center gap-1.5"
+            className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/5 hover:bg-white/10 text-slate-300 rounded-md border border-white/10 cursor-pointer transition-all flex items-center gap-1.5"
             title="Download Schematic SVG File"
           >
             <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
@@ -696,11 +696,11 @@ export const Workspace: React.FC = () => {
           </button>
           <button
             onClick={() => setWireSize(prev => prev === 'normal' ? 'thin' : 'normal')}
-            className="px-2.5 py-1 text-[10px] font-extrabold tracking-wider bg-[#2d303a] hover:bg-[#3c4252] text-slate-300 rounded border border-[#2a2e39] cursor-pointer uppercase transition-colors"
+            className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/5 hover:bg-white/10 text-slate-300 rounded-md border border-white/10 cursor-pointer transition-colors"
           >
             Size: {wireSize}
           </button>
-          <div className="flex items-center gap-1.5 text-xs text-yellow-500 bg-yellow-500/10 px-2.5 py-1 rounded border border-yellow-500/20">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-white/[0.03] px-2.5 py-1 rounded-md border border-white/10">
             <Info className="w-3.5 h-3.5" />
             <span>Click wire to select & delete.</span>
           </div>
@@ -710,7 +710,7 @@ export const Workspace: React.FC = () => {
       {/* === PROBE / WIRE DRAWING BANNER === */}
       {(probeMode || drawingWireStart) && (
         <div
-          className={`absolute top-12 left-0 right-0 z-30 flex items-center justify-between px-5 py-2.5 font-black tracking-wide text-sm pointer-events-auto ${
+            className={`absolute top-10 left-0 right-0 z-30 flex items-center justify-between px-5 py-2 font-semibold tracking-wide text-sm pointer-events-auto ${
             probeMode === 'red'
               ? 'bg-red-600 text-white border-b-2 border-red-300'
               : probeMode === 'black'
@@ -741,7 +741,7 @@ export const Workspace: React.FC = () => {
       {/* SVG Canvas Container */}
       <svg
         ref={svgRef}
-        className={`workspace-grid w-full flex-grow relative touch-none ${probeMode ? 'cursor-cell' : 'cursor-crosshair'}`}
+        className={`workspace-grid w-full flex-1 relative touch-none ${probeMode ? 'cursor-cell' : 'cursor-crosshair'}`}
         onPointerDown={handleWorkspacePointerDown}
         onPointerMove={handleWorkspacePointerMove}
         onPointerUp={handleWorkspacePointerUp}
@@ -1160,5 +1160,4 @@ export const Workspace: React.FC = () => {
     </div>
   );
 };
-
 

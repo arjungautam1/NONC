@@ -110,7 +110,7 @@ export const CardReader: React.FC<ComponentProps> = ({ component }) => {
   // K1 real proportions: 140mm tall × 44mm wide. Scale: 44px wide × 140px tall
   // Center the group so terminals land correctly
   return (
-    <g transform="translate(-22, -70)" className="select-none">
+    <g transform="translate(-22, -70)" className="select-none cursor-pointer">
       <defs>
         {/* Gloss black polycarbonate body */}
         <linearGradient id="k1Body" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -290,6 +290,18 @@ export const CardReader: React.FC<ComponentProps> = ({ component }) => {
         </g>
       )}
 
+      <rect
+        x="-8"
+        y="-8"
+        width="60"
+        height="164"
+        rx="8"
+        fill="transparent"
+        pointerEvents="all"
+        onPointerDown={handleScanPointerDown}
+        onPointerUp={handleScanPointerUp}
+      />
+
       {/* ── Component label below body ── */}
       <text x="22" y="153" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
         {component.label}
@@ -297,4 +309,3 @@ export const CardReader: React.FC<ComponentProps> = ({ component }) => {
     </g>
   );
 };
-

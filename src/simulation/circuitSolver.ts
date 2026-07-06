@@ -301,7 +301,7 @@ export function solveCircuit(
       } else if (c.type === 'timer_relay') {
         inKey = getTerminalKey(c.id, 'coil_a');
         outKey = getTerminalKey(c.id, 'coil_b');
-      } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
+      } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'maglock') {
@@ -448,7 +448,7 @@ export function queryMultimeter(
     pathComponents.forEach(c => {
       if (c.type === 'bulb') resistance += 15.0;
       else if (c.type === 'led') resistance += 220.0;
-      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'roland_fan') resistance += 45.0;
+      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'roland_fan') resistance += 45.0;
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
       else if (c.type === 'relay' || c.type === 'timer_relay') resistance += 80.0;
@@ -517,7 +517,7 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
@@ -592,7 +592,7 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));

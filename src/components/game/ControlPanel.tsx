@@ -33,19 +33,19 @@ export const ControlPanel: React.FC = () => {
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
   return (
-    <div className="h-16 bg-[#0f172a] border-b border-[#1e293b] flex items-center justify-between px-6 select-none shrink-0 relative z-20">
+    <div className="min-h-14 bg-[#0d1118] border-b border-white/10 flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-2 select-none shrink-0 relative z-20">
       
       {/* 1. App Title / Logo & Back to Dashboard */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center glow-yellow shadow-inner">
-            <Zap className="w-5 h-5 text-slate-900 fill-slate-900" />
+          <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shadow-sm">
+            <Zap className="w-5 h-5 text-slate-950 fill-slate-950" />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-widest text-white uppercase font-mono leading-none m-0">
+            <h1 className="text-xs sm:text-sm font-semibold tracking-wide text-white leading-none m-0 truncate">
               DELMI ELECTRONICS LAB
             </h1>
-            <span className="text-[9px] font-extrabold text-blue-400 tracking-wider font-mono">
+            <span className="hidden sm:inline text-[10px] font-medium text-slate-400 tracking-wide">
               VIRTUAL TRAINING SIMULATOR
             </span>
           </div>
@@ -56,30 +56,30 @@ export const ControlPanel: React.FC = () => {
             soundManager.playButton();
             setViewMode('levels');
           }}
-          className="px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 text-blue-400 hover:text-blue-300 font-extrabold font-mono text-[10px] uppercase tracking-widest cursor-pointer transition-all flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white font-semibold text-[11px] cursor-pointer transition-all flex items-center gap-1.5"
           title="Return to Levels Selection"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
-          <span>Dashboard</span>
+          <span className="hidden sm:inline">Dashboard</span>
         </button>
       </div>
 
       {/* 2. Undo/Redo & Undo history count */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center bg-[#080d1a] p-0.5 rounded border border-[#1e293b]">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center bg-black/20 p-0.5 rounded-md border border-white/10">
           <button
             onClick={undo}
             disabled={history.length === 0}
-            className="p-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
+            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
             title="Undo (Ctrl+Z)"
           >
             <Undo2 className="w-4 h-4" />
           </button>
-          <div className="w-[1px] h-4 bg-[#1e293b] mx-0.5" />
+          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
           <button
             onClick={redo}
             disabled={redoHistory.length === 0}
-            className="p-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
+            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer transition-colors"
             title="Redo (Ctrl+Y)"
           >
             <Redo2 className="w-4 h-4" />
@@ -89,27 +89,28 @@ export const ControlPanel: React.FC = () => {
         {/* Audio controls */}
         <button
           onClick={toggleMute}
-          className="p-2 bg-[#080d1a] hover:bg-slate-800 border border-[#1e293b] rounded text-slate-300 hover:text-white cursor-pointer transition-colors"
+          className="p-2 bg-black/20 hover:bg-white/10 border border-white/10 rounded-md text-slate-400 hover:text-white cursor-pointer transition-colors"
         >
           {audioMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
       </div>
 
       {/* 3. Achievements Badge & Star rating display */}
-      <div className="flex items-center gap-6 text-xs font-bold font-mono">
+      <div className="flex items-center gap-2 sm:gap-4 text-xs font-semibold">
         
         {/* Achievements trigger */}
         <button
           onClick={() => setShowAchievementsModal(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 cursor-pointer transition-colors"
         >
           <Award className="w-4 h-4" />
-          <span>ACHIEVEMENTS ({unlockedCount}/{achievements.length})</span>
+          <span className="hidden sm:inline">ACHIEVEMENTS ({unlockedCount}/{achievements.length})</span>
+          <span className="sm:hidden">{unlockedCount}/{achievements.length}</span>
         </button>
 
         {/* Score stars */}
-        <div className="flex items-center gap-1 bg-[#080d1a] px-3 py-1.5 rounded border border-[#1e293b]">
-          <span className="text-[10px] text-slate-400 uppercase tracking-widest mr-1">SOLVED:</span>
+        <div className="flex items-center gap-1 bg-black/20 px-3 py-1.5 rounded-md border border-white/10">
+          <span className="hidden sm:inline text-[10px] text-slate-400 uppercase tracking-wide mr-1">Solved</span>
           <span className="text-white text-sm font-black">{currentLevelIndex} / {levels.length}</span>
         </div>
       </div>

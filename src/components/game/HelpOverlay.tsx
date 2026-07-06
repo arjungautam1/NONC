@@ -303,13 +303,13 @@ export const HelpOverlay: React.FC = () => {
       )}
 
       {/* 2. Interactive Diagnostic Console (Panel) */}
-      <div className={`fixed bottom-0 ${sidebarOpen ? 'left-[380px]' : 'left-0'} right-0 h-52 bg-industrial-gray-950 border-t border-[#2a2e39] flex p-3 gap-4 pointer-events-auto z-10 transition-all duration-300 ease-in-out`}>
+      <div className={`fixed bottom-0 left-0 ${sidebarOpen ? 'md:left-[320px]' : 'md:left-0'} right-0 h-44 md:h-40 bg-[#0d1118]/95 border-t border-white/10 flex flex-col md:flex-row p-2 md:p-2.5 gap-2 md:gap-3 pointer-events-auto z-10 transition-all duration-300 ease-in-out backdrop-blur overflow-y-auto md:overflow-hidden`}>
 
         {/* Diagnostic Status Box */}
-        <div className="w-80 border border-[#2a2e39] bg-industrial-gray-900/50 rounded-lg p-3.5 flex flex-col gap-2">
+        <div className="hidden xl:flex w-72 border border-white/10 bg-white/[0.03] rounded-md p-3 flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 uppercase font-mono">
-              DIAGNOSTIC CONSOLE
+            <span className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+              Diagnostics
             </span>
             <Activity className={`w-4 h-4 ${isRunning ? 'text-emerald-400 animate-pulse' : 'text-industrial-gray-500'}`} />
           </div>
@@ -328,18 +328,18 @@ export const HelpOverlay: React.FC = () => {
                 {diag.title}
               </span>
             </div>
-            <p className="text-[10px] text-industrial-gray-300 font-semibold leading-relaxed mt-1.5 line-clamp-3">
+            <p className="text-[10px] text-slate-300 font-medium leading-relaxed mt-1.5 line-clamp-3">
               {diag.detail}
             </p>
           </div>
         </div>
 
         {/* 3. DMM Troubleshooting Multimeter Panel */}
-        <div className="w-[400px] h-full border border-[#2a2e39] bg-industrial-gray-900/50 rounded-lg p-2.5 flex gap-3 select-none shrink-0 overflow-hidden">
+        <div className="w-full md:w-[330px] xl:w-[360px] h-auto md:h-full border border-white/10 bg-white/[0.03] rounded-md p-2 flex gap-2.5 select-none shrink-0 overflow-hidden">
           {/* DMM Yellow Housing */}
-          <div className="w-[150px] h-full bg-yellow-500 p-1.5 rounded border-2 border-yellow-600 shadow-md flex flex-col gap-1 shrink-0">
+          <div className="w-[132px] h-full min-h-[118px] bg-[#d9b84f] p-1.5 rounded-md border border-[#b99a37] shadow-sm flex flex-col gap-1 shrink-0">
             {/* LCD Screen */}
-            <div className="bg-[#c7f7e5] border-2 border-yellow-700 px-1.5 py-0.5 rounded shadow-inner flex items-center justify-between font-mono text-slate-900">
+            <div className="bg-[#cfe7dc] border border-[#a4872c] px-1.5 py-0.5 rounded shadow-inner flex items-center justify-between font-mono text-slate-900">
               <span className="text-[7px] font-bold text-slate-600 tracking-wider">DMM-40</span>
               <span className={`text-[11px] font-black tracking-wider px-1 rounded ${multimeter.mode === 'OFF' ? 'text-slate-500' :
                   multimeter.reading === '---' ? 'text-slate-600' :
@@ -350,7 +350,7 @@ export const HelpOverlay: React.FC = () => {
             </div>
 
             {/* Mode Buttons */}
-            <div className="grid grid-cols-2 gap-1 text-[7px] font-extrabold">
+            <div className="grid grid-cols-2 gap-1 text-[7px] font-bold">
               {(['OFF', 'VOLTAGE', 'CONTINUITY', 'RESISTANCE'] as const).map(mode => {
                 const label = mode === 'VOLTAGE' ? 'V' : mode === 'CONTINUITY' ? 'CONT' : mode === 'RESISTANCE' ? 'OHM' : 'OFF';
                 const active = multimeter.mode === mode;
@@ -358,9 +358,9 @@ export const HelpOverlay: React.FC = () => {
                   <button
                     key={mode}
                     onClick={() => setMultimeterMode(mode)}
-                    className={`py-0.5 rounded border font-black cursor-pointer uppercase transition-all ${active
-                        ? 'bg-slate-900 text-yellow-300 border-slate-700 shadow-inner'
-                        : 'bg-yellow-600 text-slate-950 border-yellow-700 hover:bg-yellow-400'
+                    className={`py-0.5 rounded border font-bold cursor-pointer uppercase transition-all ${active
+                        ? 'bg-slate-900 text-slate-100 border-slate-700 shadow-inner'
+                        : 'bg-[#c6a33d] text-slate-950 border-[#a4872c] hover:bg-[#e0bd55]'
                       }`}
                   >
                     {label}
@@ -373,7 +373,7 @@ export const HelpOverlay: React.FC = () => {
             <div className="flex flex-col gap-1 border-t border-yellow-600/40 pt-1">
               <button
                 onClick={() => setProbeMode(multimeter.redProbe ? null : 'red')}
-                className={`w-full py-0.5 rounded text-[8px] font-black uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.redProbe
+                className={`w-full py-0.5 rounded text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.redProbe
                     ? 'bg-red-700 text-white border border-red-500'
                     : 'bg-red-500 hover:bg-red-400 text-white border border-red-700'
                   }`}
@@ -382,7 +382,7 @@ export const HelpOverlay: React.FC = () => {
               </button>
               <button
                 onClick={() => setProbeMode(multimeter.blackProbe ? null : 'black')}
-                className={`w-full py-0.5 rounded text-[8px] font-black uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.blackProbe
+                className={`w-full py-0.5 rounded text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.blackProbe
                     ? 'bg-slate-600 text-white border border-slate-400'
                     : 'bg-slate-500 hover:bg-slate-400 text-white border border-slate-700'
                   }`}
@@ -401,14 +401,14 @@ export const HelpOverlay: React.FC = () => {
           </div>
 
           {/* DMM Guide Instructions */}
-          <div className="flex-1 flex flex-col justify-between min-w-0 overflow-hidden">
+          <div className="hidden sm:flex flex-1 flex-col justify-between min-w-0 overflow-hidden">
             <div className="flex items-center gap-1">
-              <Gauge className="w-3.5 h-3.5 text-yellow-500" />
-              <span className="text-[10px] font-extrabold text-industrial-gray-400 tracking-wider font-mono">
-                HOW TO USE DMM
+              <Gauge className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[10px] font-semibold text-slate-400 tracking-wide">
+                DMM
               </span>
             </div>
-            <ol className="text-[9px] text-zinc-300 font-semibold pl-3 list-decimal leading-snug mt-1 flex-grow overflow-hidden">
+            <ol className="text-[9px] text-slate-300 font-medium pl-3 list-decimal leading-snug mt-1 flex-grow overflow-hidden">
               <li>Pick a mode: <b>V</b>=Voltage, <b>OHM</b>=Resistance, <b>CONT</b>=Continuity.</li>
               <li>Click <b>ATTACH RED</b> — then click any terminal on the canvas.</li>
               <li>Click <b>ATTACH BLK</b> — click another terminal.</li>
@@ -418,21 +418,21 @@ export const HelpOverlay: React.FC = () => {
         </div>
 
         {/* Dynamic Hints & Real World Application Panel */}
-        <div className="flex-1 border border-[#2a2e39] bg-industrial-gray-900/60 rounded-lg p-2.5 flex flex-col gap-2">
+        <div className="flex-1 border border-white/10 bg-white/[0.03] rounded-md p-2.5 flex flex-col gap-2 min-w-0">
           {/* Upper Section: Hints */}
           <div className="flex-1 flex flex-col gap-1 min-h-0">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold tracking-widest text-yellow-500 uppercase font-mono">
-                HINTS & DIAGRAMS
+              <span className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+                Hints
               </span>
-              <span className="text-[9px] font-bold text-industrial-gray-400 bg-industrial-gray-800 px-1.5 py-0.5 rounded border border-[#2a2e39] uppercase font-mono">
+              <span className="text-[9px] font-semibold text-slate-400 bg-black/20 px-1.5 py-0.5 rounded border border-white/10 uppercase">
                 Hint {currentHintIndex + 1} of {level.hints.length}
               </span>
             </div>
             
             <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1">
-              <div key={`${currentLevelIndex}-${currentHintIndex}`} className="text-[10px] text-zinc-200 leading-normal font-semibold animate-fade-in">
-                <span className="text-yellow-500 font-bold font-mono text-[9px] uppercase tracking-wider">Hint {currentHintIndex + 1}: </span>
+              <div key={`${currentLevelIndex}-${currentHintIndex}`} className="text-[10px] text-slate-200 leading-normal font-medium animate-fade-in">
+                <span className="text-slate-400 font-semibold text-[9px] uppercase tracking-wide">Hint {currentHintIndex + 1}: </span>
                 {level.hints[currentHintIndex]}
               </div>
             </div>
@@ -442,44 +442,44 @@ export const HelpOverlay: React.FC = () => {
                 soundManager.playClick();
                 useHint();
               }}
-              className="self-end text-[8px] font-extrabold text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 px-2 py-0.5 rounded border border-yellow-500/30 cursor-pointer transition-colors uppercase tracking-wider font-mono"
+              className="self-end text-[8px] font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded border border-white/10 cursor-pointer transition-colors uppercase tracking-wide"
             >
               NEXT HINT
             </button>
           </div>
 
           {/* Divider */}
-          <div className="border-t border-[#2a2e39]/65 my-0.5" />
+          <div className="border-t border-white/10 my-0.5" />
 
           {/* Lower Section: Real-World Application with SVG visual */}
           {(() => {
             const app = getRealWorldApplication(level.id);
             return (
-              <div className="h-16 shrink-0 flex gap-3 text-left items-center justify-between">
+              <div className="h-12 shrink-0 flex gap-3 text-left items-center justify-between">
                 <div className="flex-grow min-w-0 flex flex-col gap-0.5">
-                  <div className="flex items-center justify-between text-emerald-400">
+                  <div className="flex items-center justify-between text-slate-300">
                     <div className="flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5" />
-                      <span className="text-[9px] font-extrabold tracking-wider uppercase font-mono">
-                        REAL-WORLD APP: {app.title}
+                      <span className="text-[9px] font-semibold tracking-wide uppercase">
+                        Real-world: {app.title}
                       </span>
                     </div>
                     {/* Download SVG button */}
                     <button
                       onClick={handleDownloadVisual}
-                      className="text-[8px] font-extrabold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 cursor-pointer transition-colors uppercase tracking-wider font-mono flex items-center gap-1"
+                      className="text-[8px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded border border-white/10 cursor-pointer transition-colors uppercase tracking-wide flex items-center gap-1"
                       title="Download Vector SVG Diagram"
                     >
                       <Download className="w-2.5 h-2.5" />
                       <span>SVG</span>
                     </button>
                   </div>
-                  <p className="text-[10px] text-zinc-300 leading-normal font-semibold overflow-y-auto max-h-[44px] pr-1">
+                  <p className="text-[10px] text-slate-400 leading-normal font-medium overflow-y-auto max-h-[32px] pr-1">
                     {app.desc}
                   </p>
                 </div>
                 {/* SVG Visual illustration of equivalent application - scaled to 56px */}
-                <div className="shrink-0 w-14 h-14 real-world-visual-container">
+                <div className="shrink-0 w-11 h-11 real-world-visual-container">
                   <RealWorldVisual levelId={level.id} isActive={isRunning} />
                 </div>
               </div>

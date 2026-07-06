@@ -2,14 +2,14 @@
 
 /* Custom theme colors & styles for industrial look */
 @theme {
-  --color-industrial-gray-900: #080d1a; /* Darkest Delmi Blue */
-  --color-industrial-gray-800: #0f172a; /* Slate/Navy Delmi Blue */
-  --color-industrial-gray-700: #1e293b; /* Medium Delmi Blue border */
-  --color-industrial-gray-600: #1d4ed8; /* Delmi Primary Blue border */
-  --color-industrial-gray-500: #2563eb; /* Delmi Accent Blue */
-  --color-industrial-gray-400: #3b82f6; /* Glowing Blue */
-  --color-industrial-gray-300: #93c5fd; /* Soft Blue-gray text */
-  --color-industrial-gray-200: #bfdbfe; /* Light Blue-gray highlight */
+  --color-industrial-gray-900: #080b12;
+  --color-industrial-gray-800: #111827;
+  --color-industrial-gray-700: #1f2937;
+  --color-industrial-gray-600: #334155;
+  --color-industrial-gray-500: #64748b;
+  --color-industrial-gray-400: #94a3b8;
+  --color-industrial-gray-300: #cbd5e1;
+  --color-industrial-gray-200: #e2e8f0;
   --color-industrial-blue: #0f598c;
   --color-industrial-orange: #f97316;
   --color-industrial-yellow: #eab308;
@@ -17,11 +17,14 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #080d1a;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #080b12;
   color: #cbd5e1;
   overflow-x: hidden;
   user-select: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  font-synthesis-weight: none;
 }
 
 #root {
@@ -33,11 +36,11 @@ body {
 /* Grid background for schematic workspace */
 .workspace-grid {
   background-image: 
-    radial-gradient(#1e293b 1px, transparent 1px), 
-    radial-gradient(#1e293b 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: 0 0, 10px 10px;
-  background-color: #0a1122;
+    radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px), 
+    radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  background-color: #0b1018;
 }
 
 /* Glassmorphism panel styles */
@@ -69,28 +72,28 @@ body {
 
 /* Glow effects */
 .glow-yellow {
-  box-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
-  filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.7));
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.28);
+  filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.35));
 }
 
 .glow-red {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.7));
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.28);
+  filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.35));
 }
 
 .glow-green {
-  box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
-  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.7));
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.26);
+  filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.32));
 }
 
 .glow-orange {
-  box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
-  filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.7));
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.24);
+  filter: drop-shadow(0 0 5px rgba(249, 115, 22, 0.3));
 }
 
 .glow-blue {
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.7));
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.24);
+  filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.3));
 }
 
 /* Rotating animations for motors */

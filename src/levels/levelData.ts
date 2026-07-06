@@ -1685,13 +1685,13 @@ export const levels: Level[] = [
       },
       {
         id: 'act1',
-        type: 'actuator',
+        type: 'parking_gate',
         x: 780,
         y: 250,
-        label: 'Barrier Gate Arm',
+        label: 'Parking Gate',
         terminals: [
-          { id: 'pos', name: 'POS', type: 'pos', x: -30, y: 35 },
-          { id: 'neg', name: 'NEG', type: 'neg', x: 30, y: 35 }
+          { id: 'pos', name: 'POS', type: 'pos', x: -10, y: 40 },
+          { id: 'neg', name: 'NEG', type: 'neg', x: 22, y: 40 }
         ],
         state: {}
       }
