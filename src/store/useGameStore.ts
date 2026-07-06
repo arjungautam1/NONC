@@ -246,6 +246,13 @@ export const useGameStore = create<GameState>((set, get) => {
       feedback = '🚨 Short Circuit Detected! Current is flowing directly from Positive to Negative without passing through a load. Check your wiring loops.';
     }
 
+    // Trigger continuity beep sound if mode is CONTINUITY and reading indicates path
+    if (get().multimeter.mode === 'CONTINUITY' && multimeterReading.includes('Beep')) {
+      soundManager.startBeep();
+    } else {
+      soundManager.stopBeep();
+    }
+
     set({
       components: updatedComponents,
       simulation: solverResult,

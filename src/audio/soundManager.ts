@@ -2,11 +2,14 @@ class SoundManager {
   private ctx: AudioContext | null = null;
   private humOscillators: Map<string, { osc: OscillatorNode; oscs?: OscillatorNode[]; gain: GainNode }> = new Map();
   private muted = false;
+  private beepOsc: OscillatorNode | null = null;
+  private beepGain: GainNode | null = null;
 
   setMuted(muted: boolean) {
     this.muted = muted;
     if (muted) {
       this.stopAllHums();
+      this.stopBeep();
     }
   }
 
@@ -396,6 +399,60 @@ class SoundManager {
 
   stopAllHums() {
     Array.from(this.humOscillators.keys()).forEach(id => this.stopHum(id));
+  }
+
+  startBeep() {
+    if (this.muted) return;
+    try {
+      if (this.beepOsc) return;
+
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(2500, now); // Comfortable high-pitch continuity beep
+
+      gain.gain.setValueAtTime(0.08, now); // comfortable volume
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      this.beepOsc = osc;
+      this.beepGain = gain;
+    } catch (e) {
+      console.warn('Audio startBeep failed:', e);
+    }
+  }
+
+  stopBeep() {
+    if (this.beepOsc) {
+      try {
+        const osc = this.beepOsc;
+        const gain = this.beepGain;
+        const ctx = this.getContext();
+        const now = ctx.currentTime;
+        
+        if (gain) {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+        }
+        
+        setTimeout(() => {
+          try {
+            osc.stop();
+            osc.disconnect();
+            if (gain) gain.disconnect();
+          } catch(e){}
+        }, 40);
+      } catch (e) {}
+      this.beepOsc = null;
+      this.beepGain = null;
+    }
   }
 }
 
