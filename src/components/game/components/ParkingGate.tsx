@@ -55,20 +55,20 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
 
-      // Simulate car driving over the Loop Detector (presses button after 0.5 seconds)
+      // Simulate car driving over the Loop Detector (presses button after 1.1 seconds - after passing gate arm)
       pressTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', true);
-      }, 500);
-
-      // Simulate car clearing the Loop Detector (releases button after 1.1 seconds)
-      releaseTimeoutRef.current = setTimeout(() => {
-        useGameStore.getState().pressButton('btn2', false);
       }, 1100);
 
-      // Reset the car driving state after the animation finishes (1.5 seconds)
+      // Simulate car clearing the Loop Detector (releases button after 1.5 seconds)
+      releaseTimeoutRef.current = setTimeout(() => {
+        useGameStore.getState().pressButton('btn2', false);
+      }, 1500);
+
+      // Reset the car driving state after the animation finishes (1.6 seconds)
       animTimeoutRef.current = setTimeout(() => {
         setIsCarDriving(false);
-      }, 1500);
+      }, 1600);
     }
   }, [isOpen, hasClosed, isRunning, isCarDriving]);
 
@@ -105,7 +105,7 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
           0% { transform: translate(85px, 26px); opacity: 0; }
           15% { transform: translate(75px, 26px); opacity: 1; }
           25% { transform: translate(75px, 26px); opacity: 1; }
-          75% { transform: translate(-20px, 26px); opacity: 1; }
+          70% { transform: translate(-20px, 26px); opacity: 1; }
           100% { transform: translate(-85px, 26px); opacity: 0; }
         }
         @keyframes wheelSpin {
@@ -113,7 +113,7 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
           to { transform: rotate(-360deg); }
         }
         .car-animated-rtl {
-          animation: driveThroughRightToLeft 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          animation: driveThroughRightToLeft 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         .car-waiting-rtl {
           transform: translate(75px, 26px);
