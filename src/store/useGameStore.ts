@@ -586,7 +586,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
       let hasChanges = false;
       const updatedComponents = components.map(c => {
-        if (c.type === 'actuator' || c.type === 'elevator_motor') {
+        if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
           const vPos = simulation.nodeVoltages[`${c.id}:pos`] || 0;
           const vNeg = simulation.nodeVoltages[`${c.id}:neg`] || 0;
           const currentTravel = c.state.travel || 0;
@@ -617,7 +617,7 @@ export const useGameStore = create<GameState>((set, get) => {
       });
 
       if (hasChanges) {
-        const elevator = updatedComponents.find(c => c.type === 'elevator_motor' || c.type === 'actuator');
+        const elevator = updatedComponents.find(c => c.type === 'elevator_motor' || c.type === 'actuator' || c.type === 'parking_gate');
         const elevatorTravel = elevator?.state.travel ?? 0;
 
         const finalComponents = updatedComponents.map(c => {

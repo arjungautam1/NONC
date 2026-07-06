@@ -21,7 +21,8 @@ export type ComponentType =
   | 'limit_switch'
   | 'ac_source'
   | 'transformer'
-  | 'roland_fan';
+  | 'roland_fan'
+  | 'parking_gate';
 
 export type TerminalType =
   | 'pos'
