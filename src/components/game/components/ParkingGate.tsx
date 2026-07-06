@@ -28,19 +28,19 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
 
   return (
     <g transform="translate(0, 0)">
-      {/* Dynamic inline styles for the car driving animation */}
+      {/* Dynamic inline styles for the car driving animation (Right to Left) */}
       <style>{`
-        @keyframes driveThrough {
-          0% { transform: translate(-70px, 26px); opacity: 1; }
-          20% { transform: translate(-70px, 26px); opacity: 1; }
-          75% { transform: translate(15px, 26px); opacity: 1; }
-          100% { transform: translate(85px, 26px); opacity: 0; }
+        @keyframes driveThroughRightToLeft {
+          0% { transform: translate(75px, 26px); opacity: 1; }
+          20% { transform: translate(75px, 26px); opacity: 1; }
+          75% { transform: translate(-10px, 26px); opacity: 1; }
+          100% { transform: translate(-85px, 26px); opacity: 0; }
         }
-        .car-animated {
-          animation: driveThrough 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        .car-animated-rtl {
+          animation: driveThroughRightToLeft 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
-        .car-waiting {
-          transform: translate(-70px, 26px);
+        .car-waiting-rtl {
+          transform: translate(75px, 26px);
         }
       `}</style>
 
@@ -101,22 +101,24 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
       <text x="0" y="43" fill="#64748b" fontSize="7.5" fontWeight="bold" textAnchor="middle">IN</text>
       <text x="32" y="43" fill="#64748b" fontSize="7.5" fontWeight="bold" textAnchor="middle">OUT</text>
 
-      {/* Animated Mini Car */}
-      <g className={isOpen ? 'car-animated' : 'car-waiting'}>
-        {/* Car body */}
-        <rect x="-12" y="-8" width="24" height="8" rx="2.5" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="0.8" />
-        {/* Cabin */}
-        <path d="M-7 -8 L-4 -13 L4 -13 L7 -8 Z" fill="#93c5fd" stroke="#1d4ed8" strokeWidth="0.8" />
-        {/* Windows */}
-        <path d="M-5 -9 L-3 -12 L0 -12 L0 -9 Z" fill="#e0f2fe" />
-        <path d="M1 -9 L1 -12 L3 -12 L5 -9 Z" fill="#e0f2fe" />
-        {/* Wheels */}
-        <circle cx="-6" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
-        <circle cx="-6" cy="0" r="1.2" fill="#cbd5e1" />
-        <circle cx="6" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
-        <circle cx="6" cy="0" r="1.2" fill="#cbd5e1" />
-        {/* Headlight */}
-        <circle cx="11.2" cy="-4" r="0.8" fill="#fef08a" />
+      {/* Animated Mini Car (Facing Left, driving Right-to-Left) */}
+      <g className={isOpen ? 'car-animated-rtl' : 'car-waiting-rtl'}>
+        <g transform="scale(-1, 1)">
+          {/* Car body */}
+          <rect x="-12" y="-8" width="24" height="8" rx="2.5" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="0.8" />
+          {/* Cabin */}
+          <path d="M-7 -8 L-4 -13 L4 -13 L7 -8 Z" fill="#93c5fd" stroke="#1d4ed8" strokeWidth="0.8" />
+          {/* Windows */}
+          <path d="M-5 -9 L-3 -12 L0 -12 L0 -9 Z" fill="#e0f2fe" />
+          <path d="M1 -9 L1 -12 L3 -12 L5 -9 Z" fill="#e0f2fe" />
+          {/* Wheels */}
+          <circle cx="-6" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
+          <circle cx="-6" cy="0" r="1.2" fill="#cbd5e1" />
+          <circle cx="6" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
+          <circle cx="6" cy="0" r="1.2" fill="#cbd5e1" />
+          {/* Headlight */}
+          <circle cx="11.2" cy="-4" r="0.8" fill="#fef08a" />
+        </g>
       </g>
 
       {/* Pivot Axis Hub */}
