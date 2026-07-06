@@ -26,24 +26,49 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   // Gate arm rotation angle: 0 degrees (horizontal) to -90 degrees (vertical/up)
   const angle = -(travel / 100) * 90;
 
-  // Automatically trigger the vehicle Loop Detector as the car passes over it
+  // Keep references to timeouts so we can manage them across renders safely
+  const lastOpenRef = React.useRef(false);
+  const pressTimeoutRef = React.useRef<any>(null);
+  const releaseTimeoutRef = React.useRef<any>(null);
+
+  // Trigger the vehicle Loop Detector when the gate opens
   React.useEffect(() => {
-    if (isOpen && isRunning) {
-      // Simulate car driving over the Loop Detector
-      const pressTimeout = setTimeout(() => {
+    if (isOpen && !lastOpenRef.current && isRunning) {
+      lastOpenRef.current = true;
+
+      // Clear any pending timeouts
+      if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+      if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
+
+      // Simulate car driving over the Loop Detector (presses button after 1.2 seconds)
+      pressTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', true);
-      }, 1200); // 1.2s: car drives over loop
+      }, 1200);
 
-      const releaseTimeout = setTimeout(() => {
+      // Simulate car clearing the Loop Detector (releases button after 2.2 seconds)
+      releaseTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', false);
-      }, 2200); // 2.2s: car clears loop
+      }, 2200);
+    }
 
-      return () => {
-        clearTimeout(pressTimeout);
-        clearTimeout(releaseTimeout);
-      };
+    if (!isOpen) {
+      lastOpenRef.current = false;
     }
   }, [isOpen, isRunning]);
+
+  // Clean up timeouts and ensure the button is released when simulation stops or component unmounts
+  React.useEffect(() => {
+    if (!isRunning) {
+      if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+      if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
+      useGameStore.getState().pressButton('btn2', false);
+    }
+
+    return () => {
+      if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+      if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
+    };
+  }, [isRunning]);
 
   return (
     <g transform="translate(0, 0)">
