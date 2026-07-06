@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../../store/useGameStore';
+import { Logo } from './components/Logo';
 import { 
   Undo2, 
   Redo2, 
@@ -39,19 +40,14 @@ export const ControlPanel: React.FC = () => {
       
       {/* 1. App Title / Logo & Back to Dashboard */}
       <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-900 border border-white/10 shadow-inner">
-            <svg viewBox="0 0 100 100" className="w-6.5 h-6.5" fill="none" stroke="#1b75d0" strokeWidth="8.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M 42,16 L 42,84 C 70,84 82,70 82,50 C 82,30 70,16 42,16 Z" />
-              <path d="M 52,28 L 52,72 C 68,72 70,62 70,50 C 70,38 68,28 52,28 Z" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-xs sm:text-sm font-semibold tracking-wide text-white leading-none m-0 truncate normal-case">
-              <span className="text-[#1b75d0] font-bold">DELMI</span> ELECTRONICS LAB
-            </h1>
-            <span className="hidden sm:inline text-[10px] font-medium text-slate-400 tracking-wide">
-              VIRTUAL TRAINING SIMULATOR
+        <div className="flex items-center gap-5">
+          <Logo variant="horizontal" size="sm" />
+          <div className="border-l border-white/10 pl-5 hidden md:block">
+            <h2 className="text-[10px] font-bold text-slate-300 tracking-wide uppercase">
+              Electronics Lab
+            </h2>
+            <span className="text-[8.5px] font-medium text-slate-500 tracking-wide uppercase">
+              Virtual Training Simulator
             </span>
           </div>
         </div>

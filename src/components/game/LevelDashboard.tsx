@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../store/useGameStore';
+import { Logo } from './components/Logo';
 import { levels } from '../../levels/levelData';
 import { RealWorldVisual } from './components/RealWorldVisual';
 import {
@@ -49,20 +50,15 @@ export const LevelDashboard: React.FC = () => {
 
         {/* Top bar — logo + badge */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            {/* Delmi logo pill */}
-            <div className="relative flex items-center justify-center w-11 h-11 rounded-lg bg-slate-900 border border-white/10 shadow-inner">
-              <svg viewBox="0 0 100 100" className="w-7.5 h-7.5" fill="none" stroke="#1b75d0" strokeWidth="8.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M 42,16 L 42,84 C 70,84 82,70 82,50 C 82,30 70,16 42,16 Z" />
-                <path d="M 52,28 L 52,72 C 68,72 70,62 70,50 C 70,38 68,28 52,28 Z" />
-              </svg>
-            </div>
-            <div>
+          <div className="flex items-center gap-5">
+            {/* Delmi logo */}
+            <Logo variant="horizontal" size="md" />
+            <div className="border-l border-white/10 pl-5">
               <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-semibold text-white tracking-wide">
-                  <span className="text-[#1b75d0] font-bold">Delmi</span> Electronics Lab
-                </h1>
-                <span className="text-[9px] font-semibold bg-white/[0.06] text-slate-400 border border-white/10 px-2 py-0.5 rounded-md tracking-wide uppercase">
+                <h2 className="text-xs font-bold text-slate-300 tracking-wide uppercase">
+                  Electronics Lab
+                </h2>
+                <span className="text-[9.5px] font-semibold bg-white/[0.06] text-slate-400 border border-white/10 px-2 py-0.5 rounded-md tracking-wide uppercase">
                   v2.0
                 </span>
               </div>
