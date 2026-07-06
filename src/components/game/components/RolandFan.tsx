@@ -9,19 +9,19 @@ interface ComponentProps {
 export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) => {
   return (
     <g transform="translate(0, 0)">
-      {/* Clip path for the portrait */}
+      {/* Clip path for the portrait to show full square body */}
       <defs>
         <clipPath id="rolandClip">
-          <rect x="-55" y="-55" width="110" height="90" rx="8" />
+          <rect x="-55" y="-55" width="110" height="110" rx="8" />
         </clipPath>
       </defs>
 
-      {/* Background Frame / Card */}
+      {/* Background Frame / Card (Vertical layout to show full body) */}
       <rect 
-        x="-58" 
-        y="-58" 
-        width="116" 
-        height="116" 
+        x="-60" 
+        y="-80" 
+        width="120" 
+        height="160" 
         rx="10" 
         fill="#1e293b" 
         stroke={isEnergized ? '#facc15' : '#334155'} 
@@ -30,23 +30,23 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
         className="transition-colors duration-300"
       />
 
-      {/* Roland Portrait */}
+      {/* Roland Portrait (Full 1:1 Aspect Ratio to show arms crossed and boxes) */}
       <image 
         href="/roland.jpg" 
         x="-55" 
         y="-55" 
         width="110" 
-        height="90" 
-        preserveAspectRatio="xMidYMid slice" 
+        height="110" 
+        preserveAspectRatio="xMidYMid meet" 
         clipPath="url(#rolandClip)" 
       />
 
       {/* Relay Master Crown Text */}
       <text 
         x="0" 
-        y="-64" 
+        y="-88" 
         fill="#facc15" 
-        fontSize="8.5" 
+        fontSize="9" 
         fontWeight="900" 
         textAnchor="middle" 
         className="font-mono tracking-wider animate-pulse"
@@ -54,8 +54,8 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
         ★ RELAY MASTER ★
       </text>
 
-      {/* Rotating Cap/Fan */}
-      <g transform="translate(0, -28)">
+      {/* Rotating Cap/Fan overlay positioned exactly on his red cap */}
+      <g transform="translate(-1, -37)">
         <g 
           className={isEnergized ? 'animate-motor-spin' : ''}
           style={{ transformOrigin: '0px 0px' }}
@@ -82,16 +82,16 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
       </g>
 
       {/* Connection Terminal Box at bottom */}
-      <rect x="-48" y="38" width="96" height="16" rx="3" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
+      <rect x="-48" y="60" width="96" height="16" rx="3" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
       
       {/* Terminal labels and hitboxes positions */}
-      <text x="-32" y="49" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">IN</text>
-      <text x="32" y="49" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">OUT</text>
+      <text x="-32" y="71" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">IN</text>
+      <text x="32" y="71" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">OUT</text>
 
       {/* Component Name Label */}
       <text 
         x="0" 
-        y="72" 
+        y="94" 
         fill="#cbd5e1" 
         fontSize="9.5" 
         fontWeight="bold" 

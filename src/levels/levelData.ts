@@ -1549,8 +1549,8 @@ export const levels: Level[] = [
         y: 240,
         label: 'Relay Master Roland',
         terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -32, y: 46 },
-          { id: 'out', name: 'OUT', type: 'out', x: 32, y: 46 }
+          { id: 'in', name: 'IN', type: 'in', x: -32, y: 68 },
+          { id: 'out', name: 'OUT', type: 'out', x: 32, y: 68 }
         ],
         state: {}
       }
