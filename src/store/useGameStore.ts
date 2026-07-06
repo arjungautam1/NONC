@@ -251,7 +251,7 @@ export const useGameStore = create<GameState>((set, get) => {
       feedback = '🚨 Short Circuit Detected! Current is flowing directly from Positive to Negative without passing through a load. Check your wiring loops.';
       
       if (currentIsRunning) {
-        soundManager.playPuff();
+        soundManager.playShortCircuit();
         currentIsRunning = false;
 
         // Calculate center coordinate of components

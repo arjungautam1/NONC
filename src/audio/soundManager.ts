@@ -505,6 +505,108 @@ class SoundManager {
       console.warn('Audio playPuff failed:', e);
     }
   }
+
+  playShortCircuit() {
+    if (this.muted) return;
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+
+      // 1. Heavy Blast/Explosion (Low thud + distorted impact)
+      const blastOsc = ctx.createOscillator();
+      const blastOsc2 = ctx.createOscillator();
+      const blastGain = ctx.createGain();
+      const blastFilter = ctx.createBiquadFilter();
+
+      blastOsc.type = 'sawtooth';
+      blastOsc.frequency.setValueAtTime(100, now);
+      blastOsc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+
+      blastOsc2.type = 'square';
+      blastOsc2.frequency.setValueAtTime(50, now);
+      blastOsc2.frequency.exponentialRampToValueAtTime(20, now + 0.3);
+
+      blastFilter.type = 'lowpass';
+      blastFilter.frequency.setValueAtTime(180, now);
+
+      blastGain.gain.setValueAtTime(0.7, now);
+      blastGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      blastOsc.connect(blastFilter);
+      blastOsc2.connect(blastFilter);
+      blastFilter.connect(blastGain);
+      blastGain.connect(ctx.destination);
+
+      blastOsc.start(now);
+      blastOsc2.start(now);
+      blastOsc.stop(now + 0.4);
+      blastOsc2.stop(now + 0.4);
+
+      // 2. Volumetric Puff/Sizzle (Fading gas pressure release)
+      const puffDuration = 2.4;
+      const puffBufferSize = ctx.sampleRate * puffDuration;
+      const puffBuffer = ctx.createBuffer(1, puffBufferSize, ctx.sampleRate);
+      const puffData = puffBuffer.getChannelData(0);
+      for (let i = 0; i < puffBufferSize; i++) {
+        puffData[i] = Math.random() * 2 - 1;
+      }
+      const puffSource = ctx.createBufferSource();
+      puffSource.buffer = puffBuffer;
+
+      const puffFilter = ctx.createBiquadFilter();
+      puffFilter.type = 'bandpass';
+      puffFilter.frequency.setValueAtTime(900, now);
+      puffFilter.frequency.exponentialRampToValueAtTime(350, now + 1.2);
+      puffFilter.Q.setValueAtTime(1.8, now);
+
+      const puffGain = ctx.createGain();
+      puffGain.gain.setValueAtTime(0.35, now);
+      puffGain.gain.exponentialRampToValueAtTime(0.001, now + puffDuration);
+
+      puffSource.connect(puffFilter);
+      puffFilter.connect(puffGain);
+      puffGain.connect(ctx.destination);
+
+      puffSource.start(now);
+      puffSource.stop(now + puffDuration);
+
+      // 3. Scheduling 22 snaps/crackles over 2.2s (Matching sparks)
+      const crackleBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate); // 40ms snap buffer
+      const crackleData = crackleBuffer.getChannelData(0);
+      for (let i = 0; i < crackleBuffer.length; i++) {
+        crackleData[i] = (Math.random() * 2 - 1) * (1 - i / crackleBuffer.length);
+      }
+
+      for (let i = 0; i < 22; i++) {
+        const delay = (i % 8) * 0.22 + (i % 3) * 0.08 + Math.random() * 0.12; // Spread across 2.2 seconds
+        if (delay > 2.2) continue;
+        
+        const snapTime = now + delay;
+        
+        const snapSource = ctx.createBufferSource();
+        snapSource.buffer = crackleBuffer;
+
+        const snapFilter = ctx.createBiquadFilter();
+        snapFilter.type = 'highpass';
+        snapFilter.frequency.setValueAtTime(1800 + (i % 5) * 400, snapTime);
+
+        const snapGain = ctx.createGain();
+        const snapVol = 0.5 * (1 - delay / 2.5);
+        snapGain.gain.setValueAtTime(snapVol, snapTime);
+        snapGain.gain.exponentialRampToValueAtTime(0.001, snapTime + 0.035);
+
+        snapSource.connect(snapFilter);
+        snapFilter.connect(snapGain);
+        snapGain.connect(ctx.destination);
+
+        snapSource.start(snapTime);
+        snapSource.stop(snapTime + 0.04);
+      }
+
+    } catch (e) {
+      console.warn('Audio playShortCircuit failed:', e);
+    }
+  }
 }
 
 export const soundManager = new SoundManager();
