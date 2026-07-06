@@ -17,6 +17,7 @@ import { ACSource } from './ACSource';
 import { Transformer } from './Transformer';
 import { RolandFan } from './RolandFan';
 import { ParkingGate } from './ParkingGate';
+import { DoorSensor } from './DoorSensor';
 
 interface ComponentRendererProps {
   component: CircuitComponent;
@@ -53,6 +54,8 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <Maglock component={component} />;
     case 'card_reader':
       return <CardReader component={component} />;
+    case 'door_sensor':
+      return <DoorSensor component={component} />;
     case 'terminal_block':
       return <TerminalBlock component={component} />;
     case 'timer_relay':

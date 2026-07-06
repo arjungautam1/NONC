@@ -80,6 +80,8 @@ export function solveCircuit(
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
       } else if (c.type === 'button_nc' && !c.state.pressed) {
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+      } else if (c.type === 'door_sensor' && !c.state.toggled) {
+        addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
       } else if (c.type === 'switch_selector') {
         const targetOut = c.state.toggled ? 'out_b' : 'out_a';
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
@@ -487,6 +489,8 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'button_nc' && !c.state.pressed) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+    } else if (c.type === 'door_sensor' && !c.state.toggled) {
+      addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'switch_selector') {
       const targetOut = c.state.toggled ? 'out_b' : 'out_a';
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
@@ -572,6 +576,8 @@ function getComponentsInPath(
     if (c.type === 'button_no' && c.state.pressed) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'button_nc' && !c.state.pressed) {
+      addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+    } else if (c.type === 'door_sensor' && !c.state.toggled) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'switch_selector') {
       const targetOut = c.state.toggled ? 'out_b' : 'out_a';
