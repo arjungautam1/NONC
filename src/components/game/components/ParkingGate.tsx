@@ -26,21 +26,49 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   // Gate arm rotation angle: 0 degrees (horizontal) to -90 degrees (vertical/up)
   const angle = -(travel / 100) * 90;
 
+  // Automatically trigger the vehicle Loop Detector as the car passes over it
+  React.useEffect(() => {
+    if (isOpen && isRunning) {
+      // Simulate car driving over the Loop Detector
+      const pressTimeout = setTimeout(() => {
+        useGameStore.getState().pressButton('btn2', true);
+      }, 1200); // 1.2s: car drives over loop
+
+      const releaseTimeout = setTimeout(() => {
+        useGameStore.getState().pressButton('btn2', false);
+      }, 2200); // 2.2s: car clears loop
+
+      return () => {
+        clearTimeout(pressTimeout);
+        clearTimeout(releaseTimeout);
+      };
+    }
+  }, [isOpen, isRunning]);
+
   return (
     <g transform="translate(0, 0)">
-      {/* Dynamic inline styles for the car driving animation (Right to Left) */}
+      {/* Dynamic inline styles for the car driving & wheel spin animations (Right to Left) */}
       <style>{`
         @keyframes driveThroughRightToLeft {
-          0% { transform: translate(75px, 26px); opacity: 1; }
-          20% { transform: translate(75px, 26px); opacity: 1; }
-          75% { transform: translate(-10px, 26px); opacity: 1; }
+          0% { transform: translate(85px, 26px); opacity: 0; }
+          15% { transform: translate(75px, 26px); opacity: 1; }
+          30% { transform: translate(75px, 26px); opacity: 1; }
+          80% { transform: translate(-20px, 26px); opacity: 1; }
           100% { transform: translate(-85px, 26px); opacity: 0; }
         }
+        @keyframes wheelSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(-360deg); }
+        }
         .car-animated-rtl {
-          animation: driveThroughRightToLeft 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          animation: driveThroughRightToLeft 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         .car-waiting-rtl {
           transform: translate(75px, 26px);
+          opacity: 1;
+        }
+        .wheel-spinning {
+          animation: wheelSpin 0.35s linear infinite;
         }
       `}</style>
 
@@ -111,11 +139,19 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
           {/* Windows */}
           <path d="M-5 -9 L-3 -12 L0 -12 L0 -9 Z" fill="#e0f2fe" />
           <path d="M1 -9 L1 -12 L3 -12 L5 -9 Z" fill="#e0f2fe" />
-          {/* Wheels */}
-          <circle cx="-6" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
-          <circle cx="-6" cy="0" r="1.2" fill="#cbd5e1" />
-          <circle cx="6" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
-          <circle cx="6" cy="0" r="1.2" fill="#cbd5e1" />
+          
+          {/* Front Wheel with rotating spokes */}
+          <g transform="translate(-6, 0)">
+            <circle cx="0" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
+            <line x1="0" y1="0" x2="2.5" y2="0" stroke="#ffffff" strokeWidth="0.6" className={isOpen ? 'wheel-spinning' : ''} style={{ transformOrigin: '0px 0px' }} />
+          </g>
+
+          {/* Rear Wheel with rotating spokes */}
+          <g transform="translate(6, 0)">
+            <circle cx="0" cy="0" r="3" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
+            <line x1="0" y1="0" x2="2.5" y2="0" stroke="#ffffff" strokeWidth="0.6" className={isOpen ? 'wheel-spinning' : ''} style={{ transformOrigin: '0px 0px' }} />
+          </g>
+
           {/* Headlight */}
           <circle cx="11.2" cy="-4" r="0.8" fill="#fef08a" />
         </g>
