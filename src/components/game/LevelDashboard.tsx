@@ -1,33 +1,14 @@
 import React from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { levels } from '../../levels/levelData';
+import { RealWorldVisual } from './components/RealWorldVisual';
 import {
   Zap,
   CheckCircle2,
   Trophy,
-  Star,
   CircuitBoard,
-  Play,
-  Cpu,
-  Radio,
   BarChart3,
 } from 'lucide-react';
-
-/* ── Difficulty config ── */
-const getDifficulty = (id: number) => {
-  if (id <= 5)  return { label: 'Starter',      color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' };
-  if (id <= 12) return { label: 'Intermediate', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' };
-  return         { label: 'Expert',             color: '#2563eb', bg: 'rgba(37,99,235,0.10)',   border: 'rgba(37,99,235,0.30)' };
-};
-
-/* ── Category grouping ── */
-const getCategory = (id: number) => {
-  if (id <= 4)  return { icon: Zap,          label: 'Fundamentals',     accent: '#2563eb' };
-  if (id <= 8)  return { icon: CircuitBoard, label: 'Relay Control',    accent: '#8b5cf6' };
-  if (id <= 13) return { icon: Cpu,          label: 'Advanced Circuits', accent: '#f59e0b' };
-  if (id <= 17) return { icon: Radio,        label: 'Motion & Timing',  accent: '#10b981' };
-  return         { icon: BarChart3,          label: 'Master Series',    accent: '#ef4444' };
-};
 
 /* ── Animated number counter ── */
 const AnimatedNumber: React.FC<{ value: number; suffix?: string }> = ({ value, suffix = '' }) => {
@@ -192,8 +173,6 @@ export const LevelDashboard: React.FC = () => {
             const index = levels.indexOf(lvl);
             const isCompleted = index < completedCount;
             const isActive    = index === completedCount;
-            const diff        = getDifficulty(lvl.id);
-            const cat         = getCategory(lvl.id);
             const isHovered   = hoveredId === lvl.id;
 
             return (
@@ -202,120 +181,49 @@ export const LevelDashboard: React.FC = () => {
                 onClick={() => initLevel(index)}
                 onMouseEnter={() => setHoveredId(lvl.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className="relative rounded-lg cursor-pointer flex flex-col overflow-hidden transition-all duration-200"
+                className="relative rounded-xl cursor-pointer flex flex-col overflow-hidden transition-all duration-300 group"
                 style={{
-                  background: isCompleted
-                    ? 'rgba(16,185,129,0.04)'
-                    : isActive
-                    ? 'rgba(37,99,235,0.07)'
-                    : 'rgba(15,23,42,0.50)',
+                  background: 'rgba(10,15,30,0.48)',
                   border: isCompleted
-                    ? `1px solid ${isHovered ? 'rgba(16,185,129,0.5)' : 'rgba(16,185,129,0.18)'}`
+                    ? `1px solid ${isHovered ? 'rgba(16,185,129,0.45)' : 'rgba(16,185,129,0.12)'}`
                     : isActive
-                    ? `1px solid ${isHovered ? 'rgba(59,130,246,0.7)' : 'rgba(59,130,246,0.35)'}`
-                    : `1px solid ${isHovered ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)'}`,
-                  transform: isHovered ? 'translateY(-3px)' : 'none',
-                  opacity: 1,
-                  boxShadow: isActive && isHovered
-                    ? '0 8px 32px rgba(37,99,235,0.20)'
-                    : isCompleted && isHovered
-                    ? '0 8px 32px rgba(16,185,129,0.12)'
-                    : isHovered
-                    ? '0 8px 24px rgba(0,0,0,0.30)'
-                    : 'none'
+                    ? `1px solid ${isHovered ? 'rgba(59,130,246,0.6)' : 'rgba(59,130,246,0.25)'}`
+                    : `1px solid ${isHovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
+                  transform: isHovered ? 'translateY(-4px)' : 'none',
+                  boxShadow: isHovered ? '0 12px 30px rgba(0,0,0,0.4)' : 'none'
                 }}
               >
-                {/* Visual Accent top border */}
-                <div className="h-[2px] w-full"
-                  style={{
-                    background: isCompleted
-                      ? 'linear-gradient(90deg, #10b981, #34d399)'
-                      : isActive
-                      ? 'linear-gradient(90deg, #2563eb, #60a5fa)'
-                      : 'linear-gradient(90deg, #334155, #475569)'
-                  }}
-                />
-
-                <div className="p-3.5 flex flex-col flex-grow gap-3">
-                  {/* Top card row: Level number & Category icon */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="text-[11px] font-mono font-black"
-                        style={{
-                          color: isCompleted ? '#10b981' : isActive ? '#60a5fa' : '#475569',
-                        }}>
-                        {lvl.id.toString().padStart(2,'0')}
-                      </div>
-                      {/* Category label */}
-                      <div className="flex items-center gap-1 opacity-60">
-                        <cat.icon className="w-3 h-3" style={{ color: cat.accent }} />
-                      </div>
+                {/* Visual Thumbnail Area */}
+                <div className="h-32 w-full bg-slate-950/40 relative overflow-hidden flex items-center justify-center p-4 border-b border-white/[0.04] transition-all group-hover:bg-slate-950/20">
+                  <div className="w-20 h-20 transform group-hover:scale-105 transition-transform duration-300">
+                    <RealWorldVisual levelId={lvl.id} isActive={isCompleted || isActive || isHovered} />
+                  </div>
+                  {/* Completed Checkmark Overlay */}
+                  {isCompleted && (
+                    <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     </div>
-
-                    {/* Status badge */}
-                    {isCompleted ? (
-                      <div className="flex items-center gap-1 rounded-md px-2 py-0.5"
-                        style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                        <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wide">Done</span>
-                      </div>
-                    ) : isActive ? (
-                      <div className="flex items-center gap-1 rounded-md px-2 py-0.5"
-                        style={{ background: 'rgba(226,232,240,0.08)', border: '1px solid rgba(226,232,240,0.16)' }}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                        <span className="text-[9px] font-semibold text-slate-200 uppercase tracking-wide">Next</span>
-                      </div>
-                    ) : null}
+                  )}
+                  {/* Active/Next Ribbon */}
+                  {isActive && (
+                    <div className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_#60a5fa]" />
+                  )}
+                  {/* Level Number Indicator */}
+                  <div className="absolute bottom-2.5 left-2.5 px-1.5 py-0.5 rounded bg-black/40 border border-white/5 font-mono text-[9px] font-bold text-slate-500 group-hover:text-slate-300 transition-colors">
+                    LVL {lvl.id.toString().padStart(2, '0')}
                   </div>
+                </div>
 
-                  {/* Title & description */}
-                  <div className="flex-grow">
-                    <h3 className="text-sm font-semibold text-white leading-snug mb-1.5 transition-colors"
-                      style={{ color: isHovered && isActive ? '#93c5fd' : isHovered && isCompleted ? '#6ee7b7' : 'white' }}>
-                      {lvl.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 leading-relaxed font-medium line-clamp-2">
-                      {lvl.description}
-                    </p>
-                  </div>
-
-                  {/* Bottom row — difficulty + enter */}
-                  <div className="flex items-center justify-between pt-2.5"
-                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    {/* Difficulty pip */}
-                    <span className="text-[9px] font-semibold tracking-wide uppercase rounded-md px-2 py-0.5"
-                      style={{ background: diff.bg, color: diff.color, border: `1px solid ${diff.border}` }}>
-                      {diff.label}
-                    </span>
-
-                    {/* Stars or enter arrow */}
-                    {isCompleted ? (
-                      <div className="flex gap-0.5">
-                        {[1,2,3].map(n => (
-                          <Star key={n} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                    ) : (
-                      <button
-                        className="flex items-center gap-1 text-[10px] font-semibold uppercase transition-all"
-                        style={{
-                          color: isActive ? '#60a5fa' : isHovered ? '#ffffff' : '#475569',
-                          transform: isHovered ? 'translateX(3px)' : 'none'
-                        }}>
-                        {isActive ? (
-                          <>
-                            <Play className="w-3 h-3 fill-current animate-pulse" />
-                            <span>Enter Lab</span>
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3 h-3 fill-current opacity-60" />
-                            <span>Play</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                {/* Card Title Section */}
+                <div className="p-3 flex flex-col justify-center min-h-[50px]">
+                  <h3 
+                    className="text-xs font-semibold leading-snug group-hover:text-white transition-colors"
+                    style={{
+                      color: isCompleted ? '#34d399' : isActive ? '#60a5fa' : '#94a3b8'
+                    }}
+                  >
+                    {lvl.title}
+                  </h3>
                 </div>
               </div>
             );
