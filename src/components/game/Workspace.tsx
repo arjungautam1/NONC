@@ -311,86 +311,112 @@ export const Workspace: React.FC = () => {
 
     // 1. First fillet / exit segment from p1
     let A0 = p1_ext;
+    let ext1IsStraight = false;
+
     if (ext1.x !== 0 || ext1.y !== 0) {
       const target = activeWaypoints.length > 0 
         ? activeWaypoints[0] 
         : p2_ext;
 
       if (ext1.x !== 0) {
-        const dirX = Math.sign(ext1.x);
-        const dirY = target.y >= p1.y ? 1 : -1;
-        const filletStart = { x: p1_ext.x - dirX * R, y: p1.y };
-        const filletEnd = { x: p1_ext.x, y: p1.y + dirY * R };
+        // If target is in the same horizontal direction and vertical distance is small, go straight
+        if (Math.sign(target.x - p1.x) === Math.sign(ext1.x) && Math.abs(target.y - p1.y) < 30) {
+          ext1IsStraight = true;
+          A0 = p1_ext;
+        } else {
+          const dirX = Math.sign(ext1.x);
+          const dirY = target.y >= p1.y ? 1 : -1;
+          const filletStart = { x: p1_ext.x - dirX * R, y: p1.y };
+          const filletEnd = { x: p1_ext.x, y: p1.y + dirY * R };
 
-        points.push(filletStart);
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const mt = 1 - t;
-          points.push({
-            x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
-            y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
-          });
+          points.push(filletStart);
+          for (let i = 1; i < 5; i++) {
+            const t = i / 5;
+            const mt = 1 - t;
+            points.push({
+              x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
+              y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
+            });
+          }
+          A0 = filletEnd;
         }
-        A0 = filletEnd;
       } else {
-        const dirY = Math.sign(ext1.y);
-        const dirX = target.x >= p1.x ? 1 : -1;
-        const filletStart = { x: p1.x, y: p1_ext.y - dirY * R };
-        const filletEnd = { x: p1.x + dirX * R, y: p1_ext.y };
+        // If target is in the same vertical direction and horizontal distance is small, go straight
+        if (Math.sign(target.y - p1.y) === Math.sign(ext1.y) && Math.abs(target.x - p1.x) < 30) {
+          ext1IsStraight = true;
+          A0 = p1_ext;
+        } else {
+          const dirY = Math.sign(ext1.y);
+          const dirX = target.x >= p1.x ? 1 : -1;
+          const filletStart = { x: p1.x, y: p1_ext.y - dirY * R };
+          const filletEnd = { x: p1.x + dirX * R, y: p1_ext.y };
 
-        points.push(filletStart);
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const mt = 1 - t;
-          points.push({
-            x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
-            y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
-          });
+          points.push(filletStart);
+          for (let i = 1; i < 5; i++) {
+            const t = i / 5;
+            const mt = 1 - t;
+            points.push({
+              x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
+              y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
+            });
+          }
+          A0 = filletEnd;
         }
-        A0 = filletEnd;
       }
     }
 
     // 2. Second fillet / entry segment into p2
     let AN = p2_ext;
+    let ext2IsStraight = false;
     const filletPoints2: { x: number; y: number }[] = [];
+
     if (ext2.x !== 0 || ext2.y !== 0) {
       const source = activeWaypoints.length > 0
         ? activeWaypoints[activeWaypoints.length - 1]
         : A0;
 
       if (ext2.x !== 0) {
-        const dirX = Math.sign(ext2.x);
-        const dirY = source.y >= p2.y ? 1 : -1;
-        const filletStart = { x: p2_ext.x, y: p2.y + dirY * R };
-        const filletEnd = { x: p2_ext.x - dirX * R, y: p2.y };
+        if (Math.sign(source.x - p2.x) === Math.sign(ext2.x) && Math.abs(source.y - p2.y) < 30) {
+          ext2IsStraight = true;
+          AN = p2_ext;
+        } else {
+          const dirX = Math.sign(ext2.x);
+          const dirY = source.y >= p2.y ? 1 : -1;
+          const filletStart = { x: p2_ext.x, y: p2.y + dirY * R };
+          const filletEnd = { x: p2_ext.x - dirX * R, y: p2.y };
 
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const mt = 1 - t;
-          filletPoints2.push({
-            x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
-            y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
-          });
+          for (let i = 1; i < 5; i++) {
+            const t = i / 5;
+            const mt = 1 - t;
+            filletPoints2.push({
+              x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
+              y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
+            });
+          }
+          filletPoints2.push(filletEnd);
+          AN = filletStart;
         }
-        filletPoints2.push(filletEnd);
-        AN = filletStart;
       } else {
-        const dirY = Math.sign(ext2.y);
-        const dirX = source.x >= p2.x ? 1 : -1;
-        const filletStart = { x: p2.x + dirX * R, y: p2_ext.y };
-        const filletEnd = { x: p2.x, y: p2_ext.y - dirY * R };
+        if (Math.sign(source.y - p2.y) === Math.sign(ext2.y) && Math.abs(source.x - p2.x) < 30) {
+          ext2IsStraight = true;
+          AN = p2_ext;
+        } else {
+          const dirY = Math.sign(ext2.y);
+          const dirX = source.x >= p2.x ? 1 : -1;
+          const filletStart = { x: p2.x + dirX * R, y: p2_ext.y };
+          const filletEnd = { x: p2.x, y: p2_ext.y - dirY * R };
 
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const mt = 1 - t;
-          filletPoints2.push({
-            x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
-            y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
-          });
+          for (let i = 1; i < 5; i++) {
+            const t = i / 5;
+            const mt = 1 - t;
+            filletPoints2.push({
+              x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
+              y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
+            });
+          }
+          filletPoints2.push(filletEnd);
+          AN = filletStart;
         }
-        filletPoints2.push(filletEnd);
-        AN = filletStart;
       }
     }
 
@@ -434,10 +460,48 @@ export const Workspace: React.FC = () => {
       const dx = Math.abs(AN.x - A0.x);
       const dy = Math.abs(AN.y - A0.y);
       const sag = Math.max(30, Math.min(100, (dx + dy) * 0.15));
-      const cp1x = A0.x;
-      const cp1y = A0.y + sag;
-      const cp2x = AN.x;
-      const cp2y = AN.y + sag;
+
+      let cp1x = A0.x;
+      let cp1y = A0.y;
+      const dirX = AN.x >= A0.x ? 1 : -1;
+      const dirY = AN.y >= A0.y ? 1 : -1;
+
+      if (ext1.x !== 0) {
+        if (ext1IsStraight) {
+          cp1x = A0.x + Math.sign(ext1.x) * sag;
+        } else {
+          cp1y = A0.y + dirY * sag;
+        }
+      } else if (ext1.y !== 0) {
+        if (ext1IsStraight) {
+          cp1y = A0.y + Math.sign(ext1.y) * sag;
+        } else {
+          cp1x = A0.x + dirX * sag;
+        }
+      } else {
+        cp1y = A0.y + sag;
+      }
+
+      let cp2x = AN.x;
+      let cp2y = AN.y;
+      const sDirX = A0.x >= AN.x ? 1 : -1;
+      const sDirY = A0.y >= AN.y ? 1 : -1;
+
+      if (ext2.x !== 0) {
+        if (ext2IsStraight) {
+          cp2x = AN.x + Math.sign(ext2.x) * sag;
+        } else {
+          cp2y = AN.y + sDirY * sag;
+        }
+      } else if (ext2.y !== 0) {
+        if (ext2IsStraight) {
+          cp2y = AN.y + Math.sign(ext2.y) * sag;
+        } else {
+          cp2x = AN.x + sDirX * sag;
+        }
+      } else {
+        cp2y = AN.y + sag;
+      }
 
       for (let i = 0; i <= STEPS; i++) {
         const t = i / STEPS;
