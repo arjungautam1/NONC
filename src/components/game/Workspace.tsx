@@ -14,6 +14,7 @@ export const Workspace: React.FC = () => {
     toggleSimulation,
     simulation,
     updateComponentPosition,
+    addComponent,
     addWire,
     removeWire,
     multimeter,
@@ -711,6 +712,46 @@ export const Workspace: React.FC = () => {
     }
   };
 
+  const spliceWireAtCoords = (wire: Wire, x: number, y: number) => {
+    const junctionId = `junction_${Date.now()}`;
+    const junctionComponent: CircuitComponent = {
+      id: junctionId,
+      type: 'junction',
+      x,
+      y,
+      label: '',
+      terminals: [{ id: 'port', name: 'Joint', type: 'in', x: 0, y: 0 }],
+      state: { color: wire.color }
+    };
+
+    // Add junction component to store
+    addComponent(junctionComponent);
+
+    // Remove original wire
+    removeWire(wire.id);
+
+    // Create two new wires to connect original start & end to the new junction
+    addWire(
+      wire.fromComponentId,
+      wire.fromTerminalId,
+      junctionId,
+      'port',
+      wire.color,
+      []
+    );
+
+    addWire(
+      junctionId,
+      'port',
+      wire.toComponentId,
+      wire.toTerminalId,
+      wire.color,
+      []
+    );
+
+    return junctionId;
+  };
+
   // Check if a wire has current flowing through it
   const isWireAnimating = (wire: Wire) => {
     if (!isRunning || simulation.shortCircuit) return false;
@@ -948,7 +989,24 @@ export const Workspace: React.FC = () => {
                 className="cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedWireId(isSelected ? null : wire.id);
+                  if (drawingWireStart) {
+                    // SPLICING: Create a junction at the click point, and connect the currently drawn wire to it!
+                    const coords = getSVGCoords(e as any);
+                    const junctionId = spliceWireAtCoords(wire, coords.x, coords.y);
+                    addWire(
+                      drawingWireStart.componentId,
+                      drawingWireStart.terminalId,
+                      junctionId,
+                      'port',
+                      activeColor,
+                      tempWaypoints
+                    );
+                    setDrawingWireStart(null);
+                    setTempWaypoints([]);
+                  } else {
+                    // Regular selection
+                    setSelectedWireId(isSelected ? null : wire.id);
+                  }
                 }}
               />
 
@@ -1009,7 +1067,7 @@ export const Workspace: React.FC = () => {
               {/* Delete trigger button in middle of wire */}
               {isSelected && (
                 <g 
-                  transform={`translate(${(p1.x + p2.x) / 2}, ${(p1.y + p2.y) / 2 + 15})`}
+                  transform={`translate(${(p1.x + p2.x) / 2 + 12}, ${(p1.y + p2.y) / 2 + 15})`}
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1017,9 +1075,36 @@ export const Workspace: React.FC = () => {
                     setSelectedWireId(null);
                   }}
                 >
+                  <title>Delete Wire</title>
                   <circle cx="0" cy="0" r="10" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1" />
                   <line x1="-4" y1="-4" x2="4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
                   <line x1="4" y1="-4" x2="-4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
+                </g>
+              )}
+
+              {/* Splice / Extend button next to Delete button */}
+              {isSelected && (
+                <g 
+                  transform={`translate(${(p1.x + p2.x) / 2 - 12}, ${(p1.y + p2.y) / 2 + 15})`}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const midX = (p1.x + p2.x) / 2;
+                    const midY = (p1.y + p2.y) / 2;
+                    const junctionId = spliceWireAtCoords(wire, midX, midY);
+                    
+                    // Immediately start drawing a wire from this new junction!
+                    setDrawingWireStart({ componentId: junctionId, terminalId: 'port' });
+                    setActiveColor(wire.color);
+                    setMousePos({ x: midX, y: midY });
+                    setPointerDownCoords({ x: midX, y: midY });
+                    setSelectedWireId(null);
+                  }}
+                >
+                  <title>Splice Wire / Extend Joint</title>
+                  <circle cx="0" cy="0" r="10" fill="#2563eb" stroke="#1e3a8a" strokeWidth="1" />
+                  <line x1="-5" y1="0" x2="5" y2="0" stroke="#ffffff" strokeWidth="1.8" />
+                  <line x1="0" y1="-5" x2="0" y2="5" stroke="#ffffff" strokeWidth="1.8" />
                 </g>
               )}
 
@@ -1182,11 +1267,13 @@ export const Workspace: React.FC = () => {
                         data-terminal-id={term.id}
                       />
 
-                      {/* Metal ring */}
-                      <circle cx="0" cy="0" r="6" fill="#cbd5e1" stroke="#334155" strokeWidth="1.5" />
-                      
-                      {/* Connection center stud */}
-                      <circle cx="0" cy="0" r="3.5" fill={termColor} />
+                      {/* Metal ring & Connection stud (Only for non-junction terminals) */}
+                      {comp.type !== 'junction' && (
+                        <>
+                          <circle cx="0" cy="0" r="6" fill="#cbd5e1" stroke="#334155" strokeWidth="1.5" />
+                          <circle cx="0" cy="0" r="3.5" fill={termColor} />
+                        </>
+                      )}
 
                       {/* Red probe indicator badge */}
                       {hasRedProbe && (
@@ -1206,15 +1293,17 @@ export const Workspace: React.FC = () => {
 
                       {/* Floating label */}
                       {isHovered ? (
-                        <text y="-22" fill="#ffffff" fontSize="9" fontWeight="black" textAnchor="middle" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.8))">
-                          {probeMode
-                            ? (probeMode === 'red' ? `🔴 Attach RED → ${term.name}` : `⚫ Attach BLK → ${term.name}`)
-                            : term.name
-                          }
-                        </text>
+                        comp.type !== 'junction' && (
+                          <text y="-22" fill="#ffffff" fontSize="9" fontWeight="black" textAnchor="middle" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.8))">
+                            {probeMode
+                              ? (probeMode === 'red' ? `🔴 Attach RED → ${term.name}` : `⚫ Attach BLK → ${term.name}`)
+                              : term.name
+                            }
+                          </text>
+                        )
                       ) : (
                         // Don't show static label for timer_relay – board SVG already prints labels on the PCB
-                        comp.type !== 'timer_relay' && (
+                        comp.type !== 'timer_relay' && comp.type !== 'junction' && (
                           <text y="-10" fill="#a4b0cb" fontSize="7" fontWeight="bold" textAnchor="middle" opacity="0.6">
                             {term.name}
                           </text>

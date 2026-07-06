@@ -22,7 +22,8 @@ export type ComponentType =
   | 'ac_source'
   | 'transformer'
   | 'roland_fan'
-  | 'parking_gate';
+  | 'parking_gate'
+  | 'junction';
 
 export type TerminalType =
   | 'pos'

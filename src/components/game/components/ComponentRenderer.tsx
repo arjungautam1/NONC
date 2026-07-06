@@ -74,6 +74,27 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <RolandFan component={component} isEnergized={isEnergized} />;
     case 'parking_gate':
       return <ParkingGate component={component} />;
+    case 'junction':
+      const getJunctionColor = (colorName: string) => {
+        switch (colorName) {
+          case 'red': return '#ef4444';
+          case 'black': return '#526077';
+          case 'green': return '#22c55e';
+          case 'orange': return '#f97316';
+          default: return '#f59e0b';
+        }
+      };
+      return (
+        <circle 
+          cx="0" 
+          cy="0" 
+          r="4.5" 
+          fill={getJunctionColor(component.state.color)} 
+          stroke="#ffffff" 
+          strokeWidth="1.2" 
+          style={{ filter: isEnergized ? 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.9))' : 'none' }}
+        />
+      );
     default:
       return null;
   }
