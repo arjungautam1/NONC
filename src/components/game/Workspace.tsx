@@ -874,33 +874,71 @@ export const Workspace: React.FC = () => {
             const btnX = minX - 55;
             const btnY = minY - 75;
 
+            {/* SVG toggle switch — no foreignObject, scales with zoom */}
             return (
-              <foreignObject
-                x={btnX}
-                y={btnY}
-                width="145"
-                height="50"
-                className="overflow-visible select-none"
+              <g
+                transform={`translate(${btnX}, ${btnY})`}
+                onClick={(e) => { e.stopPropagation(); toggleSimulation(); }}
+                style={{ cursor: 'pointer' }}
               >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSimulation();
-                  }}
-                  className={`w-[130px] h-[36px] rounded-lg border flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-md active:scale-95 ${
-                    isRunning
-                      ? 'bg-emerald-600/90 hover:bg-emerald-500 border-emerald-400 text-white shadow-emerald-950/40 font-black'
-                      : 'bg-rose-950/80 hover:bg-rose-900 border-rose-800 text-rose-300 shadow-rose-950/40 font-bold'
-                  }`}
-                  style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <span className={`w-2 h-2 rounded-full absolute ${isRunning ? 'bg-emerald-300 animate-ping' : 'bg-rose-600'}`} />
-                    <span className={`w-2 h-2 rounded-full relative ${isRunning ? 'bg-emerald-300' : 'bg-rose-600'}`} />
-                  </div>
-                  <span>Power: {isRunning ? 'ON' : 'OFF'}</span>
-                </button>
-              </foreignObject>
+                {/* Shadow / backing plate */}
+                <rect x="0" y="0" width="90" height="36" rx="18" fill={isRunning ? '#064e3b' : '#1c0a0a'} opacity="0.7" />
+
+                {/* Track */}
+                <rect x="0" y="0" width="90" height="36" rx="18"
+                  fill={isRunning ? '#059669' : '#3f0d0d'}
+                  stroke={isRunning ? '#6ee7b7' : '#f87171'}
+                  strokeWidth="1.5"
+                  style={{ transition: 'fill 0.25s, stroke 0.25s' }}
+                />
+
+                {/* Glow halo when ON */}
+                {isRunning && (
+                  <rect x="-3" y="-3" width="96" height="42" rx="21"
+                    fill="none" stroke="#34d399" strokeWidth="2" opacity="0.35"
+                    className="animate-pulse"
+                  />
+                )}
+
+                {/* Thumb knob */}
+                <circle
+                  cx={isRunning ? 72 : 18}
+                  cy="18"
+                  r="13"
+                  fill={isRunning ? '#d1fae5' : '#7f1d1d'}
+                  stroke={isRunning ? '#a7f3d0' : '#ef4444'}
+                  strokeWidth="1.5"
+                  style={{ transition: 'cx 0.25s cubic-bezier(0.34,1.56,0.64,1), fill 0.25s, stroke 0.25s' }}
+                />
+
+                {/* Thumb highlight glint */}
+                <circle
+                  cx={isRunning ? 68 : 14}
+                  cy="13"
+                  r="4"
+                  fill="white"
+                  opacity={isRunning ? 0.35 : 0.12}
+                  style={{ transition: 'cx 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}
+                />
+
+                {/* ON label */}
+                <text
+                  x="26" y="23"
+                  fontSize="8.5" fontWeight="800" fontFamily="monospace"
+                  fill={isRunning ? '#d1fae5' : '#4b1c1c'}
+                  textAnchor="middle"
+                  style={{ transition: 'fill 0.25s', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                >ON</text>
+
+                {/* OFF label */}
+                <text
+                  x="65" y="23"
+                  fontSize="8.5" fontWeight="800" fontFamily="monospace"
+                  fill={isRunning ? '#064e3b' : '#fca5a5'}
+                  textAnchor="middle"
+                  style={{ transition: 'fill 0.25s', letterSpacing: '0.08em' }}
+                >OFF</text>
+              </g>
             );
           })()}
 
