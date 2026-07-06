@@ -33,7 +33,6 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   const [hasClosed, setHasClosed] = React.useState(true);
 
   // Keep references to timeouts so we can manage them across renders safely
-  const startDriveTimeoutRef = React.useRef<any>(null);
   const pressTimeoutRef = React.useRef<any>(null);
   const releaseTimeoutRef = React.useRef<any>(null);
   const animTimeoutRef = React.useRef<any>(null);
@@ -45,45 +44,40 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
     }
   }, [travel]);
 
-  // Trigger the vehicle Loop Detector and car animation when the gate opens (with 5-second hold)
+  // Trigger the vehicle Loop Detector and car animation when the gate opens
   React.useEffect(() => {
     if (isOpen && hasClosed && !isCarDriving && isRunning) {
+      setIsCarDriving(true);
       setHasClosed(false); // Lock out another car from arriving until gate fully closes again
 
       // Clear any pending timeouts
-      if (startDriveTimeoutRef.current) clearTimeout(startDriveTimeoutRef.current);
       if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
 
-      // Wait 5 seconds before car drives through and triggers the close sensor
-      startDriveTimeoutRef.current = setTimeout(() => {
-        if (useGameStore.getState().isRunning) {
-          setIsCarDriving(true);
-
-          // Simulate car driving over the Loop Detector (presses button after 1.1 seconds - after passing gate arm)
-          pressTimeoutRef.current = setTimeout(() => {
-            useGameStore.getState().pressButton('btn2', true);
-          }, 1100);
-
-          // Simulate car clearing the Loop Detector (releases button after 1.5 seconds)
-          releaseTimeoutRef.current = setTimeout(() => {
-            useGameStore.getState().pressButton('btn2', false);
-          }, 1500);
-
-          // Reset the car driving state after the animation finishes (1.6 seconds)
-          animTimeoutRef.current = setTimeout(() => {
-            setIsCarDriving(false);
-          }, 1600);
-        }
+      // The car passes immediately (at 0.0s, taking 1.5s to cross and exit)
+      // The gate stays open for 5.0s, then the loop detector registers the pass to lower it
+      
+      // Simulate car driving over the Loop Detector (presses button after 5.0 seconds of open hold time)
+      pressTimeoutRef.current = setTimeout(() => {
+        useGameStore.getState().pressButton('btn2', true);
       }, 5000);
+
+      // Simulate car clearing the Loop Detector (releases button after 5.6 seconds)
+      releaseTimeoutRef.current = setTimeout(() => {
+        useGameStore.getState().pressButton('btn2', false);
+      }, 5600);
+
+      // Reset the car driving state after the animation finishes (1.6 seconds from start)
+      animTimeoutRef.current = setTimeout(() => {
+        setIsCarDriving(false);
+      }, 1600);
     }
   }, [isOpen, hasClosed, isRunning, isCarDriving]);
 
   // Clean up timeouts and ensure the button is released when simulation stops or component unmounts
   React.useEffect(() => {
     if (!isRunning) {
-      if (startDriveTimeoutRef.current) clearTimeout(startDriveTimeoutRef.current);
       if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
@@ -93,7 +87,6 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
     }
 
     return () => {
-      if (startDriveTimeoutRef.current) clearTimeout(startDriveTimeoutRef.current);
       if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
