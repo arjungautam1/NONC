@@ -1326,113 +1326,104 @@ export const Workspace: React.FC = () => {
       {components.length > 0 && (
         <div className="absolute top-14 left-4 z-20 pointer-events-auto bg-[#0b0f16]/90 border border-white/10 rounded-lg p-2.5 shadow-2xl flex flex-col items-center gap-1.5 backdrop-blur-md">
           <div className="text-[9px] font-black tracking-wider text-slate-500 uppercase select-none">System Power</div>
-          <svg width="54" height="86" viewBox="0 0 54 86" style={{ cursor: 'pointer' }}>
+          <svg width="64" height="76" viewBox="0 0 64 76" style={{ cursor: 'pointer' }}>
             <defs>
-              <linearGradient id="switchBodyGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stopColor="#6b7280" />
-                <stop offset="18%"  stopColor="#d1d5db" />
-                <stop offset="45%"  stopColor="#f9fafb" />
-                <stop offset="65%"  stopColor="#e5e7eb" />
-                <stop offset="100%" stopColor="#9ca3af" />
+              {/* Textured waffle pattern */}
+              <pattern id="wafflePattern" width="4" height="4" patternUnits="userSpaceOnUse">
+                <rect width="3" height="3" fill="#ffffff" opacity="0.12" />
+                <rect x="0" y="0" width="4" height="4" fill="none" stroke="#000000" strokeWidth="0.5" opacity="0.25" />
+              </pattern>
+              
+              {/* Glowing red filter */}
+              <filter id="red-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              {/* Tilted Away (Shadow) */}
+              <linearGradient id="topTiltedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#7f1d1d" />
+                <stop offset="100%" stopColor="#450a0a" />
               </linearGradient>
-              <linearGradient id="switchBodyGradV" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#9ca3af" />
-                <stop offset="30%"  stopColor="#f3f4f6" />
-                <stop offset="70%"  stopColor="#e5e7eb" />
-                <stop offset="100%" stopColor="#6b7280" />
+              <linearGradient id="bottomTiltedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#580f0f" />
+                <stop offset="100%" stopColor="#3b0707" />
               </linearGradient>
-              <linearGradient id="batGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stopColor="#374151" />
-                <stop offset="30%"  stopColor="#6b7280" />
-                <stop offset="60%"  stopColor="#9ca3af" />
-                <stop offset="100%" stopColor="#4b5563" />
+
+              {/* Pressed In / Illuminated */}
+              <linearGradient id="topPressedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#b91c1c" />
+                <stop offset="100%" stopColor="#991b1b" />
               </linearGradient>
-              <radialGradient id="cavityGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%"   stopColor="#111827" />
-                <stop offset="100%" stopColor="#030712" />
-              </radialGradient>
-              <radialGradient id="ledOn" cx="50%" cy="50%" r="50%">
-                <stop offset="0%"   stopColor="#86efac" />
-                <stop offset="60%"  stopColor="#22c55e" />
-                <stop offset="100%" stopColor="#15803d" />
-              </radialGradient>
-              <radialGradient id="ledOff" cx="50%" cy="50%" r="50%">
-                <stop offset="0%"   stopColor="#6b7280" />
-                <stop offset="100%" stopColor="#374151" />
-              </radialGradient>
+              <linearGradient id="bottomPressedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#ff4d4d" />
+                <stop offset="40%" stopColor="#ef4444" />
+                <stop offset="100%" stopColor="#b91c1c" />
+              </linearGradient>
             </defs>
 
-            {/* Outer shadow */}
-            <rect x="3" y="5" width="54" height="86" rx="7" fill="#000" opacity="0.45" />
+            {/* Black bezel casing */}
+            <rect x="2" y="2" width="60" height="72" rx="6" fill="#18181b" stroke="#09090b" strokeWidth="2.5" />
+            
+            {/* Inner bevel frame */}
+            <rect x="5" y="5" width="54" height="66" rx="4" fill="#2d2d30" stroke="#121214" strokeWidth="1" />
+            
+            {/* Rocker cavity depth */}
+            <rect x="8" y="8" width="48" height="60" rx="2" fill="#09090b" />
 
-            {/* Switch body */}
-            <rect x="0" y="0" width="54" height="86" rx="7"
-              fill="url(#switchBodyGrad)"
-              stroke="#374151" strokeWidth="1"
-            />
-            <rect x="0" y="0" width="54" height="86" rx="7"
-              fill="url(#switchBodyGradV)"
-              opacity="0.45"
-            />
-            <rect x="1" y="1" width="52" height="4" rx="3" fill="white" opacity="0.3" />
-
-            {/* LED */}
-            <circle cx="27" cy="12" r="5"
-              fill={isRunning ? 'url(#ledOn)' : 'url(#ledOff)'}
-              stroke={isRunning ? '#bbf7d0' : '#4b5563'}
-              strokeWidth="0.8"
-            />
-            <circle cx="25.5" cy="10.5" r="1.5" fill="white" opacity={isRunning ? 0.7 : 0.15} />
+            {/* Glowing neon active backlight */}
             {isRunning && (
-              <circle cx="27" cy="12" r="8" fill="#22c55e" opacity="0.2" className="animate-pulse" />
+              <rect x="10" y="10" width="44" height="56" rx="3" fill="#ef4444" opacity="0.3" filter="url(#red-glow)" />
             )}
 
-            {/* Cavity */}
-            <ellipse cx="27" cy="48" rx="14" ry="26"
-              fill="url(#cavityGrad)"
-              stroke="#111827" strokeWidth="1"
-            />
-            <ellipse cx="27" cy="48" rx="14" ry="26"
-              fill="none"
-              stroke="#1f2937" strokeWidth="2"
-            />
+            {/* Rocker Key Body */}
+            {isRunning ? (
+              // ON state: bottom half "I" is pressed down, top half "O" is tilted up (shadowed)
+              <g>
+                {/* Top tilted-away half "O" */}
+                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,38 L 10,38 Z" fill="url(#topTiltedGrad)" />
+                
+                {/* Bottom pressed-in half "I" (brightly illuminated) */}
+                <path d="M 10,38 L 54,38 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#bottomPressedGrad)" />
 
-            {/* Bat handle */}
-            <g transform={`translate(27, 48) rotate(${isRunning ? -30 : 30})`}
-               style={{ transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
-              <rect x="-4.5" y="-22" width="9" height="30" rx="4.5"
-                fill="url(#batGrad)"
-                stroke="#1f2937" strokeWidth="0.8"
-              />
-              <ellipse cx="0" cy="-22" rx="5.5" ry="4"
-                fill="#4b5563"
-                stroke="#1f2937" strokeWidth="0.8"
-              />
-              <ellipse cx="-1.5" cy="-23.5" rx="2" ry="1.2"
-                fill="white" opacity="0.35"
-              />
-              <ellipse cx="0" cy="6" rx="6" ry="4"
-                fill="#374151"
-                stroke="#111827" strokeWidth="0.8"
-              />
-              <ellipse cx="0" cy="6" rx="4" ry="2.5"
-                fill="#6b7280"
-              />
-            </g>
+                {/* Textured Grid overlay */}
+                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#wafflePattern)" />
 
-            {/* Labels */}
-            <text x="27" y="80"
-              fontSize="7" fontWeight="900" fontFamily="monospace"
-              fill={isRunning ? '#22c55e' : '#6b7280'}
-              textAnchor="middle"
-              style={{ transition: 'fill 0.2s', letterSpacing: '0.12em' }}
-            >{ isRunning ? 'ON' : 'OFF' }</text>
+                {/* High contrast line in middle pivot */}
+                <line x1="10" y1="38" x2="54" y2="38" stroke="#7f1d1d" strokeWidth="1.5" />
+                <line x1="10" y1="39" x2="54" y2="39" stroke="#f87171" strokeWidth="0.5" opacity="0.5" />
 
-            {/* Click target */}
-            <rect x="0" y="0" width="54" height="86" rx="7"
-              fill="transparent"
-              onClick={(e) => { e.stopPropagation(); toggleSimulation(); }}
-            />
+                {/* Symbols */}
+                <text x="32" y="26" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#7f1d1d" textAnchor="middle" opacity="0.8">O</text>
+                <text x="32" y="56" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#ffe4e6" textAnchor="middle" filter="url(#red-glow)">I</text>
+              </g>
+            ) : (
+              // OFF state: top half "O" is pressed down, bottom half "I" is tilted up (shadowed)
+              <g>
+                {/* Top pressed-in half "O" */}
+                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,38 L 10,38 Z" fill="url(#topPressedGrad)" />
+                
+                {/* Bottom tilted-away half "I" (shadowed) */}
+                <path d="M 10,38 L 54,38 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#bottomTiltedGrad)" />
+
+                {/* Textured Grid overlay */}
+                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#wafflePattern)" />
+
+                {/* High contrast line in middle pivot */}
+                <line x1="10" y1="38" x2="54" y2="38" stroke="#450a0a" strokeWidth="1.5" />
+                <line x1="10" y1="39" x2="54" y2="39" stroke="#b91c1c" strokeWidth="0.5" opacity="0.3" />
+
+                {/* Symbols */}
+                <text x="32" y="26" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#fecaca" textAnchor="middle">O</text>
+                <text x="32" y="56" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#7f1d1d" textAnchor="middle" opacity="0.7">I</text>
+              </g>
+            )}
+
+            {/* Click target overlay */}
+            <rect x="0" y="0" width="64" height="76" fill="transparent" onClick={(e) => { e.stopPropagation(); toggleSimulation(); }} />
           </svg>
         </div>
       )}
