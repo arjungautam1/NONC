@@ -65,6 +65,7 @@ interface GameState {
   toggleSimulation: () => void;
   
   useHint: () => void;
+  hintRevealedAt: number;
   startTimer: () => void;
   stopTimer: () => void;
   tickTimer: () => void;
@@ -74,6 +75,8 @@ interface GameState {
   unlockAchievement: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
+  bottomPanelOpen: boolean;
+  toggleBottomPanel: () => void;
   viewMode: 'levels' | 'lab';
   setViewMode: (mode: 'levels' | 'lab') => void;
 }
@@ -295,6 +298,9 @@ export const useGameStore = create<GameState>((set, get) => {
     timerIntervalId: null,
     sidebarOpen: true,
     toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
+    bottomPanelOpen: true,
+    toggleBottomPanel: () => set(state => ({ bottomPanelOpen: !state.bottomPanelOpen })),
+    hintRevealedAt: 0,
     viewMode: 'levels',
     setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -559,7 +565,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
     useHint: () => {
       const score = { ...get().score, hintsUsed: get().score.hintsUsed + 1 };
-      set({ score });
+      set({ score, hintRevealedAt: Date.now() });
     },
 
     startTimer: () => {

@@ -103,26 +103,48 @@ export const Sidebar: React.FC = () => {
   const unlockedHints = level.hints.slice(0, maxHintIndex + 1);
 
   return (
-    <div className={`relative h-full transition-all duration-300 ease-in-out shrink-0 flex ${sidebarOpen ? 'w-[380px]' : 'w-0'}`}>
-      
-      {/* Sidebar Collapse/Expand Toggle Button (Floats on the border) */}
-      <button
-        onClick={toggleSidebar}
-        className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-40 bg-[#1e293b] border border-[#334155] rounded-r-md py-3.5 px-0.5 hover:bg-[#334155] cursor-pointer text-slate-400 hover:text-white transition-all flex items-center justify-center shadow-lg"
-        title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-        style={{ pointerEvents: 'auto' }}
-      >
-        {sidebarOpen ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-      </button>
+    <div className={`relative h-full transition-all duration-300 ease-in-out shrink-0 flex`}
+      style={{ width: sidebarOpen ? 380 : 28 }}>
+
+      {/* ── Slim Edge Tab (visible when closed) ── */}
+      {!sidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          title="Open Sidebar"
+          className="w-[28px] h-full bg-[#0d1424] border-r border-[#1e3a5f] flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#1a2a45] transition-all group shrink-0"
+          style={{ pointerEvents: 'auto' }}
+        >
+          {/* Glow pill indicator */}
+          <span className="w-1 h-10 rounded-full bg-[#1a4a8a] group-hover:bg-[#2563eb] transition-colors shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
+          <ChevronRight className="w-3.5 h-3.5 text-[#2563eb] group-hover:text-white transition-colors" />
+          <span
+            className="text-[9px] font-extrabold text-[#2563eb] group-hover:text-white tracking-widest uppercase font-mono"
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+          >
+            GUIDE
+          </span>
+        </button>
+      )}
 
       {/* Main Sidebar Panel */}
+      {sidebarOpen && (
       <div className="w-[380px] bg-industrial-gray-900 border-r border-[#2a2e39] flex flex-col h-full overflow-hidden shrink-0">
         
         {/* 1. Level Selector Header (shrink-0) */}
         <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-800/50 flex flex-col gap-2 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-extrabold tracking-widest text-yellow-500">TRAINING MODULE</span>
-            <span className="text-xs font-bold text-industrial-gray-400 font-mono">{formatTime(timeElapsed)}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-industrial-gray-400 font-mono">{formatTime(timeElapsed)}</span>
+              {/* Collapse sidebar button */}
+              <button
+                onClick={toggleSidebar}
+                title="Collapse Sidebar"
+                className="p-1 rounded hover:bg-industrial-gray-700 cursor-pointer text-slate-500 hover:text-white transition-all"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
           </div>
           <div className="flex items-center justify-between mt-1">
             <button 
@@ -265,6 +287,7 @@ export const Sidebar: React.FC = () => {
           </span>
         </div>
       </div>
+      )}
     </div>
   );
 };

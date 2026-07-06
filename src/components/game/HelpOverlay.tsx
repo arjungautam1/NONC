@@ -123,16 +123,35 @@ export const HelpOverlay: React.FC = () => {
     setMultimeterMode,
     setProbe,
     setProbeMode,
-    sidebarOpen
+    sidebarOpen,
+    hintRevealedAt
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
 
   const [isDismissed, setIsDismissed] = React.useState(false);
 
+  // Hint toast state
+  const [hintToastVisible, setHintToastVisible] = React.useState(false);
+  const hintToastTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showHintToast = React.useCallback(() => {
+    setHintToastVisible(true);
+    if (hintToastTimerRef.current) clearTimeout(hintToastTimerRef.current);
+    hintToastTimerRef.current = setTimeout(() => setHintToastVisible(false), 5000);
+  }, []);
+
   useEffect(() => {
     setIsDismissed(false);
+    setHintToastVisible(false);
   }, [currentLevelIndex]);
+
+  // Show toast whenever a hint is revealed (H key or button)
+  useEffect(() => {
+    if (hintRevealedAt > 0) {
+      showHintToast();
+    }
+  }, [hintRevealedAt, showHintToast]);
 
   const handleDownloadVisual = () => {
     const svgEl = document.querySelector('.real-world-visual-container svg');
@@ -442,6 +461,7 @@ export const HelpOverlay: React.FC = () => {
               onClick={() => {
                 soundManager.playClick();
                 useHint();
+                showHintToast();
               }}
               className="self-end text-[8px] font-extrabold text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 hover:bg-yellow-500/20 px-2 py-0.5 rounded border border-yellow-500/30 cursor-pointer transition-colors uppercase tracking-wider font-mono"
             >
@@ -555,6 +575,53 @@ export const HelpOverlay: React.FC = () => {
           </div>
         </div>
       )}
+      {/* ── Floating Hint Toast (bottom-right, appears on H key or Next Hint click) ── */}
+      {hintToastVisible && score.hintsUsed >= 0 && (() => {
+        const latestHintIdx = Math.min(score.hintsUsed, level.hints.length - 1);
+        const latestHint = level.hints[latestHintIdx];
+        return (
+          <div
+            className="fixed bottom-6 right-6 w-[340px] z-[60] pointer-events-auto"
+            style={{ animation: 'slideUpFadeIn 0.3s ease' }}
+          >
+            <div className="bg-[#0d1117] border border-yellow-500/40 rounded-2xl shadow-2xl overflow-hidden">
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-yellow-500/10 border-b border-yellow-500/20">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-yellow-400" />
+                  <span className="text-[10px] font-extrabold text-yellow-400 uppercase tracking-widest font-mono">
+                    Hint {latestHintIdx + 1} of {level.hints.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setHintToastVisible(false)}
+                  className="text-yellow-500/60 hover:text-yellow-300 cursor-pointer transition-colors font-bold text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+              {/* Hint text body */}
+              <div className="px-4 py-3">
+                <p className="text-sm text-zinc-200 leading-relaxed font-semibold">
+                  {latestHint}
+                </p>
+              </div>
+              {/* Footer — next / close */}
+              <div className="flex items-center justify-between px-4 py-2 border-t border-[#1e2535]">
+                <span className="text-[9px] text-zinc-500 font-mono">Press H for next hint</span>
+                {latestHintIdx < level.hints.length - 1 && (
+                  <button
+                    onClick={() => { useHint(); showHintToast(); }}
+                    className="text-[9px] font-extrabold text-yellow-500 hover:text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 px-2.5 py-1 rounded border border-yellow-500/30 cursor-pointer uppercase tracking-wider font-mono transition-colors"
+                  >
+                    Next Hint →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
