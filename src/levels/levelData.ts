@@ -1571,5 +1571,153 @@ export const levels: Level[] = [
       }
       return { success: false, feedback: 'Press the Push Button while the simulation is running to spin Roland\'s cap.' };
     }
+  },
+  {
+    id: 18,
+    title: 'Automatic Parking Gate',
+    description: 'Design an automatic control circuit for a parking barrier gate using a card reader, limit switches, and a loop detector.',
+    instructions: [
+      'Welcome to the parking gate module! Your task is to wire the automatic gate system.',
+      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1. Open Relay A2 to PSU (-).',
+      'Latching Open: Connect PSU (+) through the NC contact of Open Limit (limit_top) to Open Relay COM. Connect Open Relay NO to Open Relay A1. Connect Open Relay NO to Actuator (+) POS.',
+      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1. Close Relay A2 to PSU (-).',
+      'Latching Close: Connect PSU (+) through the NC contact of Closed Limit (limit_bottom) to Close Relay COM. Connect Close Relay NO to Close Relay A1. Connect Close Relay NO to Actuator (-) NEG.',
+      'Scan a card at the CDVI Reader to lift the gate, and then click the Loop Detector to lower the gate back down!'
+    ],
+    goals: [
+      'Connect CDVI Reader to raise the gate via Open Relay',
+      'Use limit switches to stop the gate at fully open and closed limits',
+      'Activate Loop Detector to lower the gate back to closed'
+    ],
+    inventory: [],
+    preplacedComponents: [
+      {
+        id: 'ps1',
+        type: 'power_supply',
+        x: 100,
+        y: 250,
+        label: '24V Power Supply',
+        terminals: [
+          { id: 'pos', name: '(+)', type: 'pos', x: -25, y: 15 },
+          { id: 'neg', name: '(-)', type: 'neg', x: 25, y: 15 }
+        ],
+        state: {}
+      },
+      {
+        id: 'reader1',
+        type: 'card_reader',
+        x: 260,
+        y: 150,
+        label: 'CDVI Reader',
+        terminals: [
+          { id: 'pos', name: '12V', type: 'pos', x: -30, y: 25 },
+          { id: 'neg', name: 'GND', type: 'neg', x: 30, y: 25 },
+          { id: 'out', name: 'TRIG', type: 'out', x: 0, y: -25 }
+        ],
+        state: {}
+      },
+      {
+        id: 'btn2',
+        type: 'button_no',
+        x: 260,
+        y: 350,
+        label: 'Loop Detector',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
+        ],
+        state: {}
+      },
+      {
+        id: 'relay_open',
+        type: 'relay',
+        x: 420,
+        y: 150,
+        label: 'Open Relay',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
+          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
+          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+        ],
+        state: {}
+      },
+      {
+        id: 'relay_close',
+        type: 'relay',
+        x: 420,
+        y: 350,
+        label: 'Close Relay',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
+          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
+          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+        ],
+        state: {}
+      },
+      {
+        id: 'limit_top',
+        type: 'limit_switch',
+        x: 600,
+        y: 150,
+        label: 'Open Limit Switch',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
+        ],
+        state: {}
+      },
+      {
+        id: 'limit_bottom',
+        type: 'limit_switch',
+        x: 600,
+        y: 350,
+        label: 'Closed Limit Switch',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
+        ],
+        state: {}
+      },
+      {
+        id: 'act1',
+        type: 'actuator',
+        x: 780,
+        y: 250,
+        label: 'Barrier Gate Arm',
+        terminals: [
+          { id: 'pos', name: 'POS', type: 'pos', x: -30, y: 35 },
+          { id: 'neg', name: 'NEG', type: 'neg', x: 30, y: 35 }
+        ],
+        state: {}
+      }
+    ],
+    preplacedWires: [],
+    hints: [
+      'Open Circuit: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1.',
+      'Open Latch: PSU (+) -> Open Limit IN. Open Limit OUT -> Open Relay COM. Open Relay NO -> Open Relay A1 (latch) & Actuator POS.',
+      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1.',
+      'Close Latch: PSU (+) -> Closed Limit IN. Closed Limit OUT -> Close Relay COM. Close Relay NO -> Close Relay A1 (latch) & Actuator NEG.'
+    ],
+    successCriteria: (components, _wires, _nodeVoltages, _isEnergized) => {
+      const act = components.find(c => c.id === 'act1');
+      const travel = act?.state.travel || 0;
+      
+      if (travel >= 100) {
+        act!.state.reachedTop = true;
+      }
+      
+      if (act?.state.reachedTop && travel <= 0) {
+        return { success: true };
+      }
+      
+      return {
+        success: false,
+        feedback: 'Wire the automatic gate so that scanning the CDVI Reader raises the gate to 100%, and clicking the Loop Detector lowers it back to 0%.'
+      };
+    }
   }
 ];

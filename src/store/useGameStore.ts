@@ -617,7 +617,7 @@ export const useGameStore = create<GameState>((set, get) => {
       });
 
       if (hasChanges) {
-        const elevator = updatedComponents.find(c => c.type === 'elevator_motor');
+        const elevator = updatedComponents.find(c => c.type === 'elevator_motor' || c.type === 'actuator');
         const elevatorTravel = elevator?.state.travel ?? 0;
 
         const finalComponents = updatedComponents.map(c => {
