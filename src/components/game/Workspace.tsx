@@ -1343,24 +1343,26 @@ export const Workspace: React.FC = () => {
                 </feMerge>
               </filter>
 
-              {/* Tilted Away (Shadow) */}
+              {/* Tilted Away (Shadow / Unlit) */}
               <linearGradient id="topTiltedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#7f1d1d" />
-                <stop offset="100%" stopColor="#450a0a" />
+                <stop offset="0%" stopColor="#5c0d0d" />
+                <stop offset="100%" stopColor="#2e0505" />
               </linearGradient>
               <linearGradient id="bottomTiltedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#580f0f" />
-                <stop offset="100%" stopColor="#3b0707" />
+                <stop offset="0%" stopColor="#450a0a" />
+                <stop offset="100%" stopColor="#240202" />
               </linearGradient>
 
-              {/* Pressed In / Illuminated */}
-              <linearGradient id="topPressedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#b91c1c" />
-                <stop offset="100%" stopColor="#991b1b" />
+              {/* OFF State - Pressed but Unlit */}
+              <linearGradient id="topUnlitGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#881337" />
+                <stop offset="100%" stopColor="#5c0d0d" />
               </linearGradient>
-              <linearGradient id="bottomPressedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+
+              {/* ON State - Pressed and Illuminated */}
+              <linearGradient id="bottomIllumGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#ff4d4d" />
-                <stop offset="40%" stopColor="#ef4444" />
+                <stop offset="35%" stopColor="#ef4444" />
                 <stop offset="100%" stopColor="#b91c1c" />
               </linearGradient>
             </defs>
@@ -1387,7 +1389,7 @@ export const Workspace: React.FC = () => {
                 <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,38 Z" fill="url(#topTiltedGrad)" />
                 
                 {/* Bottom pressed-in half "I" (brightly illuminated) */}
-                <path d="M 10,38 L 54,38 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#bottomPressedGrad)" />
+                <path d="M 10,38 L 54,38 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#bottomIllumGrad)" />
 
                 {/* Textured Grid overlay */}
                 <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#wafflePattern)" />
@@ -1397,14 +1399,14 @@ export const Workspace: React.FC = () => {
                 <line x1="10" y1="39" x2="54" y2="39" stroke="#f87171" strokeWidth="0.5" opacity="0.5" />
 
                 {/* Symbols */}
-                <text x="32" y="26" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#7f1d1d" textAnchor="middle" opacity="0.8">O</text>
+                <text x="32" y="26" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#ffffff" textAnchor="middle" opacity="0.15">O</text>
                 <text x="32" y="56" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#ffe4e6" textAnchor="middle" filter="url(#red-glow)">I</text>
               </g>
             ) : (
               // OFF state: top half "O" is pressed down, bottom half "I" is tilted up (shadowed)
               <g>
-                {/* Top pressed-in half "O" */}
-                <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,38 Z" fill="url(#topPressedGrad)" />
+                {/* Top pressed-in half "O" (unlit) */}
+                <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,38 Z" fill="url(#topUnlitGrad)" />
                 
                 {/* Bottom tilted-away half "I" (shadowed) */}
                 <path d="M 10,38 L 54,38 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#bottomTiltedGrad)" />
@@ -1416,9 +1418,9 @@ export const Workspace: React.FC = () => {
                 <line x1="10" y1="38" x2="54" y2="38" stroke="#450a0a" strokeWidth="1.5" />
                 <line x1="10" y1="39" x2="54" y2="39" stroke="#b91c1c" strokeWidth="0.5" opacity="0.3" />
 
-                {/* Symbols */}
-                <text x="32" y="26" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#fecaca" textAnchor="middle">O</text>
-                <text x="32" y="56" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#7f1d1d" textAnchor="middle" opacity="0.7">I</text>
+                {/* Symbols (totally matte, unlit) */}
+                <text x="32" y="26" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#ffffff" textAnchor="middle" opacity="0.35">O</text>
+                <text x="32" y="56" fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" fill="#ffffff" textAnchor="middle" opacity="0.12">I</text>
               </g>
             )}
 
