@@ -288,28 +288,26 @@ export const Sidebar: React.FC = () => {
               </span>
             </div>
 
-            {/* Revealed Hints List */}
-            {score.hintsUsed > 0 && (
-              <div className="flex flex-col gap-1.5 max-h-24 overflow-y-auto pr-1">
-                {level.hints.slice(0, score.hintsUsed).map((hint, idx) => (
-                  <div key={idx} className="p-2 rounded bg-amber-500/5 border border-amber-500/10 text-[10px] text-amber-200/90 leading-relaxed font-medium">
-                    <span className="font-bold text-amber-400 mr-1">Hint {idx + 1}:</span>
-                    {hint}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Revealed Active Hint */}
+            {score.hintsUsed > 0 && (() => {
+              const activeHintIdx = (score.hintsUsed - 1) % level.hints.length;
+              const hintText = level.hints[activeHintIdx];
+              return (
+                <div className="p-2 rounded bg-amber-500/5 border border-amber-500/10 text-[10px] text-amber-200/90 leading-relaxed font-medium">
+                  <span className="font-bold text-amber-400 mr-1">Hint {activeHintIdx + 1}:</span>
+                  {hintText}
+                </div>
+              );
+            })()}
 
-            {/* Reveal Button */}
-            {score.hintsUsed < level.hints.length && (
-              <button
-                onClick={useHint}
-                className="w-full py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1.5"
-              >
-                <span>Reveal Next Hint</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+            {/* Reveal/Cycle Button */}
+            <button
+              onClick={useHint}
+              className="w-full py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>{score.hintsUsed < level.hints.length ? 'Reveal Next Hint' : 'Next Hint (Cycle)'}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 

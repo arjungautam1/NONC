@@ -422,28 +422,26 @@ export const HelpOverlay: React.FC = () => {
                 <div className="flex-1 overflow-y-auto pr-1 text-[9.5px] leading-relaxed font-semibold text-slate-300 min-h-0 custom-scrollbar mb-1">
                   {score.hintsUsed === 0 ? (
                     <p className="text-slate-500 italic font-medium">Stuck? Click below to reveal step-by-step diagnostic hints.</p>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      {level.hints.slice(0, score.hintsUsed).map((hint, hIdx) => (
-                        <p key={hIdx} className="bg-amber-500/[0.03] border border-amber-500/10 rounded px-2 py-1 text-amber-200/90 font-medium">
-                          <span className="text-amber-400 font-bold mr-1">Hint {hIdx + 1}:</span>
-                          {hint}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+                  ) : (() => {
+                    const activeHintIdx = (score.hintsUsed - 1) % level.hints.length;
+                    const hintText = level.hints[activeHintIdx];
+                    return (
+                      <p className="bg-amber-500/[0.03] border border-amber-500/10 rounded px-2 py-1 text-amber-200/90 font-medium">
+                        <span className="text-amber-400 font-bold mr-1">Hint {activeHintIdx + 1}:</span>
+                        {hintText}
+                      </p>
+                    );
+                  })()}
                 </div>
 
                 {/* Reveal button */}
-                {score.hintsUsed < level.hints.length && (
-                  <button
-                    onClick={useHint}
-                    className="w-full py-1 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1"
-                  >
-                    <span>Reveal Hint</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </button>
-                )}
+                <button
+                  onClick={useHint}
+                  className="w-full py-1 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1"
+                >
+                  <span>{score.hintsUsed < level.hints.length ? 'Reveal Hint' : 'Next Hint (Cycle)'}</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
               </div>
             ) : (
               <p className="text-[9.5px] text-slate-500 font-medium mt-1">No hints available for this training module.</p>
