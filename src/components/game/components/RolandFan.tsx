@@ -15,26 +15,18 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
           <rect x="-55" y="-55" width="110" height="110" rx="8" />
         </clipPath>
 
-        {/* Spherical crown gradient */}
-        <radialGradient id="capCrownGrad" cx="35%" cy="35%" r="65%">
-          <stop offset="0%" stopColor="#fca5a5" />
-          <stop offset="35%" stopColor="#ef4444" />
-          <stop offset="85%" stopColor="#b91c1c" />
-          <stop offset="100%" stopColor="#7f1d1d" />
-        </radialGradient>
-
-        {/* Visor gradient */}
-        <linearGradient id="capBrimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#f87171" />
-          <stop offset="30%" stopColor="#ef4444" />
-          <stop offset="100%" stopColor="#991b1b" />
+        {/* Shiny yellow fan blade gradient */}
+        <linearGradient id="fanBladeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#fef08a" />
+          <stop offset="50%" stopColor="#eab308" />
+          <stop offset="100%" stopColor="#a16207" />
         </linearGradient>
 
-        {/* Squatchee button gradient */}
-        <radialGradient id="capButtonGrad" cx="30%" cy="30%" r="70%">
+        {/* Central hub gradient */}
+        <radialGradient id="hubGrad" cx="35%" cy="35%" r="65%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="40%" stopColor="#ef4444" />
-          <stop offset="100%" stopColor="#7f1d1d" />
+          <stop offset="60%" stopColor="#cbd5e1" />
+          <stop offset="100%" stopColor="#475569" />
         </radialGradient>
       </defs>
 
@@ -52,7 +44,7 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
         className="transition-colors duration-300"
       />
 
-      {/* Roland Portrait (Full 1:1 Aspect Ratio to show arms crossed and boxes) */}
+      {/* Roland Portrait */}
       <image 
         href="/roland.png" 
         x="-55" 
@@ -76,61 +68,31 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
         ★ RELAY MASTER ★
       </text>
 
-      {/* Rotating High-Fidelity Cap/Fan overlay positioned exactly on his red cap */}
-      <g transform="translate(-1, -37)" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.5))">
+      {/* Rotating Beanie Propeller sitting exactly on the top button of his red cap */}
+      <g transform="translate(-1.5, -43)" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.6))">
         <g 
           className={isEnergized ? 'animate-motor-spin' : ''}
           style={{ transformOrigin: '0px 0px' }}
         >
-          {/* 3 Stitched Visor / Brim blades */}
+          {/* 3 detailed aerodynamic fan blades */}
           <g transform="rotate(0)">
-            <path d="M-12 -8 C-12 -28, 12 -28, 12 -8 Z" fill="url(#capBrimGrad)" stroke="#7f1d1d" strokeWidth="1.2" />
-            <path d="M-9 -12 C-9 -24, 9 -24, 9 -12" fill="none" stroke="#fee2e2" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
-            <path d="M-6 -15 C-6 -20, 6 -20, 6 -15" fill="none" stroke="#fee2e2" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
+            <path d="M-2 -2 L-6 -22 C-3 -24, 3 -24, 6 -22 L2 -2 Z" fill="url(#fanBladeGrad)" stroke="#78350f" strokeWidth="0.8" />
+            <path d="M-4 -8 C-4 -18, 4 -18, 4 -8" fill="none" stroke="#fef08a" strokeWidth="0.5" strokeDasharray="1,1" opacity="0.6" />
           </g>
           
           <g transform="rotate(120)">
-            <path d="M-12 -8 C-12 -28, 12 -28, 12 -8 Z" fill="url(#capBrimGrad)" stroke="#7f1d1d" strokeWidth="1.2" />
-            <path d="M-9 -12 C-9 -24, 9 -24, 9 -12" fill="none" stroke="#fee2e2" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
-            <path d="M-6 -15 C-6 -20, 6 -20, 6 -15" fill="none" stroke="#fee2e2" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
+            <path d="M-2 -2 L-6 -22 C-3 -24, 3 -24, 6 -22 L2 -2 Z" fill="url(#fanBladeGrad)" stroke="#78350f" strokeWidth="0.8" />
+            <path d="M-4 -8 C-4 -18, 4 -18, 4 -8" fill="none" stroke="#fef08a" strokeWidth="0.5" strokeDasharray="1,1" opacity="0.6" />
           </g>
 
           <g transform="rotate(240)">
-            <path d="M-12 -8 C-12 -28, 12 -28, 12 -8 Z" fill="url(#capBrimGrad)" stroke="#7f1d1d" strokeWidth="1.2" />
-            <path d="M-9 -12 C-9 -24, 9 -24, 9 -12" fill="none" stroke="#fee2e2" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
-            <path d="M-6 -15 C-6 -20, 6 -20, 6 -15" fill="none" stroke="#fee2e2" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
+            <path d="M-2 -2 L-6 -22 C-3 -24, 3 -24, 6 -22 L2 -2 Z" fill="url(#fanBladeGrad)" stroke="#78350f" strokeWidth="0.8" />
+            <path d="M-4 -8 C-4 -18, 4 -18, 4 -8" fill="none" stroke="#fef08a" strokeWidth="0.5" strokeDasharray="1,1" opacity="0.6" />
           </g>
 
-          {/* Central Cap Dome / Crown */}
-          <circle cx="0" cy="0" r="14" fill="url(#capCrownGrad)" stroke="#7f1d1d" strokeWidth="1.5" />
-
-          {/* Seam / Stitching Lines of Cap Panels */}
-          <line x1="0" y1="0" x2="0" y2="-14" stroke="#7f1d1d" strokeWidth="0.8" />
-          <line x1="0" y1="0" x2="12.1" y2="-7" stroke="#7f1d1d" strokeWidth="0.8" />
-          <line x1="0" y1="0" x2="12.1" y2="7" stroke="#7f1d1d" strokeWidth="0.8" />
-          <line x1="0" y1="0" x2="0" y2="14" stroke="#7f1d1d" strokeWidth="0.8" />
-          <line x1="0" y1="0" x2="-12.1" y2="7" stroke="#7f1d1d" strokeWidth="0.8" />
-          <line x1="0" y1="0" x2="-12.1" y2="-7" stroke="#7f1d1d" strokeWidth="0.8" />
-
-          {/* Cap Panel Stitching Highlights */}
-          <circle cx="0" cy="0" r="11" fill="none" stroke="#fee2e2" strokeWidth="0.6" strokeDasharray="1,2" opacity="0.6" />
-
-          {/* Red/White 'D' Delmi Logo circle in center */}
-          <circle cx="0" cy="0" r="7" fill="#b91c1c" stroke="white" strokeWidth="0.8" />
-          <text 
-            x="0" 
-            y="2.8" 
-            fill="white" 
-            fontSize="8.2" 
-            fontWeight="900" 
-            textAnchor="middle" 
-            fontFamily="sans-serif"
-          >
-            D
-          </text>
-
-          {/* Central Top Button (Squatchee) */}
-          <circle cx="0" cy="0" r="3" fill="url(#capButtonGrad)" stroke="#7f1d1d" strokeWidth="0.8" />
+          {/* Central Mounting Hub */}
+          <circle cx="0" cy="0" r="5" fill="url(#hubGrad)" stroke="#475569" strokeWidth="1.2" />
+          <circle cx="0" cy="0" r="1.5" fill="#1e293b" />
         </g>
       </g>
 
