@@ -1251,34 +1251,34 @@ export const Workspace: React.FC = () => {
               }
               @keyframes spark-shoot {
                 0% {
-                  stroke-dasharray: 0, 160;
+                  stroke-dasharray: 0, 80;
                   stroke-dashoffset: 0;
                   opacity: 1;
                   stroke: #ffffff;
                 }
                 15% {
-                  stroke-dasharray: 24, 160;
-                  stroke-dashoffset: -5;
-                  stroke: #fffbeb;
+                  stroke-dasharray: 12, 80;
+                  stroke-dashoffset: -3;
+                  stroke: #fef08a;
                 }
                 45% {
-                  stroke-dasharray: 18, 160;
-                  stroke: #ff7a3b;
+                  stroke-dasharray: 10, 80;
+                  stroke: #fbbf24;
                 }
                 100% {
-                  stroke-dasharray: 1, 160;
-                  stroke-dashoffset: -140;
+                  stroke-dasharray: 1, 80;
+                  stroke-dashoffset: -70;
                   opacity: 0;
-                  stroke: #ef4444;
+                  stroke: #f59e0b;
                 }
               }
               @keyframes core-flicker {
                 0% { transform: scale(1); opacity: 1; }
-                20% { transform: scale(0.8); opacity: 0.7; }
+                20% { transform: scale(0.85); opacity: 0.8; }
                 40% { transform: scale(1.1); opacity: 0.95; }
-                60% { transform: scale(0.7); opacity: 0.5; }
-                80% { transform: scale(0.9); opacity: 0.8; }
-                95% { transform: scale(0.4); opacity: 0.3; }
+                60% { transform: scale(0.75); opacity: 0.6; }
+                80% { transform: scale(0.9); opacity: 0.85; }
+                95% { transform: scale(0.5); opacity: 0.4; }
                 100% { transform: scale(0); opacity: 0; }
               }
               .smoke-w1 { animation: billow-wispy-1 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -1318,9 +1318,9 @@ export const Workspace: React.FC = () => {
             {/* 2. Spark lines (Deterministic generation over a long timeline up to 2.2s) */}
             {Array.from({ length: 64 }).map((_, i) => {
               const angle = i * 5.625 + (i % 5) * 3.5; // 64 sparks around 360 degrees
-              const length = 45 + (i % 7) * 16; // Varying lengths: 45px to 141px
+              const length = 20 + (i % 6) * 7; // Tight lengths: 20px to 55px
               const delay = (i % 24) * 0.09; // Staggered delays: 0s up to 2.16s!
-              const duration = 0.35 + (i % 3) * 0.08; // Varying speed: 0.35s to 0.51s
+              const duration = 0.3 + (i % 3) * 0.07; // Varying speed: 0.3s to 0.44s
               return (
                 <line
                   key={i}
@@ -1328,8 +1328,8 @@ export const Workspace: React.FC = () => {
                   y1="0"
                   x2={length}
                   y2="0"
-                  stroke="#ff6b35"
-                  strokeWidth="1.2"
+                  stroke="#fbbf24"
+                  strokeWidth="1.0"
                   strokeLinecap="round"
                   style={{
                     transform: `rotate(${angle}deg)`,
@@ -1342,8 +1342,8 @@ export const Workspace: React.FC = () => {
 
             {/* 3. White-Hot Core (Flickers and shrinks over 2.4s) */}
             <g className="core-active" style={{ transformOrigin: 'center' }}>
-              <circle r="16" fill="#ff7a3b" opacity="0.7" filter="url(#volumetric-blur)" />
-              <circle r="6" fill="#ffffff" />
+              <circle r="8" fill="#f59e0b" opacity="0.75" filter="url(#volumetric-blur)" />
+              <circle r="3" fill="#ffffff" />
             </g>
           </g>
         )}
