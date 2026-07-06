@@ -66,7 +66,7 @@ export const LevelDashboard: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#080b12] text-slate-100 flex flex-col select-none font-sans overflow-y-auto relative">
+    <div className="min-h-screen bg-[#070a0f] text-slate-100 flex flex-col select-none font-sans overflow-y-auto relative">
 
       {/* ── Ambient background glows ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -82,7 +82,7 @@ export const LevelDashboard: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             {/* Delmi logo pill */}
-            <div className="relative flex items-center justify-center w-11 h-11 rounded-xl overflow-hidden bg-slate-200 shadow-sm">
+            <div className="relative flex items-center justify-center w-11 h-11 rounded-lg overflow-hidden bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.16)]">
               <Zap className="w-6 h-6 text-slate-950 fill-slate-950" />
             </div>
             <div>
@@ -90,7 +90,7 @@ export const LevelDashboard: React.FC = () => {
                 <h1 className="text-lg font-semibold text-white tracking-wide">
                   Delmi Electronics Lab
                 </h1>
-                <span className="text-[9px] font-semibold bg-white/5 text-slate-400 border border-white/10 px-2 py-0.5 rounded-full tracking-wide uppercase">
+                <span className="text-[9px] font-semibold bg-white/[0.06] text-slate-400 border border-white/10 px-2 py-0.5 rounded-md tracking-wide uppercase">
                   v2.0
                 </span>
               </div>
@@ -102,11 +102,11 @@ export const LevelDashboard: React.FC = () => {
 
           {/* Live stats chips */}
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5">
+            <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-md px-3.5 py-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
               <span className="text-[11px] font-semibold text-slate-300">{completedCount} Solved</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3.5 py-1.5">
+            <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 rounded-md px-3.5 py-1.5">
               <Trophy className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-[11px] font-semibold text-slate-300">{unlockedCount} Badges</span>
             </div>
@@ -135,8 +135,8 @@ export const LevelDashboard: React.FC = () => {
             { label: 'Progress', value: percentComplete, suffix: '%', icon: BarChart3, color: '#8b5cf6' },
           ].map(stat => (
             <div key={stat.label}
-              className="rounded-xl border border-white/10 bg-white/[0.03] p-4 flex items-center gap-3 relative overflow-hidden">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white/5 border border-white/10">
+              className="rounded-lg border border-white/10 bg-white/[0.035] p-4 flex items-center gap-3 relative overflow-hidden shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              <div className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-white/[0.06] border border-white/10">
                 <stat.icon className="w-4.5 h-4.5 text-slate-400" />
               </div>
               <div>
@@ -150,9 +150,9 @@ export const LevelDashboard: React.FC = () => {
         </div>
 
         {/* Progress bar full-width */}
-        <div className="rounded-full h-1.5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded h-1.5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div
-            className="h-full rounded-full transition-all duration-1000"
+            className="h-full rounded transition-all duration-1000"
             style={{ width: `${percentComplete}%`, background: '#94a3b8' }}
           />
         </div>
@@ -170,14 +170,14 @@ export const LevelDashboard: React.FC = () => {
 
         {/* Filter tabs */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-1.5 p-1 rounded-xl overflow-x-auto max-w-full" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-1.5 p-1 rounded-lg overflow-x-auto max-w-full" style={{ background: 'rgba(15,23,42,0.72)', border: '1px solid rgba(255,255,255,0.08)' }}>
             {(['all', 'completed', 'available'] as const).map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className="px-3 sm:px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all cursor-pointer whitespace-nowrap"
+                className="px-3 sm:px-4 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all cursor-pointer whitespace-nowrap"
                 style={filter === f
-                  ? { background: '#1d4ed8', color: 'white', boxShadow: '0 0 12px rgba(37,99,235,0.4)' }
+                  ? { background: '#e2e8f0', color: '#0f172a' }
                   : { color: '#64748b' }}
               >
                 {f === 'all' ? `All (${totalLevels})` : f === 'completed' ? `Solved (${completedCount})` : `Available (${totalLevels - completedCount})`}
@@ -206,7 +206,7 @@ export const LevelDashboard: React.FC = () => {
                 onClick={() => initLevel(index)}
                 onMouseEnter={() => setHoveredId(lvl.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className="relative rounded-2xl cursor-pointer flex flex-col overflow-hidden transition-all duration-200"
+                className="relative rounded-lg cursor-pointer flex flex-col overflow-hidden transition-all duration-200"
                 style={{
                   background: isCompleted
                     ? 'rgba(16,185,129,0.04)'
@@ -224,13 +224,13 @@ export const LevelDashboard: React.FC = () => {
                     ? '0 8px 32px rgba(37,99,235,0.20)'
                     : isCompleted && isHovered
                     ? '0 8px 32px rgba(16,185,129,0.12)'
-                    : 'none',
+                    : '0 8px 24px rgba(0,0,0,0.10)',
                 }}
               >
                 {/* Active "current" glow border */}
                 {isActive && (
-                  <div className="absolute inset-0 rounded-2xl pointer-events-none animate-pulse"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(59,130,246,0.3)' }} />
+                  <div className="absolute inset-0 rounded-lg pointer-events-none"
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(226,232,240,0.14)' }} />
                 )}
 
                 {/* Category accent bar top */}
@@ -244,7 +244,7 @@ export const LevelDashboard: React.FC = () => {
                   <div className="flex items-start justify-between">
                     {/* Level number */}
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-mono font-black text-sm"
+                      <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 font-mono font-black text-sm"
                         style={{
                           background: isCompleted ? 'rgba(16,185,129,0.15)' : isActive ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.05)',
                           color: isCompleted ? '#10b981' : isActive ? '#60a5fa' : '#475569',
@@ -259,16 +259,16 @@ export const LevelDashboard: React.FC = () => {
 
                     {/* Status badge */}
                     {isCompleted ? (
-                      <div className="flex items-center gap-1 rounded-full px-2 py-0.5"
+                      <div className="flex items-center gap-1 rounded-md px-2 py-0.5"
                         style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
                         <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider font-mono">Done</span>
+                        <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wide">Done</span>
                       </div>
                     ) : isActive ? (
-                      <div className="flex items-center gap-1 rounded-full px-2 py-0.5"
-                        style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(59,130,246,0.30)' }}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-wider font-mono">Next</span>
+                      <div className="flex items-center gap-1 rounded-md px-2 py-0.5"
+                        style={{ background: 'rgba(226,232,240,0.08)', border: '1px solid rgba(226,232,240,0.16)' }}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                        <span className="text-[9px] font-semibold text-slate-200 uppercase tracking-wide">Next</span>
                       </div>
                     ) : isLocked ? (
                       <Lock className="w-3.5 h-3.5 text-slate-600" />
@@ -277,7 +277,7 @@ export const LevelDashboard: React.FC = () => {
 
                   {/* Title & description */}
                   <div className="flex-grow">
-                    <h3 className="text-sm font-black text-white leading-snug mb-1.5 transition-colors"
+                    <h3 className="text-sm font-semibold text-white leading-snug mb-1.5 transition-colors"
                       style={{ color: isHovered && isActive ? '#93c5fd' : isHovered && isCompleted ? '#6ee7b7' : 'white' }}>
                       {lvl.title}
                     </h3>
@@ -290,7 +290,7 @@ export const LevelDashboard: React.FC = () => {
                   <div className="flex items-center justify-between pt-2.5"
                     style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     {/* Difficulty pip */}
-                    <span className="text-[9px] font-extrabold tracking-wider uppercase rounded-full px-2 py-0.5 font-mono"
+                    <span className="text-[9px] font-semibold tracking-wide uppercase rounded-md px-2 py-0.5"
                       style={{ background: diff.bg, color: diff.color, border: `1px solid ${diff.border}` }}>
                       {diff.label}
                     </span>
@@ -304,7 +304,7 @@ export const LevelDashboard: React.FC = () => {
                       </div>
                     ) : (
                       <button
-                        className="flex items-center gap-1 text-[10px] font-black uppercase font-mono transition-all"
+                        className="flex items-center gap-1 text-[10px] font-semibold uppercase transition-all"
                         style={{
                           color: isActive ? '#60a5fa' : '#334155',
                           transform: isHovered && !isLocked ? 'translateX(3px)' : 'none'
@@ -340,12 +340,12 @@ export const LevelDashboard: React.FC = () => {
       {/* ── Footer ── */}
       <footer className="relative z-10 border-t px-8 py-5 flex items-center justify-between"
         style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(6,11,24,0.8)' }}>
-        <span className="text-[10px] text-slate-600 font-mono font-bold uppercase tracking-widest">
+        <span className="text-[10px] text-slate-600 font-semibold uppercase tracking-wide">
           Delmi Electronics Corp · Virtual Simulator Suite
         </span>
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] text-slate-600 font-mono font-bold">All systems online</span>
+          <span className="text-[10px] text-slate-600 font-semibold">All systems online</span>
         </div>
       </footer>
     </div>

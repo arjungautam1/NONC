@@ -661,19 +661,19 @@ export const Workspace: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col relative min-h-0 bg-[#0b1018] select-none">
+    <div className="flex-1 flex flex-col relative min-h-0 bg-[#090e15] select-none">
       
       {/* Canvas Toolbars */}
-      <div className="h-10 border-b border-white/10 bg-[#0d1118]/80 px-4 flex items-center justify-between text-xs font-medium text-slate-300 shrink-0">
+      <div className="h-10 border-b border-white/10 bg-[#090d14]/88 px-4 flex items-center justify-between text-xs font-medium text-slate-300 shrink-0 backdrop-blur">
         <div className="flex items-center gap-3">
-          <span className="text-slate-500">Wire</span>
+          <span className="text-slate-500 uppercase tracking-wide text-[10px]">Wire</span>
           <div className="flex gap-2">
             {(['red', 'black', 'green', 'orange'] as const).map(color => (
               <button
                 key={color}
                 onClick={() => setActiveColor(color)}
-                className={`w-5 h-5 rounded-full border transition-transform cursor-pointer relative ${
-                  activeColor === color ? 'scale-110 ring-2 ring-slate-300/70' : 'opacity-70 hover:opacity-100'
+                className={`w-5 h-5 rounded-md border transition-transform cursor-pointer relative ${
+                  activeColor === color ? 'scale-105 ring-2 ring-white/60' : 'opacity-75 hover:opacity-100'
                 }`}
                 style={{
                   backgroundColor: getWireColorHex(color),
@@ -688,7 +688,7 @@ export const Workspace: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadSchematic}
-            className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/5 hover:bg-white/10 text-slate-300 rounded-md border border-white/10 cursor-pointer transition-all flex items-center gap-1.5"
+            className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/[0.06] hover:bg-white/[0.11] text-slate-300 rounded-md border border-white/10 cursor-pointer transition-all flex items-center gap-1.5"
             title="Download Schematic SVG File"
           >
             <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
@@ -696,11 +696,11 @@ export const Workspace: React.FC = () => {
           </button>
           <button
             onClick={() => setWireSize(prev => prev === 'normal' ? 'thin' : 'normal')}
-            className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/5 hover:bg-white/10 text-slate-300 rounded-md border border-white/10 cursor-pointer transition-colors"
+            className="px-2.5 py-1 text-[10px] font-semibold tracking-wide bg-white/[0.06] hover:bg-white/[0.11] text-slate-300 rounded-md border border-white/10 cursor-pointer transition-colors"
           >
             Size: {wireSize}
           </button>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-white/[0.03] px-2.5 py-1 rounded-md border border-white/10">
+          <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-400 bg-white/[0.03] px-2.5 py-1 rounded-md border border-white/10">
             <Info className="w-3.5 h-3.5" />
             <span>Click wire to select & delete.</span>
           </div>
@@ -1160,4 +1160,3 @@ export const Workspace: React.FC = () => {
     </div>
   );
 };
-

@@ -308,10 +308,10 @@ export const HelpOverlay: React.FC = () => {
       )}
 
       {/* 2. Interactive Diagnostic Console (Panel) */}
-      <div className={`fixed bottom-0 left-0 ${sidebarOpen ? 'md:left-[320px]' : 'md:left-0'} right-0 h-44 md:h-40 bg-[#0d1118]/95 border-t border-white/10 flex flex-col md:flex-row p-2 md:p-2.5 gap-2 md:gap-3 pointer-events-auto z-10 transition-all duration-300 ease-in-out backdrop-blur overflow-y-auto md:overflow-hidden`}>
+      <div className={`fixed bottom-0 left-0 ${sidebarOpen ? 'md:left-[320px]' : 'md:left-0'} right-0 h-44 md:h-40 bg-[#090d14]/94 border-t border-white/10 flex flex-col md:flex-row p-2 md:p-2.5 gap-2 md:gap-3 pointer-events-auto z-10 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-[0_-18px_40px_rgba(0,0,0,0.26)] overflow-y-auto md:overflow-hidden`}>
 
         {/* Diagnostic Status Box */}
-        <div className="hidden xl:flex w-72 border border-white/10 bg-white/[0.03] rounded-md p-3 flex-col gap-2">
+        <div className="hidden xl:flex w-72 border border-white/10 bg-white/[0.035] rounded-md p-3 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
               Diagnostics
@@ -325,7 +325,7 @@ export const HelpOverlay: React.FC = () => {
               {diag.type === 'warning' && <AlertCircle className="w-4 h-4 text-yellow-400" />}
               {diag.type === 'danger' && <AlertCircle className="w-4 h-4 text-red-500" />}
               {diag.type === 'info' && <HelpCircle className="w-4 h-4 text-sky-400" />}
-              <span className={`text-xs font-black ${diag.type === 'success' ? 'text-emerald-400' :
+              <span className={`text-xs font-semibold ${diag.type === 'success' ? 'text-emerald-400' :
                   diag.type === 'danger' ? 'text-red-500 animate-pulse' :
                     diag.type === 'warning' ? 'text-yellow-400' :
                       'text-sky-400'
@@ -340,7 +340,7 @@ export const HelpOverlay: React.FC = () => {
         </div>
 
         {/* 3. DMM Troubleshooting Multimeter Panel */}
-        <div className="w-full md:w-[360px] xl:w-[390px] h-auto md:h-full border border-white/10 bg-white/[0.03] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden">
+        <div className="w-full md:w-[360px] xl:w-[390px] h-auto md:h-full border border-white/10 bg-white/[0.035] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden">
           {/* DMM Yellow Housing */}
           <div className="w-[152px] h-full min-h-[122px] bg-[#d6b24a] p-2 rounded-md border border-[#9b7a24] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_18px_rgba(0,0,0,0.22)] flex flex-col gap-1.5 shrink-0">
             {/* LCD Screen */}
@@ -427,7 +427,7 @@ export const HelpOverlay: React.FC = () => {
         </div>
 
         {/* Dynamic Hints & Real World Application Panel */}
-        <div className="flex-1 border border-white/10 bg-white/[0.03] rounded-md p-2.5 flex flex-col gap-2 min-w-0">
+        <div className="flex-1 border border-white/10 bg-white/[0.035] rounded-md p-2.5 flex flex-col gap-2 min-w-0">
           {/* Upper Section: Hints */}
           <div className="flex-1 flex flex-col gap-1 min-h-0">
             <div className="flex items-center justify-between">

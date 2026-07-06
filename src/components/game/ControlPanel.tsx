@@ -33,16 +33,16 @@ export const ControlPanel: React.FC = () => {
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
   return (
-    <div className="min-h-14 bg-[#0d1118] border-b border-white/10 flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-2 select-none shrink-0 relative z-20">
+    <div className="min-h-14 bg-[#090d14]/92 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-2 select-none shrink-0 relative z-20 shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur-xl">
       
       {/* 1. App Title / Logo & Back to Dashboard */}
       <div className="flex items-center gap-3 sm:gap-5 min-w-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shadow-sm">
-            <Zap className="w-5 h-5 text-slate-950 fill-slate-950" />
+          <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center shadow-[0_0_0_1px_rgba(255,255,255,0.18)]">
+            <Zap className="w-5 h-5 text-[#090d14] fill-[#090d14]" />
           </div>
           <div>
-            <h1 className="text-xs sm:text-sm font-semibold tracking-wide text-white leading-none m-0 truncate">
+            <h1 className="text-xs sm:text-sm font-semibold tracking-wide text-white leading-none m-0 truncate normal-case">
               DELMI ELECTRONICS LAB
             </h1>
             <span className="hidden sm:inline text-[10px] font-medium text-slate-400 tracking-wide">
@@ -56,7 +56,7 @@ export const ControlPanel: React.FC = () => {
             soundManager.playButton();
             setViewMode('levels');
           }}
-          className="px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white font-semibold text-[11px] cursor-pointer transition-all flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-md bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-slate-300 hover:text-white font-semibold text-[11px] cursor-pointer transition-all flex items-center gap-1.5"
           title="Return to Levels Selection"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
@@ -66,7 +66,7 @@ export const ControlPanel: React.FC = () => {
 
       {/* 2. Undo/Redo & Undo history count */}
       <div className="flex items-center gap-2 sm:gap-4">
-        <div className="flex items-center bg-black/20 p-0.5 rounded-md border border-white/10">
+        <div className="flex items-center bg-white/[0.04] p-0.5 rounded-md border border-white/10">
           <button
             onClick={undo}
             disabled={history.length === 0}
@@ -89,7 +89,7 @@ export const ControlPanel: React.FC = () => {
         {/* Audio controls */}
         <button
           onClick={toggleMute}
-          className="p-2 bg-black/20 hover:bg-white/10 border border-white/10 rounded-md text-slate-400 hover:text-white cursor-pointer transition-colors"
+          className="p-2 bg-white/[0.04] hover:bg-white/10 border border-white/10 rounded-md text-slate-400 hover:text-white cursor-pointer transition-colors"
         >
           {audioMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
         </button>
@@ -101,7 +101,7 @@ export const ControlPanel: React.FC = () => {
         {/* Achievements trigger */}
         <button
           onClick={() => setShowAchievementsModal(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-slate-300 cursor-pointer transition-colors"
         >
           <Award className="w-4 h-4" />
           <span className="hidden sm:inline">ACHIEVEMENTS ({unlockedCount}/{achievements.length})</span>
@@ -109,7 +109,7 @@ export const ControlPanel: React.FC = () => {
         </button>
 
         {/* Score stars */}
-        <div className="flex items-center gap-1 bg-black/20 px-3 py-1.5 rounded-md border border-white/10">
+        <div className="flex items-center gap-1 bg-white/[0.04] px-3 py-1.5 rounded-md border border-white/10">
           <span className="hidden sm:inline text-[10px] text-slate-400 uppercase tracking-wide mr-1">Solved</span>
           <span className="text-white text-sm font-black">{currentLevelIndex} / {levels.length}</span>
         </div>
@@ -118,15 +118,15 @@ export const ControlPanel: React.FC = () => {
       {/* 4. Achievements Modal */}
       {showAchievementsModal && (
         <div className="fixed inset-0 bg-[#000000]/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="w-[500px] bg-industrial-gray-900 border border-[#3c4252] rounded-xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-800/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-amber-400">
+          <div className="w-[500px] max-w-full bg-[#0b1018] border border-white/10 rounded-lg shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-white/10 bg-white/[0.04] flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-200">
                 <Award className="w-5 h-5" />
-                <h3 className="text-sm font-black tracking-wider uppercase font-mono">Simulator Achievements</h3>
+                <h3 className="text-sm font-semibold tracking-wide">Simulator Achievements</h3>
               </div>
               <button
                 onClick={() => setShowAchievementsModal(false)}
-                className="text-industrial-gray-400 hover:text-white cursor-pointer font-bold font-mono"
+                className="text-slate-400 hover:text-white cursor-pointer font-semibold text-xs"
               >
                 CLOSE
               </button>
@@ -136,7 +136,7 @@ export const ControlPanel: React.FC = () => {
               {achievements.map(ach => (
                 <div 
                   key={ach.id} 
-                  className={`p-3 rounded-lg border flex items-center gap-3 transition-colors ${
+                  className={`p-3 rounded-md border flex items-center gap-3 transition-colors ${
                     ach.unlocked 
                       ? 'bg-amber-500/5 border-amber-500/20' 
                       : 'bg-industrial-gray-800/40 border-[#2a2e39] opacity-60'
@@ -164,7 +164,7 @@ export const ControlPanel: React.FC = () => {
               ))}
             </div>
 
-            <div className="p-4 border-t border-[#2a2e39] bg-industrial-gray-950 text-center text-[10px] font-bold text-industrial-gray-400">
+            <div className="p-4 border-t border-white/10 bg-black/20 text-center text-[10px] font-semibold text-slate-500">
               Complete training simulator tasks to unlock career badges.
             </div>
           </div>
