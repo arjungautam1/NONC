@@ -805,7 +805,7 @@ export const Workspace: React.FC = () => {
               />
 
               {/* Voltage presence pulsing ring under glowing wires */}
-              {isRunning && !isWireDead && (
+              {isRunning && !isWireDead && !drawingWireStart && (
                 <path
                   d={pathD}
                   fill="none"
@@ -819,7 +819,7 @@ export const Workspace: React.FC = () => {
               )}
 
               {/* Electron current flow overlay (flowing moving dots) */}
-              {isAnimating && (
+              {isAnimating && !drawingWireStart && (
                 <path
                   d={pathD}
                   fill="none"
