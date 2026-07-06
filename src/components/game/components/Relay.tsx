@@ -1,182 +1,158 @@
 import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
-import { useGameStore } from '../../../store/useGameStore';
-import { getTerminalKey } from '../../../simulation/circuitSolver';
 
 interface ComponentProps {
   component: CircuitComponent;
 }
 
 export const Relay: React.FC<ComponentProps> = ({ component }) => {
-  const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
-  const isRunning = useGameStore(state => state.isRunning);
-  
   const isEnergized = component.state.energized || false;
 
-  // Determine if power reaches COM terminal
-  const comKey = getTerminalKey(component.id, 'com');
-  const hasVoltage = isRunning && nodeVoltages[comKey] > 0;
-
   return (
-    <g transform="translate(-50, -60)">
-      {/* Relay enclosure */}
+    <g>
+      {/* 1. Outer Enclosure (Delmi Slate Blue Glass style) */}
       <rect
-        x="0"
-        y="0"
-        width="100"
-        height="120"
-        rx="8"
-        fill="url(#relayCaseGrad)"
-        stroke="#3f3f46"
-        strokeWidth="2.5"
-        filter="drop-shadow(0 6px 12px rgba(0,0,0,0.5))"
-      />
-
-      {/* Clear transparent lid view border */}
-      <rect
-        x="6"
-        y="6"
-        width="88"
+        x="-45"
+        y="-54"
+        width="90"
         height="108"
-        rx="6"
-        fill="none"
-        stroke="#ffffff"
-        strokeWidth="1"
-        opacity="0.1"
+        rx="5"
+        fill="#0f172a"
+        fillOpacity="0.88"
+        stroke="#1d4ed8"
+        strokeWidth="1.6"
+        filter="drop-shadow(0 4px 8px rgba(0,0,0,0.35))"
       />
 
-      {/* 1. Electromagnetic Coil Representation */}
-      <g transform="translate(25, 60)">
-        {/* Core core bar */}
-        <rect x="-10" y="-30" width="20" height="60" rx="3" fill="#52525b" stroke="#27272a" strokeWidth="1.5" />
-        
-        {/* Wound wire lines */}
-        <path
-          d="M -10 -20 C 10 -20, 10 -15, -10 -15 
-             C 10 -15, 10 -10, -10 -10 
-             C 10 -10, 10 -5,  -10 -5 
-             C 10 -5,  10 0,   -10 0 
-             C 10 0,   10 5,   -10 5 
-             C 10 5,   10 10,  -10 10 
-             C 10 10,  10 15,  -10 15 
-             C 10 15,  10 20,  -10 20"
-          fill="none"
-          stroke={isEnergized ? '#fbbf24' : '#b45309'}
-          strokeWidth="3.5"
-          filter={isEnergized ? 'drop-shadow(0 0 5px rgba(250, 204, 21, 0.8))' : 'none'}
-          style={{ transition: 'stroke 0.2s ease' }}
-        />
+      {/* Internal shine accent line */}
+      <rect
+        x="-41"
+        y="-50"
+        width="82"
+        height="100"
+        rx="3"
+        fill="none"
+        stroke="#60a5fa"
+        strokeWidth="0.6"
+        opacity="0.15"
+      />
 
-        {/* Magnetic Field rings pulsing when energized */}
+      {/* 2. Silkscreen Connection Traces */}
+      {/* Left side coil traces */}
+      <line x1="-35" y1="-30" x2="-22" y2="-30" stroke="#ca8a04" strokeWidth="1.2" />
+      <line x1="-35" y1="30" x2="-22" y2="30" stroke="#ca8a04" strokeWidth="1.2" />
+      <line x1="-22" y1="-30" x2="-22" y2="-18" stroke="#ca8a04" strokeWidth="1.2" />
+      <line x1="-22" y1="30" x2="-22" y2="18" stroke="#ca8a04" strokeWidth="1.2" />
+
+      {/* Right side contact traces */}
+      <line x1="35" y1="-30" x2="16" y2="-30" stroke="#3b82f6" strokeWidth="1.2" />
+      <line x1="35" y1="0" x2="16" y2="0" stroke="#3b82f6" strokeWidth="1.2" />
+      <line x1="35" y1="30" x2="16" y2="30" stroke="#3b82f6" strokeWidth="1.2" />
+
+      {/* 3. Electromagnetic Coil (Left Side) */}
+      <g transform="translate(-22, 0)">
+        {/* Core bar */}
+        <rect x="-3.5" y="-18" width="7" height="36" rx="1" fill="#4b5563" />
+        
+        {/* Coil windings */}
+        {[-14, -10, -6, -2, 2, 6, 10, 14].map((yVal) => (
+          <path
+            key={yVal}
+            d={`M -3.5 ${yVal} C 4.5 ${yVal - 1.5}, 4.5 ${yVal + 1.5}, -3.5 ${yVal + 2}`}
+            fill="none"
+            stroke={isEnergized ? '#fbbf24' : '#b45309'}
+            strokeWidth="1.8"
+            style={{ transition: 'stroke 0.15s ease' }}
+          />
+        ))}
+
+        {/* Pulsing magnetic fields when energized */}
         {isEnergized && (
           <g className="animate-pulse-magnetic">
-            <ellipse cx="0" cy="0" rx="25" ry="38" fill="none" stroke="#facc15" strokeWidth="1.5" strokeDasharray="4,4" />
-            <ellipse cx="0" cy="0" rx="18" ry="28" fill="none" stroke="#facc15" strokeWidth="1" opacity="0.6" strokeDasharray="3,3" />
+            <ellipse cx="0" cy="0" rx="14" ry="24" fill="none" stroke="#facc15" strokeWidth="1" strokeDasharray="2,2" />
           </g>
         )}
-
-        <text x="0" y="5" fill="#f8fafc" fontSize="8" fontWeight="bold" textAnchor="middle" opacity={isEnergized ? 0.9 : 0.6}>
-          COIL
-        </text>
       </g>
 
-      {/* 2. Mechanical Armature & Contacts */}
-      <g transform="translate(65, 0)">
-        {/* Terminal labels inside enclosure */}
-        <text x="15" y="33" fill="#a1a1aa" fontSize="7" fontWeight="bold" textAnchor="middle">COM</text>
-        <text x="15" y="63" fill="#a1a1aa" fontSize="7" fontWeight="bold" textAnchor="middle">NC</text>
-        <text x="15" y="93" fill="#a1a1aa" fontSize="7" fontWeight="bold" textAnchor="middle">NO</text>
+      {/* 4. Armature Springs & Contact Mechanism (Right Side) */}
+      {/* Contact pads */}
+      <circle cx="16" cy="-30" r="1.8" fill="#94a3b8" />
+      <circle cx="16" cy="0" r="1.8" fill="#94a3b8" />
+      <circle cx="16" cy="30" r="1.8" fill="#94a3b8" />
 
-        {/* NC Contact Point (stationary) and internal trace */}
-        <circle cx="15" cy="60" r="3" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
-        <line x1="15" y1="60" x2="25" y2="60" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Spring Armature blade pivoting from COM (y=-30) down to NC (y=0) or NO (y=30) */}
+      <line
+        x1="16"
+        y1="-30"
+        x2="16"
+        y2={isEnergized ? 30 : 0}
+        stroke={isEnergized ? '#10b981' : '#cbd5e1'}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        style={{ transition: 'y2 0.08s cubic-bezier(0.25, 1, 0.5, 1), stroke 0.08s ease' }}
+      />
+      {/* Contact button on tip of armature */}
+      <circle
+        cx="16"
+        cy={isEnergized ? 30 : 0}
+        r="2.6"
+        fill="#f8fafc"
+        stroke="#475569"
+        strokeWidth="0.6"
+        style={{ transition: 'cy 0.08s cubic-bezier(0.25, 1, 0.5, 1)' }}
+      />
 
-        {/* NO Contact Point (stationary) and internal trace */}
-        <circle cx="15" cy="90" r="3" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
-        <line x1="15" y1="90" x2="25" y2="90" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Magnetic pull dashed linkage line */}
+      <line
+        x1="-22"
+        y1="0"
+        x2="16"
+        y2={isEnergized ? 15 : 0}
+        stroke="#71717a"
+        strokeWidth="0.8"
+        strokeDasharray="2,2"
+        opacity="0.4"
+        style={{ transition: 'y2 0.08s ease' }}
+      />
 
-        {/* COM Anchor Point and internal trace */}
-        <circle cx="15" cy="30" r="3" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
-        <line x1="15" y1="30" x2="25" y2="30" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
-        
-        {/* Dotted paths showing open/blocked channels inside the device */}
-        {isEnergized ? (
-          // Energized: NC contact is open
-          <line
-            x1="15"
-            y1="30"
-            x2="15"
-            y2="60"
-            stroke={hasVoltage ? "#fbbf24" : "#4b5563"}
-            strokeWidth={hasVoltage ? 2.5 : 1.5}
-            strokeDasharray="2,3"
-            filter={hasVoltage ? "url(#yellow-glow)" : "none"}
-            opacity={hasVoltage ? 0.95 : 0.4}
-          />
-        ) : (
-          // De-energized: NO contact is open
-          <line
-            x1="15"
-            y1="30"
-            x2="15"
-            y2="90"
-            stroke={hasVoltage ? "#fbbf24" : "#4b5563"}
-            strokeWidth={hasVoltage ? 2.5 : 1.5}
-            strokeDasharray="2,3"
-            filter={hasVoltage ? "url(#yellow-glow)" : "none"}
-            opacity={hasVoltage ? 0.95 : 0.4}
-          />
-        )}
+      {/* 5. Clean Silkscreen Text Labels */}
+      {/* Left side coil labels */}
+      <text x="-14" y="-28" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="start">A1</text>
+      <text x="-14" y="32" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="start">A2</text>
+      <text x="-22" y="4" fill="#93c5fd" fontSize="5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
 
-        {/* Armature - Snapping Metal Spring */}
-        {/* Swings between NC (60px Y) and NO (90px Y) */}
-        <line
-          x1="15"
-          y1="30"
-          x2="15"
-          y2={isEnergized ? 90 : 60}
-          stroke={isEnergized ? "#22c55e" : "#cbd5e1"}
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          filter="drop-shadow(0 2px 3px rgba(0,0,0,0.3))"
-          style={{ transition: 'y2 0.08s cubic-bezier(0.25, 1, 0.5, 1), stroke 0.08s ease' }}
-        />
+      {/* Right side contact labels */}
+      <text x="8" y="-28" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">COM</text>
+      <text x="8" y="2" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC</text>
+      <text x="8" y="32" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO</text>
 
-        {/* Contact Pad on Armature */}
-        <circle
-          cx="15"
-          cy={isEnergized ? 89 : 60}
-          r="4"
-          fill="#e2e8f0"
-          stroke="#78829a"
-          strokeWidth="1"
-          style={{ transition: 'cy 0.08s cubic-bezier(0.25, 1, 0.5, 1)' }}
-        />
-
-        {/* Small magnetic linkage bar from coil to armature */}
-        <line
-          x1="-15"
-          y1="60"
-          x2="15"
-          y2={isEnergized ? 90 : 60}
-          stroke="#71717a"
-          strokeWidth="1.5"
-          strokeDasharray="2,2"
-          style={{ transition: 'y2 0.08s ease' }}
-        />
-      </g>
-
-      {/* Outer Label text */}
-      <text x="50" y="134" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
-        {component.label}
+      {/* 6. Active Indicator LED */}
+      <circle
+        cx="0"
+        cy="-42"
+        r="2.2"
+        fill={isEnergized ? '#10b981' : '#334155'}
+        stroke={isEnergized ? '#a7f3d0' : '#1e293b'}
+        strokeWidth="0.4"
+        style={{ filter: isEnergized ? 'drop-shadow(0 0 3px #10b981)' : 'none' }}
+      />
+      <text
+        x="0"
+        y="-34"
+        fill={isEnergized ? '#10b981' : '#64748b'}
+        fontSize="4.5"
+        fontWeight="bold"
+        fontFamily="monospace"
+        textAnchor="middle"
+      >
+        {isEnergized ? 'ACTIVE' : 'OFF'}
       </text>
 
-      <defs>
-        <linearGradient id="relayCaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#1e1b4b" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#0f172a" stopOpacity="0.8" />
-        </linearGradient>
-      </defs>
+      {/* Outer Label text */}
+      <text x="0" y="68" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+        {component.label}
+      </text>
     </g>
   );
 };
+export default Relay;
