@@ -28,6 +28,7 @@ function App() {
         return;
       }
       if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
         useHint();
       }
     };

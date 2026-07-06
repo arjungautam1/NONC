@@ -127,6 +127,7 @@ export const HelpOverlay: React.FC = () => {
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
+  const currentHintIndex = score.hintsUsed % level.hints.length;
 
   const [isDismissed, setIsDismissed] = React.useState(false);
 
@@ -425,17 +426,15 @@ export const HelpOverlay: React.FC = () => {
                 HINTS & DIAGRAMS
               </span>
               <span className="text-[9px] font-bold text-industrial-gray-400 bg-industrial-gray-800 px-1.5 py-0.5 rounded border border-[#2a2e39] uppercase font-mono">
-                Hint {score.hintsUsed % level.hints.length + 1} of {level.hints.length}
+                Hint {currentHintIndex + 1} of {level.hints.length}
               </span>
             </div>
             
-            <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1 flex flex-col gap-1.5">
-              {level.hints.slice(0, Math.min(score.hintsUsed + 1, level.hints.length)).map((hint, idx) => (
-                <div key={idx} className="text-[10px] text-zinc-200 leading-normal font-semibold animate-fade-in">
-                  <span className="text-yellow-500 font-bold font-mono text-[9px] uppercase tracking-wider">Hint {idx + 1}: </span>
-                  {hint}
-                </div>
-              ))}
+            <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1">
+              <div key={`${currentLevelIndex}-${currentHintIndex}`} className="text-[10px] text-zinc-200 leading-normal font-semibold animate-fade-in">
+                <span className="text-yellow-500 font-bold font-mono text-[9px] uppercase tracking-wider">Hint {currentHintIndex + 1}: </span>
+                {level.hints[currentHintIndex]}
+              </div>
             </div>
 
             <button
@@ -555,42 +554,7 @@ export const HelpOverlay: React.FC = () => {
           </div>
         </div>
       )}
-      {/* ── Quiet hint panel — bottom-right corner ── */}
-      {score.hintsUsed >= 0 && level.hints.length > 0 && (() => {
-        const idx = Math.min(score.hintsUsed, level.hints.length - 1);
-        const hint = level.hints[idx];
-        return (
-          <div className="fixed bottom-4 right-4 w-[260px] z-40 pointer-events-auto select-none">
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{
-                background: 'rgba(10,14,26,0.88)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                backdropFilter: 'blur(12px)',
-              }}
-            >
-              {/* Tiny label row */}
-              <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
-                <span className="text-[9px] font-bold text-yellow-500/70 uppercase tracking-widest font-mono">
-                  Hint {idx + 1}/{level.hints.length}
-                </span>
-                {idx < level.hints.length - 1 && (
-                  <button
-                    onClick={() => { useHint(); }}
-                    className="text-[9px] text-slate-500 hover:text-yellow-400 cursor-pointer transition-colors font-mono"
-                  >
-                    next →
-                  </button>
-                )}
-              </div>
-              {/* Hint text — quiet, small */}
-              <p className="px-3 pb-3 text-[11px] text-slate-400 leading-relaxed font-medium">
-                {hint}
-              </p>
-            </div>
-          </div>
-        );
-      })()}
+
 
     </div>
   );
