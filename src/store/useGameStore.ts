@@ -72,6 +72,8 @@ interface GameState {
   checkAchievements: () => void;
   dismissAchievement: () => void;
   unlockAchievement: (id: string) => void;
+  sidebarOpen: boolean;
+  toggleSidebar: () => void;
 }
 
 const initialAchievements: Achievement[] = [
@@ -289,6 +291,8 @@ export const useGameStore = create<GameState>((set, get) => {
     recentAchievement: null,
     timeElapsed: 0,
     timerIntervalId: null,
+    sidebarOpen: true,
+    toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
 
     initLevel: (index) => {
       const level = levels[index];

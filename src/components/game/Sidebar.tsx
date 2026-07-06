@@ -6,8 +6,11 @@ import {
   RotateCcw, 
   ChevronLeft, 
   ChevronRight, 
-  CheckCircle2
+  ChevronDown,
+  CheckCircle2,
+  HelpCircle
 } from 'lucide-react';
+import { soundManager } from '../../audio/soundManager';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -18,7 +21,11 @@ export const Sidebar: React.FC = () => {
     isRunning,
     toggleSimulation,
     resetLevel,
-    simulation
+    simulation,
+    sidebarOpen,
+    toggleSidebar,
+    score,
+    useHint
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
@@ -91,108 +98,172 @@ export const Sidebar: React.FC = () => {
     return false;
   };
 
+  // Determine which hints to show (at least the first hint is always visible, and others unlock with hintsUsed)
+  const maxHintIndex = Math.min(score.hintsUsed, level.hints.length - 1);
+  const unlockedHints = level.hints.slice(0, maxHintIndex + 1);
+
   return (
-    <div className="w-[380px] bg-industrial-gray-900 border-r border-[#2a2e39] flex flex-col h-full overflow-y-auto">
+    <div className={`relative h-full transition-all duration-300 ease-in-out shrink-0 flex ${sidebarOpen ? 'w-[380px]' : 'w-0'}`}>
       
-      {/* 1. Level Selector Header */}
-      <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-800/50 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-extrabold tracking-widest text-yellow-500">TRAINING MODULE</span>
-          <span className="text-xs font-bold text-industrial-gray-400 font-mono">{formatTime(timeElapsed)}</span>
-        </div>
-        <div className="flex items-center justify-between mt-1">
-          <button 
-            onClick={handlePrevLevel} 
-            disabled={currentLevelIndex === 0}
-            className="p-1.5 rounded hover:bg-industrial-gray-700 disabled:opacity-40 cursor-pointer"
-          >
-            <ChevronLeft className="w-5 h-5 text-white" />
-          </button>
-          <div className="text-center">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-              LEVEL {level.id} OF {levels.length}
-            </h2>
-            <div className="text-xs text-industrial-gray-300 font-bold mt-0.5 truncate max-w-[200px]">
-              {level.title}
-            </div>
+      {/* Sidebar Collapse/Expand Toggle Button (Floats on the border) */}
+      <button
+        onClick={toggleSidebar}
+        className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-40 bg-[#1e293b] border border-[#334155] rounded-r-md py-3.5 px-0.5 hover:bg-[#334155] cursor-pointer text-slate-400 hover:text-white transition-all flex items-center justify-center shadow-lg"
+        title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+        style={{ pointerEvents: 'auto' }}
+      >
+        {sidebarOpen ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+      </button>
+
+      {/* Main Sidebar Panel */}
+      <div className="w-[380px] bg-industrial-gray-900 border-r border-[#2a2e39] flex flex-col h-full overflow-hidden shrink-0">
+        
+        {/* 1. Level Selector Header (shrink-0) */}
+        <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-800/50 flex flex-col gap-2 shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold tracking-widest text-yellow-500">TRAINING MODULE</span>
+            <span className="text-xs font-bold text-industrial-gray-400 font-mono">{formatTime(timeElapsed)}</span>
           </div>
-          <button 
-            onClick={handleNextLevel} 
-            disabled={currentLevelIndex === levels.length - 1}
-            className="p-1.5 rounded hover:bg-industrial-gray-700 disabled:opacity-40 cursor-pointer"
+          <div className="flex items-center justify-between mt-1">
+            <button 
+              onClick={handlePrevLevel} 
+              disabled={currentLevelIndex === 0}
+              className="p-1.5 rounded hover:bg-industrial-gray-700 disabled:opacity-40 cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+            
+            {/* Modern Level Jump Dropdown Selector */}
+            <div className="relative flex flex-col items-center">
+              <div className="relative group">
+                <select
+                  value={currentLevelIndex}
+                  onChange={(e) => initLevel(parseInt(e.target.value))}
+                  className="bg-industrial-gray-950 text-yellow-500 font-mono text-[11px] font-extrabold uppercase tracking-wider pl-4 pr-8 py-1.5 rounded border border-[#2a2e39] cursor-pointer hover:border-yellow-500/50 hover:bg-industrial-gray-900 focus:outline-none focus:ring-1 focus:ring-yellow-500/50 appearance-none text-center shadow-inner"
+                  style={{ textAlignLast: 'center' }}
+                >
+                  {levels.map((lvl, index) => (
+                    <option key={lvl.id} value={index} className="bg-industrial-gray-950 text-slate-200 font-sans font-bold text-xs py-2 text-left">
+                      LVL {lvl.id}: {lvl.title}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-yellow-500 group-hover:text-yellow-400">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="text-[10px] text-zinc-300 font-extrabold mt-1 truncate max-w-[210px] text-center font-mono">
+                {level.title}
+              </div>
+            </div>
+
+            <button 
+              onClick={handleNextLevel} 
+              disabled={currentLevelIndex === levels.length - 1}
+              className="p-1.5 rounded hover:bg-industrial-gray-700 disabled:opacity-40 cursor-pointer"
+            >
+              <ChevronRight className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Simulator Power Controls (shrink-0) */}
+        <div className="p-4 border-b border-[#2a2e39] flex items-center justify-between gap-3 shrink-0">
+          <button
+            onClick={toggleSimulation}
+            className={`flex-1 py-3 px-4 rounded font-extrabold text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all uppercase ${
+              isRunning 
+                ? 'bg-red-600 hover:bg-red-700 text-white glow-red' 
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            }`}
           >
-            <ChevronRight className="w-5 h-5 text-white" />
+            <Play className={`w-4 h-4 ${isRunning ? 'fill-white animate-pulse' : ''}`} />
+            {isRunning ? 'Power Circuit [ON]' : 'Power Circuit [OFF]'}
+          </button>
+          <button
+            onClick={resetLevel}
+            className="p-3 bg-industrial-gray-800 hover:bg-industrial-gray-700 border border-[#3c4252] rounded text-white cursor-pointer transition-all"
+            title="Reset Circuit"
+          >
+            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
-      </div>
 
-      {/* 2. Simulator Power Controls */}
-      <div className="p-4 border-b border-[#2a2e39] flex items-center justify-between gap-3">
-        <button
-          onClick={toggleSimulation}
-          className={`flex-1 py-3 px-4 rounded font-extrabold text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all uppercase ${
-            isRunning 
-              ? 'bg-red-600 hover:bg-red-700 text-white glow-red' 
-              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-          }`}
-        >
-          <Play className={`w-4 h-4 ${isRunning ? 'fill-white animate-pulse' : ''}`} />
-          {isRunning ? 'Power Circuit [ON]' : 'Power Circuit [OFF]'}
-        </button>
-        <button
-          onClick={resetLevel}
-          className="p-3 bg-industrial-gray-800 hover:bg-industrial-gray-700 border border-[#3c4252] rounded text-white cursor-pointer transition-all"
-          title="Reset Circuit"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* 3. Objectives / Goals */}
-      <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-800/20">
-        <h3 className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 mb-3 uppercase">
-          Module Objectives
-        </h3>
-        <ul className="flex flex-col gap-2">
-          {level.goals.map((goal, idx) => {
-            const isMet = checkGoalReached(idx);
-            return (
-              <li 
-                key={idx}
-                className={`flex items-start gap-2.5 text-xs font-bold ${
-                  isMet ? 'text-emerald-400' : 'text-industrial-gray-300'
-                }`}
-              >
-                <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${isMet ? 'text-emerald-500 fill-emerald-500/20' : 'text-industrial-gray-600'}`} />
-                <span className={isMet ? 'line-through opacity-80' : ''}>{goal}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* 4. Instructions list */}
-      <div className="p-4 border-b border-[#2a2e39] flex-1">
-        <h3 className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 mb-3 uppercase">
-          Step-by-Step Guide
-        </h3>
-        <div className="text-xs text-industrial-gray-300 leading-relaxed font-semibold flex flex-col gap-3">
-          {level.instructions.map((inst, index) => (
-            <p key={index} className="flex gap-2 items-start bg-industrial-gray-800/30 p-2.5 rounded border border-[#2a2e39]/50">
-              <span className="bg-industrial-gray-700 text-yellow-500 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[9px] font-extrabold shrink-0 mt-0.5">
-                {index + 1}
-              </span>
-              <span>{inst}</span>
-            </p>
-          ))}
+        {/* 3. Objectives / Goals (shrink-0) */}
+        <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-800/20 shrink-0">
+          <h3 className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 mb-3 uppercase">
+            Module Objectives
+          </h3>
+          <ul className="flex flex-col gap-2">
+            {level.goals.map((goal, idx) => {
+              const isMet = checkGoalReached(idx);
+              return (
+                <li 
+                  key={idx}
+                  className={`flex items-start gap-2.5 text-xs font-bold ${
+                    isMet ? 'text-emerald-400' : 'text-industrial-gray-300'
+                  }`}
+                >
+                  <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${isMet ? 'text-emerald-500 fill-emerald-500/20' : 'text-industrial-gray-600'}`} />
+                  <span className={isMet ? 'line-through opacity-80' : ''}>{goal}</span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      </div>
 
-      {/* 5. Attribution Footer */}
-      <div className="p-3 bg-industrial-gray-950/40 border-t border-[#2a2e39]/30 text-center select-none shrink-0 mt-auto">
-        <span className="text-[10px] font-mono tracking-wider text-industrial-gray-500 font-extrabold uppercase">
-          Made with <span className="text-red-500">❤️</span> by Arjun
-        </span>
+        {/* 4. Instructions list (Independent scrollable flex area) */}
+        <div className="p-4 border-b border-[#2a2e39] flex-1 flex flex-col min-h-0">
+          <h3 className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 mb-2 uppercase shrink-0">
+            Step-by-Step Guide
+          </h3>
+          <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 min-h-0">
+            {level.instructions.map((inst, index) => (
+              <p key={index} className="flex gap-2.5 items-start bg-industrial-gray-800/25 p-2.5 rounded border border-[#2a2e39]/40 text-xs text-industrial-gray-300 leading-relaxed font-semibold">
+                <span className="bg-industrial-gray-700 text-yellow-500 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[9px] font-extrabold shrink-0 mt-0.5">
+                  {index + 1}
+                </span>
+                <span>{inst}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. Collapsible / Scrollable Hints List (Always displays all unlocked hints side by side) */}
+        <div className="p-4 border-b border-[#2a2e39] bg-industrial-gray-950/15 shrink-0 flex flex-col max-h-[190px]">
+          <div className="flex items-center justify-between mb-2 shrink-0">
+            <h3 className="text-[10px] font-extrabold tracking-wider text-industrial-gray-400 uppercase flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-yellow-500" />
+              <span>Level Hints ({score.hintsUsed} Unlocked)</span>
+            </h3>
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                useHint();
+              }}
+              className="text-[9px] font-extrabold text-yellow-500 hover:text-yellow-400 bg-yellow-500/10 px-2.5 py-0.5 rounded border border-yellow-500/20 cursor-pointer uppercase transition-all tracking-wide"
+            >
+              Get Hint
+            </button>
+          </div>
+          <div className="flex-grow overflow-y-auto pr-1 flex flex-col gap-2 min-h-0">
+            {unlockedHints.map((hint, idx) => (
+              <div key={idx} className="bg-yellow-500/5 p-2.5 rounded border border-yellow-500/15 text-[11px] font-semibold text-zinc-300 leading-normal animate-fade-in">
+                <span className="text-yellow-500 font-black block text-[9px] uppercase tracking-wider font-mono mb-1">
+                  Hint {idx + 1} of {level.hints.length}:
+                </span>
+                {hint}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 6. Attribution Footer (shrink-0) */}
+        <div className="p-3 bg-industrial-gray-950/40 border-t border-[#2a2e39]/30 text-center select-none shrink-0 mt-auto">
+          <span className="text-[10px] font-mono tracking-wider text-industrial-gray-500 font-extrabold uppercase">
+            Made with <span className="text-red-500">❤️</span> by Arjun
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -122,7 +122,8 @@ export const HelpOverlay: React.FC = () => {
     multimeter,
     setMultimeterMode,
     setProbe,
-    setProbeMode
+    setProbeMode,
+    sidebarOpen
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
@@ -301,7 +302,7 @@ export const HelpOverlay: React.FC = () => {
       )}
 
       {/* 2. Interactive Diagnostic Console (Panel) */}
-      <div className="fixed bottom-0 left-[380px] right-0 h-52 bg-industrial-gray-950 border-t border-[#2a2e39] flex p-3 gap-4 pointer-events-auto z-10">
+      <div className={`fixed bottom-0 ${sidebarOpen ? 'left-[380px]' : 'left-0'} right-0 h-52 bg-industrial-gray-950 border-t border-[#2a2e39] flex p-3 gap-4 pointer-events-auto z-10 transition-all duration-300 ease-in-out`}>
 
         {/* Diagnostic Status Box */}
         <div className="w-80 border border-[#2a2e39] bg-industrial-gray-900/50 rounded-lg p-3.5 flex flex-col gap-2">
@@ -428,10 +429,13 @@ export const HelpOverlay: React.FC = () => {
               </span>
             </div>
             
-            <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1">
-              <p className="text-[10px] text-zinc-200 leading-normal font-semibold">
-                {level.hints[score.hintsUsed % level.hints.length]}
-              </p>
+            <div className="flex-grow overflow-y-auto pr-1 min-h-[30px] pt-1 flex flex-col gap-1.5">
+              {level.hints.slice(0, Math.min(score.hintsUsed + 1, level.hints.length)).map((hint, idx) => (
+                <div key={idx} className="text-[10px] text-zinc-200 leading-normal font-semibold animate-fade-in">
+                  <span className="text-yellow-500 font-bold font-mono text-[9px] uppercase tracking-wider">Hint {idx + 1}: </span>
+                  {hint}
+                </div>
+              ))}
             </div>
 
             <button

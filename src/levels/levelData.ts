@@ -1050,8 +1050,8 @@ export const levels: Level[] = [
     instructions: [
       'Industrial systems use Time-Delay Relays to delay switching loads and manage in-rush currents.',
       'Wire the PSU (+) to the Main Switch (switch_selector) IN.',
-      'Wire Main Switch out_a to the Delay Timer (timer_relay) Coil A1 (coil_a). Wire Coil A2 (coil_b) to PSU (-).',
-      'Wire PSU (+) to the Delay Timer COM (com). Wire Delay Timer NO to the Cooling Fan (motor) IN.',
+      'Wire Main Switch out_a to the Delay Timer (timer_relay) trigger terminal TRG. Wire terminal - to PSU (-).',
+      'Wire PSU (+) to the Delay Timer C terminal. Wire Delay Timer NO to the Cooling Fan (motor) IN.',
       'Wire Cooling Fan OUT to PSU (-).',
       'Turn on simulation and flip the Main Switch. Watch the countdown, then see the fan spin!'
     ],
@@ -1094,11 +1094,12 @@ export const levels: Level[] = [
         y: 250,
         label: 'Delay Timer',
         terminals: [
-          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
-          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
-          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
-          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
-          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
+          { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
+          { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
+          { id: 'com', name: 'C', type: 'com', x: 24, y: 40 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
         ],
         state: {}
       },
@@ -1117,8 +1118,8 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Coil Loop: Connect PSU (+) to Switch IN. Connect Switch out_a to Timer A1. Connect Timer A2 to PSU (-).',
-      'Fan Loop: Connect PSU (+) to Timer COM. Connect Timer NO to Fan IN. Connect Fan OUT to PSU (-).',
+      'Coil Loop: Connect PSU (+) to Switch IN. Connect Switch out_a to Timer TRG. Connect Timer - to PSU (-).',
+      'Fan Loop: Connect PSU (+) to Timer C. Connect Timer NO to Fan IN. Connect Fan OUT to PSU (-).',
       'Turn on power, flip the Selector Switch, and keep it on for 2 seconds to let the timer trip!'
     ],
     successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
@@ -1784,11 +1785,12 @@ export const levels: Level[] = [
         y: 150,
         label: 'Open Timer',
         terminals: [
-          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
-          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
-          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
-          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
-          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
+          { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
+          { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
+          { id: 'com', name: 'C', type: 'com', x: 24, y: 40 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
         ],
         state: {}
       },
@@ -1799,11 +1801,12 @@ export const levels: Level[] = [
         y: 350,
         label: 'Close Timer',
         terminals: [
-          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
-          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
-          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
-          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
-          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+          { id: 'coil_a', name: 'TRG', type: 'coil_a', x: -40, y: 40 },
+          { id: 'coil_b', name: '-', type: 'coil_b', x: -24, y: 40 },
+          { id: 'pos_dummy', name: '+', type: 'pos', x: -8, y: 40 },
+          { id: 'no', name: 'NO', type: 'no', x: 8, y: 40 },
+          { id: 'com', name: 'C', type: 'com', x: 24, y: 40 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
         ],
         state: {}
       },
