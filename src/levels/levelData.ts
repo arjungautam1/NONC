@@ -1485,5 +1485,91 @@ export const levels: Level[] = [
         feedback: 'The door must be locked by default (CDVI Maglock energized) and unlock (de-energize) when the CDVI card is scanned.'
       };
     }
+  },
+  {
+    id: 17,
+    title: 'The Relay Master Challenge',
+    description: 'Help Relay Master Roland power his custom cap cooling fan using an isolation relay.',
+    instructions: [
+      'Welcome to the ultimate challenge! Relay Master Roland has integrated a custom fan directly into his Delmi cap.',
+      'Control Loop: Connect PSU (+) to Switch IN. Connect Switch OUT to Relay A1 (coil_a). Connect Relay A2 (coil_b) to PSU (-).',
+      'Power Loop: Connect PSU (+) to Relay COM. Connect Relay NO to Roland Cap Fan IN (in). Connect Roland Cap Fan OUT (out) to PSU (-).',
+      'Turn on the simulator power and press the Switch to spin Roland\'s cap!'
+    ],
+    goals: [
+      'Connect Switch to Relay Coil A1',
+      'Connect Relay NO to Roland Fan IN',
+      'Power the circuit and press the switch to spin Roland\'s cap'
+    ],
+    inventory: [],
+    preplacedComponents: [
+      {
+        id: 'ps1',
+        type: 'power_supply',
+        x: 120,
+        y: 280,
+        label: '24V Power Supply',
+        terminals: [
+          { id: 'pos', name: '(+)', type: 'pos', x: -25, y: 15 },
+          { id: 'neg', name: '(-)', type: 'neg', x: 25, y: 15 }
+        ],
+        state: {}
+      },
+      {
+        id: 'btn1',
+        type: 'button_no',
+        x: 300,
+        y: 150,
+        label: 'Push Button',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
+        ],
+        state: {}
+      },
+      {
+        id: 'relay1',
+        type: 'relay',
+        x: 420,
+        y: 350,
+        label: 'Isolation Relay',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
+          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
+          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+        ],
+        state: {}
+      },
+      {
+        id: 'roland1',
+        type: 'roland_fan',
+        x: 720,
+        y: 240,
+        label: 'Relay Master Roland',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -32, y: 46 },
+          { id: 'out', name: 'OUT', type: 'out', x: 32, y: 46 }
+        ],
+        state: {}
+      }
+    ],
+    preplacedWires: [],
+    hints: [
+      'Control Loop: PSU (+) -> Switch IN -> Switch OUT -> Relay A1. Relay A2 -> PSU (-).',
+      'Power Loop: PSU (+) -> Relay COM. Relay NO -> Roland Fan IN. Roland Fan OUT -> PSU (-).',
+      'Press and hold the push button to make Roland\'s cap rotate!'
+    ],
+    successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
+      const btn = components.find(c => c.id === 'btn1');
+      if (btn?.state.pressed && isEnergized('roland1')) {
+        return { success: true };
+      }
+      if (!btn?.state.pressed && isEnergized('roland1')) {
+        return { success: false, feedback: 'Roland\'s cap is rotating, but the switch is not pressed! Did you bypass the switch?' };
+      }
+      return { success: false, feedback: 'Press the Push Button while the simulation is running to spin Roland\'s cap.' };
+    }
   }
 ];

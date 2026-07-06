@@ -291,7 +291,7 @@ export function solveCircuit(
       if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator') {
         inKey = getTerminalKey(c.id, 'in');
         outKey = getTerminalKey(c.id, 'out');
-      } else if (c.type === 'motor' || c.type === 'buzzer') {
+      } else if (c.type === 'motor' || c.type === 'buzzer' || c.type === 'roland_fan') {
         inKey = getTerminalKey(c.id, 'in');
         outKey = getTerminalKey(c.id, 'out');
       } else if (c.type === 'relay') {
@@ -375,10 +375,10 @@ export function solveCircuit(
 
   // 8. Find fault locations for diagnostics
   // Let's identify if current stops at an open contact.
-  if (!shortCircuit && energizedComponents.size === 0 && components.some(c => ['bulb', 'led', 'motor', 'buzzer'].includes(c.type))) {
+  if (!shortCircuit && energizedComponents.size === 0 && components.some(c => ['bulb', 'led', 'motor', 'buzzer', 'roland_fan'].includes(c.type))) {
     // Look at why the active loads are off.
     for (const c of components) {
-      if (['bulb', 'led', 'motor', 'buzzer'].includes(c.type)) {
+      if (['bulb', 'led', 'motor', 'buzzer', 'roland_fan'].includes(c.type)) {
         const hasPos = Object.keys(nodeVoltages).some(k => nodeVoltages[k] > 0 && k.split(':')[0] === c.id);
         
         if (!hasPos) {
@@ -448,7 +448,7 @@ export function queryMultimeter(
     pathComponents.forEach(c => {
       if (c.type === 'bulb') resistance += 15.0;
       else if (c.type === 'led') resistance += 220.0;
-      else if (c.type === 'motor' || c.type === 'actuator') resistance += 45.0;
+      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'roland_fan') resistance += 45.0;
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
       else if (c.type === 'relay' || c.type === 'timer_relay') resistance += 80.0;
@@ -515,7 +515,7 @@ function checkPathBetween(
     } else if (c.type === 'terminal_block') {
       addConn(getTerminalKey(c.id, 't1'), getTerminalKey(c.id, 't2'));
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
-    } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator'].includes(c.type)) {
+    } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
@@ -590,7 +590,7 @@ function getComponentsInPath(
     } else if (c.type === 'terminal_block') {
       addConn(getTerminalKey(c.id, 't1'), getTerminalKey(c.id, 't2'));
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
-    } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator'].includes(c.type)) {
+    } else if (['bulb', 'led', 'motor', 'buzzer', 'maglock', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'actuator' || c.type === 'elevator_motor') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));

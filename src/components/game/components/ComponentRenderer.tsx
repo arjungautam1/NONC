@@ -15,6 +15,7 @@ import { ElevatorCabin } from './ElevatorCabin';
 import { LimitSwitch } from './LimitSwitch';
 import { ACSource } from './ACSource';
 import { Transformer } from './Transformer';
+import { RolandFan } from './RolandFan';
 
 interface ComponentRendererProps {
   component: CircuitComponent;
@@ -65,6 +66,8 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <ACSource component={component} />;
     case 'transformer':
       return <Transformer component={component} isEnergized={isEnergized} />;
+    case 'roland_fan':
+      return <RolandFan component={component} isEnergized={isEnergized} />;
     default:
       return null;
   }

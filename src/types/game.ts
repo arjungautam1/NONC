@@ -20,7 +20,8 @@ export type ComponentType =
   | 'elevator_motor'
   | 'limit_switch'
   | 'ac_source'
-  | 'transformer';
+  | 'transformer'
+  | 'roland_fan';
 
 export type TerminalType =
   | 'pos'

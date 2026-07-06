@@ -109,7 +109,7 @@ export const useGameStore = create<GameState>((set, get) => {
       currentComponents.forEach(c => {
         const isEnergized = solverResult.energizedComponents.has(c.id);
         if (isEnergized) {
-          if (c.type === 'motor') soundManager.startHum(c.id, 'motor');
+          if (c.type === 'motor' || c.type === 'roland_fan') soundManager.startHum(c.id, 'motor');
           else if (c.type === 'buzzer') soundManager.startHum(c.id, 'buzzer');
           else if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator') {
             soundManager.startHum(c.id, 'bulb');
