@@ -34,7 +34,7 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   const releaseTimeoutRef = React.useRef<any>(null);
   const animTimeoutRef = React.useRef<any>(null);
 
-  // Trigger the vehicle Loop Detector and car animation when the gate opens
+  // Trigger the vehicle Loop Detector and car animation when the gate opens (Faster Speeds)
   React.useEffect(() => {
     if (isOpen && !isCarDriving && isRunning) {
       setIsCarDriving(true);
@@ -44,20 +44,20 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
 
-      // Simulate car driving over the Loop Detector (presses button after 1.2 seconds)
+      // Simulate car driving over the Loop Detector (presses button after 0.5 seconds)
       pressTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', true);
-      }, 1200);
+      }, 500);
 
-      // Simulate car clearing the Loop Detector (releases button after 2.2 seconds)
+      // Simulate car clearing the Loop Detector (releases button after 1.0 seconds)
       releaseTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', false);
-      }, 2200);
+      }, 1000);
 
-      // Reset the car driving state after the animation finishes (3.5 seconds)
+      // Reset the car driving state after the animation finishes (1.5 seconds)
       animTimeoutRef.current = setTimeout(() => {
         setIsCarDriving(false);
-      }, 3500);
+      }, 1500);
     }
   }, [isOpen, isRunning, isCarDriving]);
 
@@ -85,8 +85,8 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
         @keyframes driveThroughRightToLeft {
           0% { transform: translate(85px, 26px); opacity: 0; }
           15% { transform: translate(75px, 26px); opacity: 1; }
-          30% { transform: translate(75px, 26px); opacity: 1; }
-          80% { transform: translate(-20px, 26px); opacity: 1; }
+          25% { transform: translate(75px, 26px); opacity: 1; }
+          75% { transform: translate(-20px, 26px); opacity: 1; }
           100% { transform: translate(-85px, 26px); opacity: 0; }
         }
         @keyframes wheelSpin {
@@ -94,14 +94,14 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
           to { transform: rotate(-360deg); }
         }
         .car-animated-rtl {
-          animation: driveThroughRightToLeft 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          animation: driveThroughRightToLeft 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         .car-waiting-rtl {
           transform: translate(75px, 26px);
           opacity: 1;
         }
         .wheel-spinning {
-          animation: wheelSpin 0.35s linear infinite;
+          animation: wheelSpin 0.15s linear infinite;
         }
       `}</style>
 
