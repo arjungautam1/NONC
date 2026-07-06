@@ -28,19 +28,11 @@ const AnimatedNumber: React.FC<{ value: number; suffix?: string }> = ({ value, s
 export const LevelDashboard: React.FC = () => {
   const { initLevel, currentLevelIndex, achievements } = useGameStore();
   const [hoveredId, setHoveredId] = React.useState<number | null>(null);
-  const [filter, setFilter] = React.useState<'all' | 'completed' | 'available'>('all');
 
   const completedCount = currentLevelIndex;
   const totalLevels = levels.length;
   const percentComplete = Math.round((completedCount / totalLevels) * 100);
   const unlockedCount = achievements.filter(a => a.unlocked).length;
-
-  const filteredLevels = levels.filter(lvl => {
-    const idx = levels.indexOf(lvl);
-    if (filter === 'completed') return idx < completedCount;
-    if (filter === 'available') return idx >= completedCount;
-    return true;
-  });
 
   return (
     <div className="min-h-screen bg-[#070a0f] text-slate-100 flex flex-col select-none font-sans overflow-y-auto relative">
@@ -148,22 +140,9 @@ export const LevelDashboard: React.FC = () => {
       ══════════════════════════════════════════════ */}
       <main className="relative z-10 px-4 sm:px-8 pb-16 max-w-7xl mx-auto w-full flex-grow">
 
-        {/* Filter tabs */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-1.5 p-1 rounded-lg overflow-x-auto max-w-full" style={{ background: 'rgba(15,23,42,0.72)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {(['all', 'completed', 'available'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className="px-3 sm:px-4 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all cursor-pointer whitespace-nowrap"
-                style={filter === f
-                  ? { background: '#e2e8f0', color: '#0f172a' }
-                  : { color: '#64748b' }}
-              >
-                {f === 'all' ? `All (${totalLevels})` : f === 'completed' ? `Solved (${completedCount})` : `Available (${totalLevels - completedCount})`}
-              </button>
-            ))}
-          </div>
+        {/* Section title header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Training Modules</h3>
           <div className="text-[10px] text-slate-600 font-mono font-bold uppercase tracking-widest hidden md:block">
             Click any card to enter the lab →
           </div>
@@ -171,7 +150,7 @@ export const LevelDashboard: React.FC = () => {
 
         {/* Level cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredLevels.map((lvl) => {
+          {levels.map((lvl) => {
             const index = levels.indexOf(lvl);
             const isCompleted = index < completedCount;
             const isActive    = index === completedCount;
@@ -231,14 +210,6 @@ export const LevelDashboard: React.FC = () => {
             );
           })}
         </div>
-
-        {/* Empty filter state */}
-        {filteredLevels.length === 0 && (
-          <div className="text-center py-24 text-slate-600">
-            <CircuitBoard className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-bold">No levels in this filter.</p>
-          </div>
-        )}
       </main>
 
       {/* ── Footer ── */}

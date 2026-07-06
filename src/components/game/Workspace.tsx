@@ -874,70 +874,128 @@ export const Workspace: React.FC = () => {
             const btnX = minX - 55;
             const btnY = minY - 75;
 
-            {/* SVG toggle switch — no foreignObject, scales with zoom */}
+            {/* Physical maintained bat-handle toggle switch */}
             return (
-              <g
-                transform={`translate(${btnX}, ${btnY})`}
-                onClick={(e) => { e.stopPropagation(); toggleSimulation(); }}
-                style={{ cursor: 'pointer' }}
-              >
-                {/* Shadow / backing plate */}
-                <rect x="0" y="0" width="90" height="36" rx="18" fill={isRunning ? '#064e3b' : '#1c0a0a'} opacity="0.7" />
+              <g transform={`translate(${btnX}, ${btnY})`} style={{ cursor: 'pointer' }}>
+                <defs>
+                  {/* Chrome/metal gradient for switch body */}
+                  <linearGradient id="switchBodyGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stopColor="#6b7280" />
+                    <stop offset="18%"  stopColor="#d1d5db" />
+                    <stop offset="45%"  stopColor="#f9fafb" />
+                    <stop offset="65%"  stopColor="#e5e7eb" />
+                    <stop offset="100%" stopColor="#9ca3af" />
+                  </linearGradient>
+                  <linearGradient id="switchBodyGradV" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#9ca3af" />
+                    <stop offset="30%"  stopColor="#f3f4f6" />
+                    <stop offset="70%"  stopColor="#e5e7eb" />
+                    <stop offset="100%" stopColor="#6b7280" />
+                  </linearGradient>
+                  {/* Bat handle gradient */}
+                  <linearGradient id="batGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stopColor="#374151" />
+                    <stop offset="30%"  stopColor="#6b7280" />
+                    <stop offset="60%"  stopColor="#9ca3af" />
+                    <stop offset="100%" stopColor="#4b5563" />
+                  </linearGradient>
+                  {/* Cavity shadow */}
+                  <radialGradient id="cavityGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"   stopColor="#111827" />
+                    <stop offset="100%" stopColor="#030712" />
+                  </radialGradient>
+                  {/* LED glow */}
+                  <radialGradient id="ledOn" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"   stopColor="#86efac" />
+                    <stop offset="60%"  stopColor="#22c55e" />
+                    <stop offset="100%" stopColor="#15803d" />
+                  </radialGradient>
+                  <radialGradient id="ledOff" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"   stopColor="#6b7280" />
+                    <stop offset="100%" stopColor="#374151" />
+                  </radialGradient>
+                </defs>
 
-                {/* Track */}
-                <rect x="0" y="0" width="90" height="36" rx="18"
-                  fill={isRunning ? '#059669' : '#3f0d0d'}
-                  stroke={isRunning ? '#6ee7b7' : '#f87171'}
-                  strokeWidth="1.5"
-                  style={{ transition: 'fill 0.25s, stroke 0.25s' }}
+                {/* ── Outer drop shadow ── */}
+                <rect x="3" y="5" width="54" height="86" rx="7" fill="#000" opacity="0.45" />
+
+                {/* ── Switch body / faceplate ── */}
+                <rect x="0" y="0" width="54" height="86" rx="7"
+                  fill="url(#switchBodyGrad)"
+                  stroke="#374151" strokeWidth="1"
                 />
+                {/* Vertical highlight overlay */}
+                <rect x="0" y="0" width="54" height="86" rx="7"
+                  fill="url(#switchBodyGradV)"
+                  opacity="0.45"
+                />
+                {/* Inset bevel top */}
+                <rect x="1" y="1" width="52" height="4" rx="3" fill="white" opacity="0.3" />
 
-                {/* Glow halo when ON */}
+                {/* ── LED indicator (top) ── */}
+                <circle cx="27" cy="12" r="5"
+                  fill={isRunning ? 'url(#ledOn)' : 'url(#ledOff)'}
+                  stroke={isRunning ? '#bbf7d0' : '#4b5563'}
+                  strokeWidth="0.8"
+                />
+                {/* LED shine */}
+                <circle cx="25.5" cy="10.5" r="1.5" fill="white" opacity={isRunning ? 0.7 : 0.15} />
+                {/* LED glow bloom when ON */}
                 {isRunning && (
-                  <rect x="-3" y="-3" width="96" height="42" rx="21"
-                    fill="none" stroke="#34d399" strokeWidth="2" opacity="0.35"
-                    className="animate-pulse"
-                  />
+                  <circle cx="27" cy="12" r="8" fill="#22c55e" opacity="0.2" className="animate-pulse" />
                 )}
 
-                {/* Thumb knob */}
-                <circle
-                  cx={isRunning ? 72 : 18}
-                  cy="18"
-                  r="13"
-                  fill={isRunning ? '#d1fae5' : '#7f1d1d'}
-                  stroke={isRunning ? '#a7f3d0' : '#ef4444'}
-                  strokeWidth="1.5"
-                  style={{ transition: 'cx 0.25s cubic-bezier(0.34,1.56,0.64,1), fill 0.25s, stroke 0.25s' }}
+                {/* ── Cavity (dark oval well where bat sits) ── */}
+                <ellipse cx="27" cy="48" rx="14" ry="26"
+                  fill="url(#cavityGrad)"
+                  stroke="#111827" strokeWidth="1"
+                />
+                {/* Inner cavity bevel */}
+                <ellipse cx="27" cy="48" rx="14" ry="26"
+                  fill="none"
+                  stroke="#1f2937" strokeWidth="2"
                 />
 
-                {/* Thumb highlight glint */}
-                <circle
-                  cx={isRunning ? 68 : 14}
-                  cy="13"
-                  r="4"
-                  fill="white"
-                  opacity={isRunning ? 0.35 : 0.12}
-                  style={{ transition: 'cx 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}
+                {/* ── Bat handle — pivots at centre of cavity ── */}
+                <g transform={`translate(27, 48) rotate(${isRunning ? -30 : 30})`}
+                   style={{ transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
+                  {/* Bat shaft */}
+                  <rect x="-4.5" y="-22" width="9" height="30" rx="4.5"
+                    fill="url(#batGrad)"
+                    stroke="#1f2937" strokeWidth="0.8"
+                  />
+                  {/* Bat tip bulge */}
+                  <ellipse cx="0" cy="-22" rx="5.5" ry="4"
+                    fill="#4b5563"
+                    stroke="#1f2937" strokeWidth="0.8"
+                  />
+                  {/* Bat tip shine */}
+                  <ellipse cx="-1.5" cy="-23.5" rx="2" ry="1.2"
+                    fill="white" opacity="0.35"
+                  />
+                  {/* Pivot collar */}
+                  <ellipse cx="0" cy="6" rx="6" ry="4"
+                    fill="#374151"
+                    stroke="#111827" strokeWidth="0.8"
+                  />
+                  <ellipse cx="0" cy="6" rx="4" ry="2.5"
+                    fill="#6b7280"
+                  />
+                </g>
+
+                {/* ── Labels ── */}
+                <text x="27" y="80"
+                  fontSize="7" fontWeight="900" fontFamily="monospace"
+                  fill={isRunning ? '#22c55e' : '#6b7280'}
+                  textAnchor="middle"
+                  style={{ transition: 'fill 0.2s', letterSpacing: '0.12em' }}
+                >{ isRunning ? 'ON' : 'OFF' }</text>
+
+                {/* Click target — invisible full overlay */}
+                <rect x="0" y="0" width="54" height="86" rx="7"
+                  fill="transparent"
+                  onClick={(e) => { e.stopPropagation(); toggleSimulation(); }}
                 />
-
-                {/* ON label */}
-                <text
-                  x="26" y="23"
-                  fontSize="8.5" fontWeight="800" fontFamily="monospace"
-                  fill={isRunning ? '#d1fae5' : '#4b1c1c'}
-                  textAnchor="middle"
-                  style={{ transition: 'fill 0.25s', letterSpacing: '0.08em', textTransform: 'uppercase' }}
-                >ON</text>
-
-                {/* OFF label */}
-                <text
-                  x="65" y="23"
-                  fontSize="8.5" fontWeight="800" fontFamily="monospace"
-                  fill={isRunning ? '#064e3b' : '#fca5a5'}
-                  textAnchor="middle"
-                  style={{ transition: 'fill 0.25s', letterSpacing: '0.08em' }}
-                >OFF</text>
               </g>
             );
           })()}
