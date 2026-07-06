@@ -128,6 +128,11 @@ export const HelpOverlay: React.FC = () => {
 
   const level = levels[currentLevelIndex];
   const currentHintIndex = score.hintsUsed % level.hints.length;
+  const multimeterModeLabel =
+    multimeter.mode === 'VOLTAGE' ? 'V' :
+      multimeter.mode === 'CONTINUITY' ? 'CONT' :
+        multimeter.mode === 'RESISTANCE' ? 'OHM' :
+          'OFF';
 
   const [isDismissed, setIsDismissed] = React.useState(false);
 
@@ -335,22 +340,25 @@ export const HelpOverlay: React.FC = () => {
         </div>
 
         {/* 3. DMM Troubleshooting Multimeter Panel */}
-        <div className="w-full md:w-[330px] xl:w-[360px] h-auto md:h-full border border-white/10 bg-white/[0.03] rounded-md p-2 flex gap-2.5 select-none shrink-0 overflow-hidden">
+        <div className="w-full md:w-[360px] xl:w-[390px] h-auto md:h-full border border-white/10 bg-white/[0.03] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden">
           {/* DMM Yellow Housing */}
-          <div className="w-[132px] h-full min-h-[118px] bg-[#d9b84f] p-1.5 rounded-md border border-[#b99a37] shadow-sm flex flex-col gap-1 shrink-0">
+          <div className="w-[152px] h-full min-h-[122px] bg-[#d6b24a] p-2 rounded-md border border-[#9b7a24] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_18px_rgba(0,0,0,0.22)] flex flex-col gap-1.5 shrink-0">
             {/* LCD Screen */}
-            <div className="bg-[#cfe7dc] border border-[#a4872c] px-1.5 py-0.5 rounded shadow-inner flex items-center justify-between font-mono text-slate-900">
-              <span className="text-[7px] font-bold text-slate-600 tracking-wider">DMM-40</span>
-              <span className={`text-[11px] font-black tracking-wider px-1 rounded ${multimeter.mode === 'OFF' ? 'text-slate-500' :
+            <div className="bg-[#d7eadf] border border-[#80651e] px-2 py-1 rounded-sm shadow-inner font-mono text-slate-900">
+              <div className="flex items-center justify-between leading-none">
+                <span className="text-[7px] font-bold text-slate-600 tracking-wider">DMM-40</span>
+                <span className="text-[7px] font-bold text-slate-500">{multimeterModeLabel}</span>
+              </div>
+              <div className={`mt-0.5 text-right text-[15px] leading-none font-black tracking-wide tabular-nums ${multimeter.mode === 'OFF' ? 'text-slate-500' :
                   multimeter.reading === '---' ? 'text-slate-600' :
-                    'text-emerald-700 bg-emerald-100/50'
+                    'text-emerald-800'
                 }`}>
                 {multimeter.mode === 'OFF' ? 'OFF' : multimeter.reading}
-              </span>
+              </div>
             </div>
 
             {/* Mode Buttons */}
-            <div className="grid grid-cols-2 gap-1 text-[7px] font-bold">
+            <div className="grid grid-cols-4 gap-1 text-[7px] font-bold">
               {(['OFF', 'VOLTAGE', 'CONTINUITY', 'RESISTANCE'] as const).map(mode => {
                 const label = mode === 'VOLTAGE' ? 'V' : mode === 'CONTINUITY' ? 'CONT' : mode === 'RESISTANCE' ? 'OHM' : 'OFF';
                 const active = multimeter.mode === mode;
@@ -358,9 +366,9 @@ export const HelpOverlay: React.FC = () => {
                   <button
                     key={mode}
                     onClick={() => setMultimeterMode(mode)}
-                    className={`py-0.5 rounded border font-bold cursor-pointer uppercase transition-all ${active
-                        ? 'bg-slate-900 text-slate-100 border-slate-700 shadow-inner'
-                        : 'bg-[#c6a33d] text-slate-950 border-[#a4872c] hover:bg-[#e0bd55]'
+                    className={`h-6 rounded-sm border font-bold cursor-pointer uppercase transition-all ${active
+                        ? 'bg-slate-900 text-white border-slate-700 shadow-inner'
+                        : 'bg-[#bd9830] text-slate-950 border-[#8f711f] hover:bg-[#e0bd55]'
                       }`}
                   >
                     {label}
@@ -370,50 +378,51 @@ export const HelpOverlay: React.FC = () => {
             </div>
 
             {/* Probe Attach Buttons */}
-            <div className="flex flex-col gap-1 border-t border-yellow-600/40 pt-1">
+            <div className="grid grid-cols-2 gap-1 border-t border-[#9b7a24]/60 pt-1.5">
               <button
                 onClick={() => setProbeMode(multimeter.redProbe ? null : 'red')}
-                className={`w-full py-0.5 rounded text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.redProbe
-                    ? 'bg-red-700 text-white border border-red-500'
-                    : 'bg-red-500 hover:bg-red-400 text-white border border-red-700'
+                className={`h-7 rounded-sm text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 border ${multimeter.redProbe
+                    ? 'bg-red-700 text-white border-red-400'
+                    : 'bg-red-500 hover:bg-red-400 text-white border-red-700'
                   }`}
               >
-                🔴 {multimeter.redProbe ? '✔ RED ON' : 'ATTACH RED'}
+                <span className="w-2 h-2 rounded-full bg-red-200 shadow-inner" />
+                {multimeter.redProbe ? 'RED ON' : 'RED'}
               </button>
               <button
                 onClick={() => setProbeMode(multimeter.blackProbe ? null : 'black')}
-                className={`w-full py-0.5 rounded text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 ${multimeter.blackProbe
-                    ? 'bg-slate-600 text-white border border-slate-400'
-                    : 'bg-slate-500 hover:bg-slate-400 text-white border border-slate-700'
+                className={`h-7 rounded-sm text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 border ${multimeter.blackProbe
+                    ? 'bg-slate-900 text-white border-slate-400'
+                    : 'bg-slate-600 hover:bg-slate-500 text-white border-slate-800'
                   }`}
               >
-                ⚫ {multimeter.blackProbe ? '✔ BLK ON' : 'ATTACH BLK'}
+                <span className="w-2 h-2 rounded-full bg-slate-200 shadow-inner" />
+                {multimeter.blackProbe ? 'BLK ON' : 'BLACK'}
               </button>
               {(multimeter.redProbe || multimeter.blackProbe) && (
                 <button
                   onClick={() => { setProbe('red', null); setProbe('black', null); }}
-                  className="w-full py-0.5 rounded text-[7px] font-black uppercase cursor-pointer bg-zinc-700 hover:bg-zinc-600 text-zinc-300 border border-zinc-600 transition-all"
+                  className="col-span-2 h-5 rounded-sm text-[7px] font-bold uppercase cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
                 >
-                  ✕ Clear
+                  Clear probes
                 </button>
               )}
             </div>
           </div>
 
           {/* DMM Guide Instructions */}
-          <div className="hidden sm:flex flex-1 flex-col justify-between min-w-0 overflow-hidden">
+          <div className="hidden sm:flex flex-1 flex-col justify-between min-w-0 overflow-hidden py-0.5">
             <div className="flex items-center gap-1">
               <Gauge className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[10px] font-semibold text-slate-400 tracking-wide">
-                DMM
+              <span className="text-[10px] font-semibold text-slate-300 tracking-wide">
+                Multimeter
               </span>
             </div>
-            <ol className="text-[9px] text-slate-300 font-medium pl-3 list-decimal leading-snug mt-1 flex-grow overflow-hidden">
-              <li>Pick a mode: <b>V</b>=Voltage, <b>OHM</b>=Resistance, <b>CONT</b>=Continuity.</li>
-              <li>Click <b>ATTACH RED</b> — then click any terminal on the canvas.</li>
-              <li>Click <b>ATTACH BLK</b> — click another terminal.</li>
-              <li>LCD shows live reading between both probes!</li>
-            </ol>
+            <div className="mt-1 grid grid-cols-1 gap-1.5 text-[9px] text-slate-300 font-medium leading-snug">
+              <p><b className="text-slate-100">1.</b> Pick V, CONT, or OHM.</p>
+              <p><b className="text-red-300">RED</b> and <b className="text-slate-100">BLACK</b> attach to circuit terminals.</p>
+              <p>The screen updates once both probes are connected.</p>
+            </div>
           </div>
         </div>
 
