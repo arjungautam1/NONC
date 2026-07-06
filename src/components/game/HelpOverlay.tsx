@@ -123,7 +123,9 @@ export const HelpOverlay: React.FC = () => {
     setProbe,
     setProbeMode,
     sidebarOpen,
-    useHint
+    useHint,
+    shortCircuitPopup,
+    dismissShortCircuitPopup
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
@@ -541,6 +543,54 @@ export const HelpOverlay: React.FC = () => {
             >
               <span>Next Training Module</span>
               <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+      {/* 4. Funny Short Circuit Modal Pop-up */}
+      {shortCircuitPopup?.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm pointer-events-auto animate-fade-in">
+          <div className="relative w-[340px] max-w-[calc(100vw-2rem)] bg-[#0f0a0a]/98 border border-red-500/20 rounded-lg shadow-2xl shadow-red-950/30 p-5 flex flex-col items-center text-center animate-scale-in">
+            
+            {/* Close button */}
+            <button
+              onClick={() => {
+                soundManager.playButton();
+                dismissShortCircuitPopup();
+              }}
+              className="absolute top-3 right-3 p-1 rounded-md flex items-center justify-center text-red-400 hover:text-red-200 hover:bg-red-500/10 transition-all cursor-pointer"
+              title="Close Popup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Glowing Explosion icon */}
+            <div className="w-12 h-12 rounded-md bg-red-500/10 border border-red-500/25 text-red-400 flex items-center justify-center mb-3 shadow-lg shadow-red-500/5 animate-pulse">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+
+            <span className="text-[9px] font-semibold tracking-wider text-red-400 uppercase font-mono">
+              💥 Breaker Tripped!
+            </span>
+            <h2 className="text-base font-bold text-white mt-1">Short Circuit Detected</h2>
+            
+            <div className="my-3.5 p-3 rounded bg-red-500/[0.03] border border-red-500/10 text-[11px] text-red-200/90 leading-relaxed font-semibold italic">
+              {shortCircuitPopup.quote}
+            </div>
+
+            <p className="text-[10px] text-slate-400 leading-normal font-medium px-1">
+              Current flowed directly from Positive to Negative without passing through a load, triggering the safety breaker. Fix your path loops and try powering on again!
+            </p>
+
+            {/* Dismiss CTA button */}
+            <button
+              onClick={() => {
+                soundManager.playButton();
+                dismissShortCircuitPopup();
+              }}
+              className="mt-4 w-full py-2 bg-red-600 hover:bg-red-500 text-white rounded-md font-semibold text-xs tracking-wide flex items-center justify-center cursor-pointer transition-all uppercase shadow-md shadow-red-900/30 hover:shadow-red-800/40"
+            >
+              Okay, I'll Fix It!
             </button>
           </div>
         </div>

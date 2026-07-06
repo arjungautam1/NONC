@@ -32,6 +32,8 @@ interface GameState {
   recentAchievement: Achievement | null;
   timeElapsed: number;
   timerIntervalId: any | null;
+  shortCircuitPopup: { show: boolean; quote: string } | null;
+  dismissShortCircuitPopup: () => void;
   
   // Actions
   initLevel: (index: number, skipViewTransition?: boolean) => void;
@@ -244,6 +246,27 @@ export const useGameStore = create<GameState>((set, get) => {
       }
     } else if (solverResult.shortCircuit) {
       feedback = '🚨 Short Circuit Detected! Current is flowing directly from Positive to Negative without passing through a load. Check your wiring loops.';
+      
+      if (currentIsRunning) {
+        soundManager.playPuff();
+        currentIsRunning = false;
+
+        const FUNNY_SHORT_QUOTES = [
+          "💥 POP! You just let the magic smoke out of the wires!",
+          "🔥 ZAP! Quick, blow on the components before they melt!",
+          "⚡ OUCH! That was a short circuit. Component eyebrows have been singed.",
+          "💥 Boom! Congratulations, you successfully turned your circuit into a heater!",
+          "🔥 Tripped! Delmi's insurance policy does not cover virtual fire damage."
+        ];
+        const randomQuote = FUNNY_SHORT_QUOTES[Math.floor(Math.random() * FUNNY_SHORT_QUOTES.length)];
+
+        setTimeout(() => {
+          set({
+            shortCircuitPopup: { show: true, quote: randomQuote },
+            isRunning: false
+          });
+        }, 10);
+      }
     }
 
     // Trigger continuity beep sound if mode is CONTINUITY and reading indicates path
@@ -310,6 +333,8 @@ export const useGameStore = create<GameState>((set, get) => {
     hintRevealedAt: 0,
     viewMode: 'levels',
     setViewMode: (mode) => set({ viewMode: mode }),
+    shortCircuitPopup: null,
+    dismissShortCircuitPopup: () => set({ shortCircuitPopup: null }),
 
     initLevel: (index, skipViewTransition = false) => {
       const level = levels[index];
@@ -332,6 +357,7 @@ export const useGameStore = create<GameState>((set, get) => {
         isRunning: false,
         levelCompleted: false,
         successFeedback: '',
+        shortCircuitPopup: null,
         timeElapsed: 0,
         multimeter: {
           mode: 'OFF',

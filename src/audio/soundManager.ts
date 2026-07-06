@@ -451,7 +451,58 @@ class SoundManager {
         }, 40);
       } catch (e) {}
       this.beepOsc = null;
-      this.beepGain = null;
+    }
+  }
+  playPuff() {
+    if (this.muted) return;
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+
+      // 1. POP sound (Low frequency thud)
+      const popOsc = ctx.createOscillator();
+      const popGain = ctx.createGain();
+      popOsc.type = 'triangle';
+      popOsc.frequency.setValueAtTime(160, now);
+      popOsc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+      
+      popGain.gain.setValueAtTime(0.5, now);
+      popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      popOsc.connect(popGain);
+      popGain.connect(ctx.destination);
+
+      // 2. PUFF sound (White noise sizzle)
+      const bufferSize = ctx.sampleRate * 0.4;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = buffer;
+
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(1000, now);
+      noiseFilter.frequency.exponentialRampToValueAtTime(300, now + 0.35);
+      noiseFilter.Q.setValueAtTime(2.0, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.3, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+      noiseSource.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      popOsc.start(now);
+      noiseSource.start(now);
+
+      popOsc.stop(now + 0.16);
+      noiseSource.stop(now + 0.4);
+    } catch (e) {
+      console.warn('Audio playPuff failed:', e);
     }
   }
 }
