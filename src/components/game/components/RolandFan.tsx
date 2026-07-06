@@ -32,7 +32,7 @@ export const RolandFan: React.FC<ComponentProps> = ({ component, isEnergized }) 
 
       {/* Roland Portrait (Full 1:1 Aspect Ratio to show arms crossed and boxes) */}
       <image 
-        href="/roland.jpg" 
+        href="/roland.png" 
         x="-55" 
         y="-55" 
         width="110" 
