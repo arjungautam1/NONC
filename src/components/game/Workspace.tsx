@@ -1255,9 +1255,16 @@ export const Workspace: React.FC = () => {
                 40% { stroke: #ff7a3b; }
                 100% { stroke-dashoffset: -140; opacity: 0; stroke: #ef4444; }
               }
-              .smoke-w1 { animation: billow-wispy-1 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-              .smoke-w2 { animation: billow-wispy-2 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-              .smoke-w3 { animation: billow-wispy-3 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+              @keyframes core-flicker {
+                0% { transform: scale(1); opacity: 1; }
+                80% { transform: scale(0.9) rotate(45deg); opacity: 0.8; }
+                95% { transform: scale(0.4); opacity: 0.3; }
+                100% { transform: scale(0); opacity: 0; }
+              }
+              .smoke-w1 { animation: billow-wispy-1 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+              .smoke-w2 { animation: billow-wispy-2 2.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+              .smoke-w3 { animation: billow-wispy-3 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+              .core-active { animation: core-flicker 2.4s ease-out forwards; }
             `}</style>
             
             <defs>
@@ -1288,12 +1295,12 @@ export const Workspace: React.FC = () => {
               <circle cx="4" cy="-100" r="28" fill="#e2e8f0" className="smoke-w2" style={{ animationDelay: '0.78s' }} opacity="0.1" />
             </g>
 
-            {/* 2. Spark lines (Deterministic generation based on index to prevent mismatch) */}
-            {Array.from({ length: 32 }).map((_, i) => {
-              const angle = i * 11.25 + (i % 3) * 4.5; // 32 lines rotated around 360deg
-              const length = 55 + (i % 5) * 19; // Varying lengths: 55px to 131px
-              const delay = (i % 7) * 0.015; // Varying start delays: 0s to 0.09s
-              const duration = 0.35 + (i % 4) * 0.08; // Varying speed: 0.35s to 0.59s
+            {/* 2. Spark lines (Deterministic generation over a long timeline up to 2.2s) */}
+            {Array.from({ length: 64 }).map((_, i) => {
+              const angle = i * 5.625 + (i % 5) * 3.5; // 64 sparks around 360 degrees
+              const length = 45 + (i % 7) * 16; // Varying lengths: 45px to 141px
+              const delay = (i % 24) * 0.09; // Staggered delays: 0s up to 2.16s!
+              const duration = 0.35 + (i % 3) * 0.08; // Varying speed: 0.35s to 0.51s
               return (
                 <line
                   key={i}
@@ -1313,9 +1320,11 @@ export const Workspace: React.FC = () => {
               );
             })}
 
-            {/* 3. Small White-Hot Core Flash */}
-            <circle r="14" fill="#ff7a3b" opacity="0.65" filter="url(#volumetric-blur)" />
-            <circle r="5.5" fill="#ffffff" />
+            {/* 3. White-Hot Core (Flickers and shrinks over 2.4s) */}
+            <g className="core-active" style={{ transformOrigin: 'center' }}>
+              <circle r="16" fill="#ff7a3b" opacity="0.7" filter="url(#volumetric-blur)" />
+              <circle r="6" fill="#ffffff" />
+            </g>
           </g>
         )}
       </g>

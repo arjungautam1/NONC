@@ -290,7 +290,7 @@ export const useGameStore = create<GameState>((set, get) => {
             shortCircuitSmoke: null,
             shortCircuitPopup: { show: true, quote: randomQuote }
           });
-        }, 1500);
+        }, 3000);
       }
     }
 
