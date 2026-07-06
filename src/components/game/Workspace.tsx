@@ -283,11 +283,17 @@ export const Workspace: React.FC = () => {
 
   // Helper to extract relative terminal offsets and compute exit guide path points
   const getWireSegmentsPoints = (wire: Wire) => {
+    const isLiveDrawing = !wire.toComponentId;
+
     const p1 = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
-    const p2 = getTerminalPos(wire.toComponentId, wire.toTerminalId);
+    const p2 = isLiveDrawing
+      ? (wire.waypoints && wire.waypoints.length > 0 ? wire.waypoints[wire.waypoints.length - 1] : { x: 0, y: 0 })
+      : getTerminalPos(wire.toComponentId, wire.toTerminalId);
 
     const ext1 = getTerminalExtOffset(wire.fromComponentId, wire.fromTerminalId);
-    const ext2 = getTerminalExtOffset(wire.toComponentId, wire.toTerminalId);
+    const ext2 = isLiveDrawing
+      ? { x: 0, y: 0 }
+      : getTerminalExtOffset(wire.toComponentId, wire.toTerminalId);
 
     const p1_ext = { x: p1.x + ext1.x, y: p1.y + ext1.y };
     const p2_ext = { x: p2.x + ext2.x, y: p2.y + ext2.y };
@@ -299,11 +305,15 @@ export const Workspace: React.FC = () => {
     // Push starting point
     points.push(p1);
 
+    const activeWaypoints = isLiveDrawing
+      ? (wire.waypoints ? wire.waypoints.slice(0, -1) : [])
+      : (wire.waypoints || []);
+
     // 1. First fillet / exit segment from p1
     let A0 = p1_ext;
     if (ext1.x !== 0 || ext1.y !== 0) {
-      const target = (wire.waypoints && wire.waypoints.length > 0) 
-        ? wire.waypoints[0] 
+      const target = activeWaypoints.length > 0 
+        ? activeWaypoints[0] 
         : p2_ext;
 
       if (ext1.x !== 0) {
@@ -345,8 +355,8 @@ export const Workspace: React.FC = () => {
     let AN = p2_ext;
     const filletPoints2: { x: number; y: number }[] = [];
     if (ext2.x !== 0 || ext2.y !== 0) {
-      const source = (wire.waypoints && wire.waypoints.length > 0)
-        ? wire.waypoints[wire.waypoints.length - 1]
+      const source = activeWaypoints.length > 0
+        ? activeWaypoints[activeWaypoints.length - 1]
         : A0;
 
       if (ext2.x !== 0) {
@@ -385,8 +395,8 @@ export const Workspace: React.FC = () => {
     }
 
     // 3. Waypoint path or direct path
-    if (wire.waypoints && wire.waypoints.length > 0) {
-      const nodes = [A0, ...wire.waypoints, AN];
+    if (activeWaypoints.length > 0) {
+      const nodes = [A0, ...activeWaypoints, AN];
       
       for (let j = 1; j < nodes.length - 1; j++) {
         const W = nodes[j];
