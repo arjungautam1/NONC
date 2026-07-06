@@ -327,6 +327,105 @@ export const RealWorldVisual: React.FC<VisualProps> = ({ levelId, isActive }) =>
           )}
         </svg>
       );
+      
+    case 17: // CDVI Reader Access Control
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          {/* Wall / Door frame */}
+          <rect x="10" y="10" width="36" height="50" fill="none" stroke="#4b5563" strokeWidth="2.5" />
+          {/* Door panel */}
+          <rect 
+            x="12" 
+            y="12" 
+            width="32" 
+            height="46" 
+            fill="#27272a" 
+            stroke="#3f3f46" 
+            strokeWidth="1"
+            style={{ 
+              transform: isActive ? 'skewY(-12deg) scaleX(0.75)' : 'none',
+              transformOrigin: '12px 12px',
+              transition: 'transform 0.8s ease-in-out'
+            }}
+          />
+          {/* Door handle */}
+          <circle cx="38" cy="35" r="2" fill="#d4d4d8" />
+
+          {/* Wall-mounted card reader */}
+          <rect x="52" y="24" width="10" height="18" rx="1.5" fill="#0f172a" stroke="#334155" strokeWidth="1" />
+          <rect x="54" y="27" width="6" height="4" fill={isActive ? '#22c55e' : '#ef4444'} className="animate-pulse" />
+          
+          {/* Card shape approaching reader */}
+          <rect x="56" y="35" width="7" height="5" rx="0.5" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" opacity="0.8" />
+        </svg>
+      );
+
+    case 18: // Automatic Parking Gate
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          {/* Ground floor line */}
+          <line x1="5" y1="58" x2="65" y2="58" stroke="#3f3f46" strokeWidth="2" />
+          
+          {/* Gate barrier post/cabinet */}
+          <rect x="15" y="30" width="14" height="28" rx="1.5" fill="#f8fafc" stroke="#64748b" strokeWidth="1.5" />
+          {/* Accent red stripe on cabinet */}
+          <rect x="15" y="36" width="14" height="4" fill="#ef4444" />
+          {/* Pivot cap */}
+          <circle cx="22" cy="38" r="3.5" fill="#334155" />
+
+          {/* Barrier arm (yellow and black striped) */}
+          <g 
+            style={{ 
+              transform: isActive ? 'rotate(-75deg)' : 'rotate(0deg)',
+              transformOrigin: '22px 38px',
+              transition: 'transform 1s ease-in-out' 
+            }}
+          >
+            {/* The arm body */}
+            <rect x="22" y="36" width="40" height="4" rx="1" fill="#fbbf24" stroke="#d97706" strokeWidth="0.5" />
+            {/* Black stripes */}
+            <path d="M29 36 L33 40 M39 36 L43 40 M49 36 L53 40 M59 36 L63 40" stroke="#1e293b" strokeWidth="3" />
+          </g>
+
+          {/* Status light */}
+          <circle cx="22" cy="48" r="2" fill={isActive ? '#22c55e' : '#ef4444'} className={isActive ? 'animate-pulse' : ''} />
+        </svg>
+      );
+
+    case 19: // Smart Parking Barrier
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          {/* Ground floor line */}
+          <line x1="5" y1="58" x2="65" y2="58" stroke="#3f3f46" strokeWidth="2" />
+          
+          {/* Premium Delmi Smart Cabinet (Dark, blue glow) */}
+          <rect x="14" y="24" width="16" height="34" rx="2.5" fill="#0b1329" stroke="#1b75d0" strokeWidth="1.5" />
+          {/* Inner blue status LED screen */}
+          <rect x="18" y="29" width="8" height="6" rx="0.5" fill={isActive ? '#1e1b4b' : '#030712'} stroke={isActive ? '#60a5fa' : '#1e293b'} strokeWidth="0.5" />
+          {isActive && (
+            <circle cx="22" cy="32" r="1.5" fill="#60a5fa" className="animate-ping" />
+          )}
+          {/* Pivot cap */}
+          <circle cx="22" cy="42" r="4" fill="#1e293b" stroke="#1b75d0" strokeWidth="1" />
+
+          {/* Barrier arm (Premium blue & white striped) */}
+          <g 
+            style={{ 
+              transform: isActive ? 'rotate(-75deg)' : 'rotate(0deg)',
+              transformOrigin: '22px 42px',
+              transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)' 
+            }}
+          >
+            {/* The arm body */}
+            <rect x="22" y="40" width="42" height="4" rx="1" fill="#1b75d0" stroke="#1d4ed8" strokeWidth="0.5" />
+            {/* White stripes */}
+            <path d="M28 40 L31 44 M36 40 L39 44 M44 40 L47 44 M52 40 L55 44 M60 40 L63 44" stroke="#ffffff" strokeWidth="2.5" />
+          </g>
+
+          {/* Glowing bottom indicator */}
+          <rect x="17" y="52" width="10" height="1.5" rx="0.5" fill={isActive ? '#22c55e' : '#ef4444'} className="animate-pulse" />
+        </svg>
+      );
 
     default:
       return (

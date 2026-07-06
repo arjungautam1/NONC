@@ -23,7 +23,9 @@ export const Sidebar: React.FC = () => {
     resetLevel,
     simulation,
     sidebarOpen,
-    toggleSidebar
+    toggleSidebar,
+    score,
+    useHint
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
@@ -113,12 +115,13 @@ export const Sidebar: React.FC = () => {
           {/* Glow pill indicator */}
           <span className="h-1 w-10 md:w-1 md:h-10 rounded-full bg-[#2563eb]/45 group-hover:bg-[#60a5fa] transition-colors shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
-          <span
-            className="text-[9px] font-bold text-slate-400 group-hover:text-white tracking-widest uppercase font-mono"
-            style={{ writingMode: 'horizontal-tb' }}
-          >
-            GUIDE
-          </span>
+          <div className="flex md:flex-col items-center justify-center text-[9px] font-black text-slate-400 group-hover:text-white font-mono leading-none gap-0.5 md:gap-1.5 md:mt-2">
+            <span>G</span>
+            <span>U</span>
+            <span>I</span>
+            <span>D</span>
+            <span>E</span>
+          </div>
         </button>
       )}
 
@@ -272,6 +275,43 @@ export const Sidebar: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* 4.5. Level Hints Section */}
+        {level.hints && level.hints.length > 0 && (
+          <div className="p-3 border-t border-white/10 bg-slate-950/20 flex flex-col gap-2 shrink-0 select-none">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400 font-mono">💡 Level Hints</span>
+              </div>
+              <span className="text-[9px] font-mono text-slate-500 font-bold">
+                {Math.min(score.hintsUsed, level.hints.length)} / {level.hints.length}
+              </span>
+            </div>
+
+            {/* Revealed Hints List */}
+            {score.hintsUsed > 0 && (
+              <div className="flex flex-col gap-1.5 max-h-24 overflow-y-auto pr-1">
+                {level.hints.slice(0, score.hintsUsed).map((hint, idx) => (
+                  <div key={idx} className="p-2 rounded bg-amber-500/5 border border-amber-500/10 text-[10px] text-amber-200/90 leading-relaxed font-medium">
+                    <span className="font-bold text-amber-400 mr-1">Hint {idx + 1}:</span>
+                    {hint}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Reveal Button */}
+            {score.hintsUsed < level.hints.length && (
+              <button
+                onClick={useHint}
+                className="w-full py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>Reveal Next Hint</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 5. Attribution Footer */}
         <div className="p-2.5 bg-black/10 border-t border-white/5 text-center select-none shrink-0 mt-auto">

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { ComponentRenderer } from './components/ComponentRenderer';
 import type { CircuitComponent, Wire } from '../../types/game';
@@ -11,6 +11,7 @@ export const Workspace: React.FC = () => {
     components,
     wires,
     isRunning,
+    toggleSimulation,
     simulation,
     updateComponentPosition,
     addWire,
@@ -19,7 +20,8 @@ export const Workspace: React.FC = () => {
     setProbe,
     probeMode,
     setProbeMode,
-    currentLevelIndex
+    currentLevelIndex,
+    sidebarOpen
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
@@ -41,17 +43,79 @@ export const Workspace: React.FC = () => {
   const [wireSize, setWireSize] = useState<'normal' | 'thin'>('normal');
 
   const svgRef = useRef<SVGSVGElement | null>(null);
-  // Probe lead anchor points aligning with the yellow DMM box below the canvas
-  const RED_ANCHOR = { x: 405, y: 558 };
-  const BLK_ANCHOR = { x: 441, y: 558 };
+
+  // Listen to window resize to recalculate dynamic DMM anchor positions
+  const [resizeToggle, setResizeToggle] = useState(0);
+  useEffect(() => {
+    const handleResize = () => setResizeToggle(prev => prev + 1);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const [offsets, setOffsets] = useState({ shiftX: 0, shiftY: 0 });
+
+  // Center components dynamically
+  useEffect(() => {
+    if (!svgRef.current || components.length === 0) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const svgWidth = rect.width;
+    const svgHeight = rect.height;
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    components.forEach(c => {
+      const w = 110;
+      const h = 110;
+      minX = Math.min(minX, c.x);
+      maxX = Math.max(maxX, c.x + w);
+      minY = Math.min(minY, c.y);
+      maxY = Math.max(maxY, c.y + h);
+    });
+
+    const compWidth = maxX - minX;
+    const compHeight = maxY - minY;
+    const targetCenterX = svgWidth / 2;
+    const targetCenterY = svgHeight / 2;
+    const compCenterX = minX + compWidth / 2;
+    const compCenterY = minY + compHeight / 2;
+
+    setOffsets({
+      shiftX: targetCenterX - compCenterX * zoomScale,
+      shiftY: targetCenterY - compCenterY * zoomScale
+    });
+  }, [components, zoomScale, sidebarOpen, resizeToggle]);
+
+  // Convert screen coordinates of DMM ports to SVG coordinates relative to the SVG container
+  const getPortCoords = (portId: string) => {
+    const portEl = document.getElementById(portId);
+    const svgEl = svgRef.current;
+    if (!portEl || !svgEl) {
+      if (svgEl) {
+        const rect = svgEl.getBoundingClientRect();
+        return portId === 'dmm-red-port' 
+          ? { x: rect.width / 2 - 20, y: rect.height - 5 } 
+          : { x: rect.width / 2 + 20, y: rect.height - 5 };
+      }
+      return portId === 'dmm-red-port' ? { x: 405, y: 500 } : { x: 441, y: 500 };
+    }
+    const portRect = portEl.getBoundingClientRect();
+    const svgRect = svgEl.getBoundingClientRect();
+    return {
+      x: portRect.left + portRect.width / 2 - svgRect.left,
+      y: portRect.top + portRect.height / 2 - svgRect.top
+    };
+  };
 
   // Convert screen coordinates to SVG coordinates
   const getSVGCoords = (e: React.PointerEvent | MouseEvent) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
     return {
-      x: (e.clientX - rect.left) / zoomScale,
-      y: (e.clientY - rect.top) / zoomScale
+      x: (e.clientX - rect.left - offsets.shiftX) / zoomScale,
+      y: (e.clientY - rect.top - offsets.shiftY) / zoomScale
     };
   };
 
@@ -666,7 +730,26 @@ export const Workspace: React.FC = () => {
       
       {/* Canvas Toolbars */}
       <div className="h-10 border-b border-white/10 bg-[#090d14]/88 px-4 flex items-center justify-between text-xs font-medium text-slate-300 shrink-0 backdrop-blur">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3.5">
+          {/* Power ON/OFF button */}
+          <button
+            onClick={toggleSimulation}
+            className={`h-6.5 px-3 rounded-md font-bold text-[9.5px] tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-300 border uppercase ${
+              isRunning 
+                ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
+                : 'bg-white/[0.02] hover:bg-white/[0.06] text-slate-400 hover:text-white border-white/10'
+            }`}
+            title="Toggle Simulator Power"
+          >
+            <div className="relative flex items-center justify-center">
+              <span className={`w-1.5 h-1.5 rounded-full absolute ${isRunning ? 'bg-emerald-400 animate-ping' : 'bg-slate-600'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full relative ${isRunning ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+            </div>
+            <span>Power: {isRunning ? 'ON' : 'OFF'}</span>
+          </button>
+
+          <div className="h-4.5 w-px bg-white/10" />
+
           <span className="text-slate-500 uppercase tracking-wide text-[10px]">Wire</span>
           <div className="flex gap-2">
             {(['red', 'black', 'green', 'orange'] as const).map(color => (
@@ -797,7 +880,7 @@ export const Workspace: React.FC = () => {
         </defs>
 
         {/* Zoomed content group wrapper */}
-        <g transform={`scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
+        <g transform={`translate(${offsets.shiftX}, ${offsets.shiftY}) scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
           {/* 1. Placed components casing layer */}
           {components.map(comp => {
           const isEnergized = simulation.energizedComponents.has(comp.id);
@@ -1166,9 +1249,10 @@ export const Workspace: React.FC = () => {
         {/* 5. Probe lead wires — draw from anchor dots to connected terminals (outside zoom scale group) */}
         {multimeter.redProbe && (() => {
           const pos = getTerminalPos(multimeter.redProbe.componentId, multimeter.redProbe.terminalId);
+          const anchor = getPortCoords('dmm-red-port');
           return (
             <path
-              d={getWirePath(RED_ANCHOR.x, RED_ANCHOR.y, pos.x * zoomScale, pos.y * zoomScale)}
+              d={getWirePath(anchor.x, anchor.y, pos.x * zoomScale + offsets.shiftX, pos.y * zoomScale + offsets.shiftY)}
               fill="none"
               stroke="#ef4444"
               strokeWidth="3"
@@ -1180,9 +1264,10 @@ export const Workspace: React.FC = () => {
 
         {multimeter.blackProbe && (() => {
           const pos = getTerminalPos(multimeter.blackProbe.componentId, multimeter.blackProbe.terminalId);
+          const anchor = getPortCoords('dmm-black-port');
           return (
             <path
-              d={getWirePath(BLK_ANCHOR.x, BLK_ANCHOR.y, pos.x * zoomScale, pos.y * zoomScale)}
+              d={getWirePath(anchor.x, anchor.y, pos.x * zoomScale + offsets.shiftX, pos.y * zoomScale + offsets.shiftY)}
               fill="none"
               stroke="#475569"
               strokeWidth="3"

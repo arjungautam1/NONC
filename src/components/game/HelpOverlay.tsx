@@ -9,9 +9,8 @@ import {
   Award,
   Star,
   Activity,
-  Gauge,
   Briefcase,
-  Download,
+  ChevronRight,
   X
 } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
@@ -123,7 +122,8 @@ export const HelpOverlay: React.FC = () => {
     setMultimeterMode,
     setProbe,
     setProbeMode,
-    sidebarOpen
+    sidebarOpen,
+    useHint
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
@@ -139,36 +139,7 @@ export const HelpOverlay: React.FC = () => {
     setIsDismissed(false);
   }, [currentLevelIndex]);
 
-  const handleDownloadVisual = () => {
-    const svgEl = document.querySelector('.real-world-visual-container svg');
-    if (!svgEl) return;
-    const serializer = new XMLSerializer();
-    let source = serializer.serializeToString(svgEl);
-    if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
-      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
-    }
-    if (!source.match(/^<svg[^>]+xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/)) {
-      source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
-    }
 
-    // Inject a solid dark background rect as the first element inside <svg ...>
-    const svgTagMatch = source.match(/^<svg[^>]*>/);
-    if (svgTagMatch) {
-      const svgTag = svgTagMatch[0];
-      const bgRect = '<rect width="100%" height="100%" fill="#18181b" />';
-      const styleNode = '<style>text { font-family: monospace, sans-serif; }</style>';
-      source = source.replace(svgTag, `${svgTag}\n${bgRect}\n${styleNode}`);
-    }
-
-    source = '<?xml version="1.0" encoding="utf-8"?>\n' + source;
-    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `real_world_layout_level_${currentLevelIndex + 1}.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   // Auto-dismiss achievement notifications after 4 seconds
   useEffect(() => {
@@ -342,9 +313,9 @@ export const HelpOverlay: React.FC = () => {
         {/* 3. DMM Troubleshooting Multimeter Panel */}
         <div className="w-full md:w-[360px] xl:w-[390px] h-auto md:h-full border border-white/10 bg-white/[0.035] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden">
           {/* DMM Yellow Housing */}
-          <div className="w-[164px] h-full min-h-[122px] bg-[#d6b24a] p-2 rounded-md border border-[#9b7a24] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_8px_18px_rgba(0,0,0,0.22)] flex flex-col gap-1.5 shrink-0">
+          <div className="w-[164px] h-full min-h-[122px] bg-[#fcc419] p-1.5 rounded-md border border-[#ca8a04] shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_18px_rgba(0,0,0,0.25)] flex flex-col gap-1 shrink-0 justify-between">
             {/* LCD Screen */}
-            <div className="bg-[#d7eadf] border border-[#80651e] px-2 py-1 rounded-sm shadow-inner font-mono text-slate-900">
+            <div className="bg-[#d7eadf] border border-[#a16207] px-2 py-0.5 rounded-sm shadow-inner font-mono text-slate-900">
               <div className="flex items-center justify-between leading-none">
                 <span className="text-[7px] font-bold text-slate-600 tracking-wider">DMM-40</span>
                 <span className="text-[7px] font-bold text-slate-500">{multimeterModeLabel}</span>
@@ -358,7 +329,7 @@ export const HelpOverlay: React.FC = () => {
             </div>
 
             {/* Mode Buttons */}
-            <div className="grid grid-cols-4 gap-1 font-bold">
+            <div className="grid grid-cols-4 gap-0.5 font-bold shrink-0">
               {(['OFF', 'VOLTAGE', 'CONTINUITY', 'RESISTANCE'] as const).map(mode => {
                 const label = mode === 'VOLTAGE' ? 'V' : mode === 'CONTINUITY' ? 'CONT' : mode === 'RESISTANCE' ? 'OHM' : 'OFF';
                 const active = multimeter.mode === mode;
@@ -366,9 +337,9 @@ export const HelpOverlay: React.FC = () => {
                   <button
                     key={mode}
                     onClick={() => setMultimeterMode(mode)}
-                    className={`h-6 rounded-sm border font-bold cursor-pointer uppercase transition-all flex items-center justify-center whitespace-nowrap px-0.5 text-[8px] tracking-tighter ${active
-                        ? 'bg-slate-900 text-white border-slate-700 shadow-inner'
-                        : 'bg-[#bd9830] text-slate-950 border-[#8f711f] hover:bg-[#e0bd55]'
+                    className={`h-[18px] rounded border font-bold cursor-pointer uppercase transition-all flex items-center justify-center whitespace-nowrap px-0.5 text-[7px] tracking-tight ${active
+                        ? 'bg-slate-950 text-[#fcc419] border-slate-950 shadow-inner'
+                        : 'bg-[#d99f0e] text-slate-950 border-[#b88506] hover:bg-[#ebb11a]'
                       }`}
                   >
                     {label}
@@ -377,52 +348,106 @@ export const HelpOverlay: React.FC = () => {
               })}
             </div>
 
-            {/* Probe Attach Buttons */}
-            <div className="grid grid-cols-2 gap-1 border-t border-[#9b7a24]/60 pt-1.5">
-              <button
-                onClick={() => setProbeMode(multimeter.redProbe ? null : 'red')}
-                className={`h-7 rounded-sm text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 border ${multimeter.redProbe
-                    ? 'bg-red-700 text-white border-red-400'
-                    : 'bg-red-500 hover:bg-red-400 text-white border-red-700'
-                  }`}
-              >
-                <span className="w-2 h-2 rounded-full bg-red-200 shadow-inner" />
-                {multimeter.redProbe ? 'RED ON' : 'RED'}
-              </button>
-              <button
-                onClick={() => setProbeMode(multimeter.blackProbe ? null : 'black')}
-                className={`h-7 rounded-sm text-[8px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1 border ${multimeter.blackProbe
-                    ? 'bg-slate-900 text-white border-slate-400'
-                    : 'bg-slate-600 hover:bg-slate-500 text-white border-slate-800'
-                  }`}
-              >
-                <span className="w-2 h-2 rounded-full bg-slate-200 shadow-inner" />
-                {multimeter.blackProbe ? 'BLACK ON' : 'BLACK'}
-              </button>
-              {(multimeter.redProbe || multimeter.blackProbe) && (
+            {/* Probe Attach Sockets (COM / VΩ) */}
+            <div className="flex justify-around items-center border-t border-[#9b7a24]/60 pt-1 shrink-0 pb-0.5">
+              {/* COM Socket (Black) */}
+              <div className="flex flex-col items-center">
                 <button
-                  onClick={() => { setProbe('red', null); setProbe('black', null); }}
-                  className="col-span-2 h-5 rounded-sm text-[7px] font-bold uppercase cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
+                  id="dmm-black-port"
+                  onClick={() => setProbeMode(multimeter.blackProbe ? null : 'black')}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer shadow-md ${
+                    multimeter.blackProbe
+                      ? 'bg-slate-950 border-slate-400 ring-2 ring-slate-400/40 scale-95'
+                      : 'bg-slate-950 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
+                  }`}
+                  title="Black Probe (COM) - Click to place"
                 >
-                  Clear probes
+                  <span className={`w-3 h-3 rounded-full border transition-all ${
+                    multimeter.blackProbe 
+                      ? 'bg-[#18181b] border-slate-500 shadow-inner' 
+                      : 'bg-[#cbd5e1] border-[#64748b]'
+                  }`} />
                 </button>
-              )}
+                <span className="text-[6.5px] font-black text-slate-800 tracking-wider mt-0.5">COM</span>
+              </div>
+
+              {/* V/Ohm Socket (Red) */}
+              <div className="flex flex-col items-center">
+                <button
+                  id="dmm-red-port"
+                  onClick={() => setProbeMode(multimeter.redProbe ? null : 'red')}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all cursor-pointer shadow-md ${
+                    multimeter.redProbe
+                      ? 'bg-red-600 border-red-300 ring-2 ring-red-400/40 scale-95'
+                      : 'bg-red-750 hover:bg-red-600 border-red-900 hover:border-red-800'
+                  }`}
+                  title="Red Probe (V/Ω) - Click to place"
+                >
+                  <span className={`w-3 h-3 rounded-full border transition-all ${
+                    multimeter.redProbe 
+                      ? 'bg-[#ef4444] border-red-400 shadow-inner' 
+                      : 'bg-[#cbd5e1] border-[#64748b]'
+                  }`} />
+                </button>
+                <span className="text-[6.5px] font-black text-slate-800 tracking-wider mt-0.5">V Ω</span>
+              </div>
             </div>
+
+            {(multimeter.redProbe || multimeter.blackProbe) && (
+              <button
+                onClick={() => { setProbe('red', null); setProbe('black', null); }}
+                className="w-full h-[15px] rounded bg-slate-950/80 hover:bg-slate-950 text-slate-200 hover:text-white border border-slate-950 transition-all text-[7px] font-extrabold uppercase cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
+              >
+                Clear Probes
+              </button>
+            )}
           </div>
 
-          {/* DMM Guide Instructions */}
-          <div className="hidden sm:flex flex-1 flex-col justify-between min-w-0 overflow-hidden py-0.5">
-            <div className="flex items-center gap-1">
-              <Gauge className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[10px] font-semibold text-slate-300 tracking-wide">
-                Multimeter
-              </span>
+          {/* Dynamic DMM Hints Container */}
+          <div className="hidden sm:flex flex-1 flex-col justify-between min-w-0 overflow-hidden py-0.5 select-none">
+            <div className="flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wide font-mono">💡 Level Hints</span>
+              </div>
+              {level.hints && level.hints.length > 0 && (
+                <span className="text-[8px] font-mono text-slate-500 font-bold">
+                  {Math.min(score.hintsUsed, level.hints.length)}/{level.hints.length}
+                </span>
+              )}
             </div>
-            <div className="mt-1 grid grid-cols-1 gap-1.5 text-[9px] text-slate-300 font-medium leading-snug">
-              <p><b className="text-slate-100">1.</b> Pick V, CONT, or OHM.</p>
-              <p><b className="text-red-300">RED</b> and <b className="text-slate-100">BLACK</b> attach to circuit terminals.</p>
-              <p>The screen updates once both probes are connected.</p>
-            </div>
+            
+            {level.hints && level.hints.length > 0 ? (
+              <div className="flex-1 flex flex-col justify-between min-h-0 mt-1">
+                {/* Hints text area */}
+                <div className="flex-1 overflow-y-auto pr-1 text-[9.5px] leading-relaxed font-semibold text-slate-300 min-h-0 custom-scrollbar mb-1">
+                  {score.hintsUsed === 0 ? (
+                    <p className="text-slate-500 italic font-medium">Stuck? Click below to reveal step-by-step diagnostic hints.</p>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      {level.hints.slice(0, score.hintsUsed).map((hint, hIdx) => (
+                        <p key={hIdx} className="bg-amber-500/[0.03] border border-amber-500/10 rounded px-2 py-1 text-amber-200/90 font-medium">
+                          <span className="text-amber-400 font-bold mr-1">Hint {hIdx + 1}:</span>
+                          {hint}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Reveal button */}
+                {score.hintsUsed < level.hints.length && (
+                  <button
+                    onClick={useHint}
+                    className="w-full py-1 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 hover:border-amber-500/35 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1"
+                  >
+                    <span>Reveal Hint</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-[9.5px] text-slate-500 font-medium mt-1">No hints available for this training module.</p>
+            )}
           </div>
         </div>
 
@@ -441,15 +466,6 @@ export const HelpOverlay: React.FC = () => {
                         Real-world: {app.title}
                       </span>
                     </div>
-                    {/* Download SVG button */}
-                    <button
-                      onClick={handleDownloadVisual}
-                      className="text-[8px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded border border-white/10 cursor-pointer transition-colors uppercase tracking-wide flex items-center gap-1"
-                      title="Download Vector SVG Diagram"
-                    >
-                      <Download className="w-2.5 h-2.5" />
-                      <span>SVG</span>
-                    </button>
                   </div>
                   <p className="text-[10.5px] text-slate-400 leading-normal font-medium overflow-y-auto max-h-[80px] pr-1">
                     {app.desc}
