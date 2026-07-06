@@ -261,13 +261,24 @@ export const Workspace: React.FC = () => {
 
   const getTerminalExtOffset = (compId: string, termId: string) => {
     const comp = components.find(c => c.id === compId);
-    if (!comp) return 0;
+    if (!comp) return { x: 0, y: 0 };
     const term = comp.terminals.find(t => t.id === termId);
-    if (!term) return 0;
+    if (!term) return { x: 0, y: 0 };
     const local = getTerminalLocalPos(comp.type, term);
-    if (local.x > 5) return 22;
-    if (local.x < -5) return -22;
-    return 0;
+
+    if (comp.type === 'battery') {
+      // Battery terminals are on top, exit upwards
+      return { x: 0, y: -22 };
+    }
+    if (comp.type === 'power_supply') {
+      // Power supply terminals are on bottom, exit downwards
+      return { x: 0, y: 22 };
+    }
+
+    // Default left/right horizontal exits for other components
+    if (local.x > 5) return { x: 22, y: 0 };
+    if (local.x < -5) return { x: -22, y: 0 };
+    return { x: 0, y: 0 };
   };
 
   // Helper to extract relative terminal offsets and compute exit guide path points
@@ -278,8 +289,8 @@ export const Workspace: React.FC = () => {
     const ext1 = getTerminalExtOffset(wire.fromComponentId, wire.fromTerminalId);
     const ext2 = getTerminalExtOffset(wire.toComponentId, wire.toTerminalId);
 
-    const p1_ext = { x: p1.x + ext1, y: p1.y };
-    const p2_ext = { x: p2.x + ext2, y: p2.y };
+    const p1_ext = { x: p1.x + ext1.x, y: p1.y + ext1.y };
+    const p2_ext = { x: p2.x + ext2.x, y: p2.y + ext2.y };
 
     const R = 8; // Fillet radius
     const STEPS = 20;
@@ -288,17 +299,20 @@ export const Workspace: React.FC = () => {
     // Push starting point
     points.push(p1);
 
-    if (wire.waypoints && wire.waypoints.length > 0) {
-      let A0 = p1_ext;
-      if (ext1 !== 0) {
-        const dir1 = Math.sign(ext1);
-        const w0 = wire.waypoints[0];
-        const dirY1 = w0.y >= p1.y ? 1 : -1;
-        const filletStart = { x: p1_ext.x - dir1 * R, y: p1.y };
-        const filletEnd = { x: p1_ext.x, y: p1.y + dirY1 * R };
-        
-        points.push(filletStart);
+    // 1. First fillet / exit segment from p1
+    let A0 = p1_ext;
+    if (ext1.x !== 0 || ext1.y !== 0) {
+      const target = (wire.waypoints && wire.waypoints.length > 0) 
+        ? wire.waypoints[0] 
+        : p2_ext;
 
+      if (ext1.x !== 0) {
+        const dirX = Math.sign(ext1.x);
+        const dirY = target.y >= p1.y ? 1 : -1;
+        const filletStart = { x: p1_ext.x - dirX * R, y: p1.y };
+        const filletEnd = { x: p1_ext.x, y: p1.y + dirY * R };
+
+        points.push(filletStart);
         for (let i = 1; i < 5; i++) {
           const t = i / 5;
           const mt = 1 - t;
@@ -307,18 +321,39 @@ export const Workspace: React.FC = () => {
             y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
           });
         }
-        
+        A0 = filletEnd;
+      } else {
+        const dirY = Math.sign(ext1.y);
+        const dirX = target.x >= p1.x ? 1 : -1;
+        const filletStart = { x: p1.x, y: p1_ext.y - dirY * R };
+        const filletEnd = { x: p1.x + dirX * R, y: p1_ext.y };
+
+        points.push(filletStart);
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          points.push({
+            x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
+            y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
+          });
+        }
         A0 = filletEnd;
       }
+    }
 
-      let AN = p2_ext;
-      const filletPoints2: { x: number; y: number }[] = [];
-      if (ext2 !== 0) {
-        const dir2 = Math.sign(ext2);
-        const wLast = wire.waypoints[wire.waypoints.length - 1];
-        const dirY2 = wLast.y >= p2.y ? 1 : -1;
-        const filletStart = { x: p2_ext.x, y: p2.y + dirY2 * R };
-        const filletEnd = { x: p2_ext.x - dir2 * R, y: p2.y };
+    // 2. Second fillet / entry segment into p2
+    let AN = p2_ext;
+    const filletPoints2: { x: number; y: number }[] = [];
+    if (ext2.x !== 0 || ext2.y !== 0) {
+      const source = (wire.waypoints && wire.waypoints.length > 0)
+        ? wire.waypoints[wire.waypoints.length - 1]
+        : A0;
+
+      if (ext2.x !== 0) {
+        const dirX = Math.sign(ext2.x);
+        const dirY = source.y >= p2.y ? 1 : -1;
+        const filletStart = { x: p2_ext.x, y: p2.y + dirY * R };
+        const filletEnd = { x: p2_ext.x - dirX * R, y: p2.y };
 
         for (let i = 1; i < 5; i++) {
           const t = i / 5;
@@ -328,39 +363,50 @@ export const Workspace: React.FC = () => {
             y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
           });
         }
-        
+        filletPoints2.push(filletEnd);
+        AN = filletStart;
+      } else {
+        const dirY = Math.sign(ext2.y);
+        const dirX = source.x >= p2.x ? 1 : -1;
+        const filletStart = { x: p2.x + dirX * R, y: p2_ext.y };
+        const filletEnd = { x: p2.x, y: p2_ext.y - dirY * R };
+
+        for (let i = 1; i < 5; i++) {
+          const t = i / 5;
+          const mt = 1 - t;
+          filletPoints2.push({
+            x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
+            y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
+          });
+        }
         filletPoints2.push(filletEnd);
         AN = filletStart;
       }
+    }
 
-      // Build the list of nodes: [A0, ...waypoints, AN]
+    // 3. Waypoint path or direct path
+    if (wire.waypoints && wire.waypoints.length > 0) {
       const nodes = [A0, ...wire.waypoints, AN];
       
-      // Trace path through these nodes, rounding corners at each waypoint W
       for (let j = 1; j < nodes.length - 1; j++) {
         const W = nodes[j];
         const prev = nodes[j-1];
         const next = nodes[j+1];
 
-        // Incoming vector
         const vIn = { x: W.x - prev.x, y: W.y - prev.y };
         const lIn = Math.sqrt(vIn.x * vIn.x + vIn.y * vIn.y) || 1;
         const uIn = { x: vIn.x / lIn, y: vIn.y / lIn };
 
-        // Outgoing vector
         const vOut = { x: next.x - W.x, y: next.y - W.y };
         const lOut = Math.sqrt(vOut.x * vOut.x + vOut.y * vOut.y) || 1;
         const uOut = { x: vOut.x / lOut, y: vOut.y / lOut };
 
-        // Corner radius
         const r = Math.min(15, lIn / 2.1, lOut / 2.1);
         const pStart = { x: W.x - r * uIn.x, y: W.y - r * uIn.y };
         const pEnd = { x: W.x + r * uOut.x, y: W.y + r * uOut.y };
 
-        // 1. Line from previous point to pStart
         points.push(pStart);
 
-        // 2. Quadratic curve around W from pStart to pEnd
         for (let i = 1; i <= 5; i++) {
           const t = i / 5;
           const mt = 1 - t;
@@ -371,64 +417,17 @@ export const Workspace: React.FC = () => {
         }
       }
 
-      // Line to AN
       points.push(AN);
-
-      // Append terminal entry fillet
       points.push(...filletPoints2);
       points.push(p2);
-
     } else {
-      // Standard direct path with exit/entry horizontal offsets and corners
-      let startT = p1_ext;
-      if (ext1 !== 0) {
-        const dir1 = Math.sign(ext1);
-        const dirY1 = p2.y >= p1.y ? 1 : -1;
-        const filletStart = { x: p1_ext.x - dir1 * R, y: p1.y };
-        const filletEnd = { x: p1_ext.x, y: p1.y + dirY1 * R };
-        
-        points.push(filletStart);
-
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const mt = 1 - t;
-          points.push({
-            x: mt * mt * filletStart.x + 2 * mt * t * p1_ext.x + t * t * filletEnd.x,
-            y: mt * mt * filletStart.y + 2 * mt * t * p1_ext.y + t * t * filletEnd.y
-          });
-        }
-        
-        startT = filletEnd;
-      }
-
-      let endT = p2_ext;
-      const filletPoints2: { x: number; y: number }[] = [];
-      if (ext2 !== 0) {
-        const dir2 = Math.sign(ext2);
-        const dirY2 = p1.y >= p2.y ? 1 : -1;
-        const filletStart = { x: p2_ext.x, y: p2.y + dirY2 * R };
-        const filletEnd = { x: p2_ext.x - dir2 * R, y: p2.y };
-
-        for (let i = 1; i < 5; i++) {
-          const t = i / 5;
-          const mt = 1 - t;
-          filletPoints2.push({
-            x: mt * mt * filletStart.x + 2 * mt * t * p2_ext.x + t * t * filletEnd.x,
-            y: mt * mt * filletStart.y + 2 * mt * t * p2_ext.y + t * t * filletEnd.y
-          });
-        }
-        
-        filletPoints2.push(filletEnd);
-        endT = filletStart;
-      }
-
-      const dx = Math.abs(endT.x - startT.x);
-      const dy = Math.abs(endT.y - startT.y);
+      const dx = Math.abs(AN.x - A0.x);
+      const dy = Math.abs(AN.y - A0.y);
       const sag = Math.max(30, Math.min(100, (dx + dy) * 0.15));
-      const cp1x = startT.x;
-      const cp1y = startT.y + sag;
-      const cp2x = endT.x;
-      const cp2y = endT.y + sag;
+      const cp1x = A0.x;
+      const cp1y = A0.y + sag;
+      const cp2x = AN.x;
+      const cp2y = AN.y + sag;
 
       for (let i = 0; i <= STEPS; i++) {
         const t = i / STEPS;
@@ -438,8 +437,8 @@ export const Workspace: React.FC = () => {
         const w3 = 3 * mt * t * t;
         const w4 = t * t * t;
         points.push({
-          x: w1 * startT.x + w2 * cp1x + w3 * cp2x + w4 * endT.x,
-          y: w1 * startT.y + w2 * cp1y + w3 * cp2y + w4 * endT.y
+          x: w1 * A0.x + w2 * cp1x + w3 * cp2x + w4 * AN.x,
+          y: w1 * A0.y + w2 * cp1y + w3 * cp2y + w4 * AN.y
         });
       }
 
