@@ -865,6 +865,12 @@ export const Workspace: React.FC = () => {
           
           {/* Power switch located at the top-left of the components */}
           {components.length > 0 && (() => {
+            const hasBattery = components.some(c => c.type === 'battery');
+            const hasPowerSwitchOnly = !components.some(c => c.type === 'power_supply' || c.type === 'ac_source');
+            if (hasBattery && hasPowerSwitchOnly) {
+              return null;
+            }
+
             let minX = Infinity;
             let minY = Infinity;
             components.forEach(c => {

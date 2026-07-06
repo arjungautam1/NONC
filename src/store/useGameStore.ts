@@ -114,6 +114,17 @@ export const useGameStore = create<GameState>((set, get) => {
     // Solve circuit
     const solverResult = solveCircuit(currentComponents, currentWires);
 
+    const hasBattery = currentComponents.some(c => c.type === 'battery');
+    const hasPowerSwitchOnly = !currentComponents.some(c => c.type === 'power_supply' || c.type === 'ac_source');
+    const isBatteryLevel = hasBattery && hasPowerSwitchOnly;
+
+    if (isBatteryLevel && !solverResult.shortCircuit) {
+      currentIsRunning = true;
+      if (!get().isRunning) {
+        set({ isRunning: true });
+      }
+    }
+
     // Synchronize sounds (continuous hums)
     if (currentIsRunning && !solverResult.shortCircuit) {
       currentComponents.forEach(c => {
@@ -372,13 +383,17 @@ export const useGameStore = create<GameState>((set, get) => {
       const newComps = JSON.parse(JSON.stringify(level.preplacedComponents));
       const newWires = [...level.preplacedWires];
 
+      const hasBattery = newComps.some((c: any) => c.type === 'battery');
+      const hasPowerSwitchOnly = !newComps.some((c: any) => c.type === 'power_supply' || c.type === 'ac_source');
+      const defaultRunning = hasBattery && hasPowerSwitchOnly;
+
       set({
         currentLevelIndex: index,
         components: newComps,
         wires: newWires,
         history: [],
         redoHistory: [],
-        isRunning: false,
+        isRunning: defaultRunning,
         levelCompleted: false,
         successFeedback: '',
         shortCircuitPopup: null,
@@ -401,7 +416,7 @@ export const useGameStore = create<GameState>((set, get) => {
       });
 
       // Solve initial states
-      runSimulation(newComps, newWires, false);
+      runSimulation(newComps, newWires, defaultRunning);
       get().startTimer();
     },
 
