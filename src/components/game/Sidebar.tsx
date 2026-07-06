@@ -175,6 +175,13 @@ export const Sidebar: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* 5. Attribution Footer */}
+      <div className="p-3 bg-industrial-gray-950/40 border-t border-[#2a2e39]/30 text-center select-none shrink-0 mt-auto">
+        <span className="text-[10px] font-mono tracking-wider text-industrial-gray-500 font-extrabold uppercase">
+          Made with <span className="text-red-500">❤️</span> by Arjun
+        </span>
+      </div>
     </div>
   );
 };
