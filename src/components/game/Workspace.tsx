@@ -732,25 +732,6 @@ export const Workspace: React.FC = () => {
       {/* Canvas Toolbars */}
       <div className="h-10 border-b border-white/10 bg-[#090d14]/88 px-4 flex items-center justify-between text-xs font-medium text-slate-300 shrink-0 backdrop-blur">
         <div className="flex items-center gap-3.5">
-          {/* Power ON/OFF button */}
-          <button
-            onClick={toggleSimulation}
-            className={`h-6.5 px-3 rounded-md font-bold text-[9.5px] tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-300 border uppercase ${
-              isRunning 
-                ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
-                : 'bg-white/[0.02] hover:bg-white/[0.06] text-slate-400 hover:text-white border-white/10'
-            }`}
-            title="Toggle Simulator Power"
-          >
-            <div className="relative flex items-center justify-center">
-              <span className={`w-1.5 h-1.5 rounded-full absolute ${isRunning ? 'bg-emerald-400 animate-ping' : 'bg-slate-600'}`} />
-              <span className={`w-1.5 h-1.5 rounded-full relative ${isRunning ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-            </div>
-            <span>Power: {isRunning ? 'ON' : 'OFF'}</span>
-          </button>
-
-          <div className="h-4.5 w-px bg-white/10" />
-
           <span className="text-slate-500 uppercase tracking-wide text-[10px]">Wire</span>
           <div className="flex gap-2">
             {(['red', 'black', 'green', 'orange'] as const).map(color => (
@@ -880,8 +861,49 @@ export const Workspace: React.FC = () => {
           </filter>
         </defs>
 
-        {/* Zoomed content group wrapper */}
         <g transform={`translate(${offsets.shiftX}, ${offsets.shiftY}) scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
+          
+          {/* Power switch located at the top-left of the components */}
+          {components.length > 0 && (() => {
+            let minX = Infinity;
+            let minY = Infinity;
+            components.forEach(c => {
+              minX = Math.min(minX, c.x);
+              minY = Math.min(minY, c.y);
+            });
+            const btnX = minX - 55;
+            const btnY = minY - 75;
+
+            return (
+              <foreignObject
+                x={btnX}
+                y={btnY}
+                width="145"
+                height="50"
+                className="overflow-visible select-none"
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSimulation();
+                  }}
+                  className={`w-[130px] h-[36px] rounded-lg border flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-md active:scale-95 ${
+                    isRunning
+                      ? 'bg-emerald-600/90 hover:bg-emerald-500 border-emerald-400 text-white shadow-emerald-950/40 font-black'
+                      : 'bg-rose-950/80 hover:bg-rose-900 border-rose-800 text-rose-300 shadow-rose-950/40 font-bold'
+                  }`}
+                  style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <span className={`w-2 h-2 rounded-full absolute ${isRunning ? 'bg-emerald-300 animate-ping' : 'bg-rose-600'}`} />
+                    <span className={`w-2 h-2 rounded-full relative ${isRunning ? 'bg-emerald-300' : 'bg-rose-600'}`} />
+                  </div>
+                  <span>Power: {isRunning ? 'ON' : 'OFF'}</span>
+                </button>
+              </foreignObject>
+            );
+          })()}
+
           {/* 1. Placed components casing layer */}
           {components.map(comp => {
           const isEnergized = simulation.energizedComponents.has(comp.id);
