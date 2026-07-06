@@ -1227,105 +1227,95 @@ export const Workspace: React.FC = () => {
               </g>
             );
           })}
-                  {/* 4.5. Funny Electrical POP & Smoke Sizzle Animation Overlay */}
+        {/* 4.5. Funny Electrical POP & Smoke Sizzle Animation Overlay */}
         {shortCircuitSmoke?.active && (
           <g transform={`translate(${shortCircuitSmoke.x}, ${shortCircuitSmoke.y})`} pointerEvents="none" className="select-none z-40">
             <style>{`
-              @keyframes billow-smoke-1 {
+              @keyframes billow-wispy-1 {
                 0% { transform: translate(0, 5px) scale(0.4) rotate(0deg); opacity: 0; }
-                12% { opacity: 0.85; }
-                45% { opacity: 0.65; }
-                100% { transform: translate(-50px, -150px) scale(4.2) rotate(-140deg); opacity: 0; }
+                10% { opacity: 0.55; }
+                45% { opacity: 0.35; }
+                100% { transform: translate(-18px, -180px) scale(3.8) rotate(-70deg); opacity: 0; }
               }
-              @keyframes billow-smoke-2 {
+              @keyframes billow-wispy-2 {
                 0% { transform: translate(0, 5px) scale(0.3) rotate(0deg); opacity: 0; }
-                15% { opacity: 0.9; }
-                50% { opacity: 0.7; }
-                100% { transform: translate(45px, -170px) scale(4.8) rotate(200deg); opacity: 0; }
+                12% { opacity: 0.6; }
+                50% { opacity: 0.4; }
+                100% { transform: translate(18px, -200px) scale(4.4) rotate(90deg); opacity: 0; }
               }
-              @keyframes billow-smoke-3 {
+              @keyframes billow-wispy-3 {
                 0% { transform: translate(0, 5px) scale(0.5) rotate(0deg); opacity: 0; }
-                10% { opacity: 0.8; }
-                40% { opacity: 0.6; }
-                100% { transform: translate(-10px, -130px) scale(3.8) rotate(90deg); opacity: 0; }
+                8% { opacity: 0.5; }
+                40% { opacity: 0.3; }
+                100% { transform: translate(-3px, -160px) scale(3.2) rotate(40deg); opacity: 0; }
               }
-              @keyframes fire-glow-burst {
-                0% { transform: translate(0, 5px) scale(0.5); opacity: 0.95; }
-                25% { transform: translate(0, -15px) scale(1.6); opacity: 0.85; }
-                100% { transform: translate(0, -45px) scale(0.2); opacity: 0; }
+              @keyframes streak-out {
+                0% { stroke-dashoffset: 18; opacity: 1; stroke: #ffffff; }
+                15% { stroke-dashoffset: 0; stroke: #fffbeb; }
+                40% { stroke: #ff7a3b; }
+                100% { stroke-dashoffset: -140; opacity: 0; stroke: #ef4444; }
               }
-              @keyframes spark-arc {
-                0% { transform: translate(0, 0) scale(1); opacity: 1; }
-                30% { opacity: 1; }
-                100% { transform: translate(var(--spark-x), var(--spark-y)) scale(0.1); opacity: 0; }
-              }
-              .smoke-p1 { animation: billow-smoke-1 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-              .smoke-p2 { animation: billow-smoke-2 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-              .smoke-p3 { animation: billow-smoke-3 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-              .fire-burst { animation: fire-glow-burst 0.75s ease-out forwards; }
-              .spark-particle { animation: spark-arc 0.9s cubic-bezier(0.1, 0.8, 0.25, 1) forwards; }
+              .smoke-w1 { animation: billow-wispy-1 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+              .smoke-w2 { animation: billow-wispy-2 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+              .smoke-w3 { animation: billow-wispy-3 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
             `}</style>
             
             <defs>
-              <radialGradient id="flash-glow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#fffbeb" stopOpacity="1" />
-                <stop offset="35%" stopColor="#f97316" stopOpacity="0.8" />
-                <stop offset="70%" stopColor="#ef4444" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-              </radialGradient>
-              
-              <radialGradient id="fire-grad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#fef08a" stopOpacity="1" />
-                <stop offset="30%" stopColor="#f97316" stopOpacity="0.9" />
-                <stop offset="70%" stopColor="#dc2626" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#7f1d1d" stopOpacity="0" />
-              </radialGradient>
-
-              {/* Advanced Volumetric Smoke Blur Filter */}
+              {/* Volumetric smoke filter */}
               <filter id="volumetric-blur" x="-100%" y="-100%" width="300%" height="300%">
-                <feGaussianBlur stdDeviation="8" />
+                <feGaussianBlur stdDeviation="7" />
               </filter>
             </defs>
             
-            {/* 1. Initial Bright Electrical Flash */}
-            <circle r="90" fill="url(#flash-glow)" className="opacity-95 animate-ping" style={{ animationDuration: '0.2s', animationIterationCount: 1 }} />
-            <circle r="40" fill="#fef08a" className="opacity-100 animate-pulse" style={{ animationDuration: '0.1s', animationIterationCount: 1 }} />
-            
-            {/* 2. Soft Volumetric Smoke Cloud Layer (Blurred together for realism) */}
+            {/* 1. Wispy White Volumetric Smoke Column */}
             <g filter="url(#volumetric-blur)">
-              {/* Dark Charcoal base smoke */}
-              <circle cx="-12" cy="0" r="16" fill="#18181b" className="smoke-p1" />
-              <circle cx="8" cy="-5" r="15" fill="#27272a" className="smoke-p2" />
-              <circle cx="2" cy="10" r="14" fill="#18181b" className="smoke-p3" />
+              {/* Faint base wisps */}
+              <circle cx="-5" cy="0" r="14" fill="#f8fafc" className="smoke-w1" opacity="0.15" />
+              <circle cx="5" cy="-5" r="12" fill="#f1f5f9" className="smoke-w2" opacity="0.15" />
+              <circle cx="0" cy="5" r="13" fill="#e2e8f0" className="smoke-w3" opacity="0.12" />
 
-              {/* Midtone Slate Grey smoke */}
-              <circle cx="-5" cy="5" r="18" fill="#4b5563" className="smoke-p1" style={{ animationDelay: '0.08s' }} />
-              <circle cx="12" cy="2" r="16" fill="#3f3f46" className="smoke-p2" style={{ animationDelay: '0.05s' }} />
-              <circle cx="-15" cy="-8" r="17" fill="#4b5563" className="smoke-p3" style={{ animationDelay: '0.12s' }} />
-
-              {/* Light Ash/Steam overlay */}
-              <circle cx="5" cy="-10" r="22" fill="#71717a" className="smoke-p1" style={{ animationDelay: '0.18s' }} />
-              <circle cx="-8" cy="8" r="19" fill="#9ca3af" className="smoke-p2" style={{ animationDelay: '0.14s' }} />
-              <circle cx="15" cy="12" r="18" fill="#71717a" className="smoke-p3" style={{ animationDelay: '0.22s' }} />
-              <circle cx="0" cy="0" r="24" fill="#9ca3af" className="smoke-p1" style={{ animationDelay: '0.28s' }} />
+              {/* Main rising wispy columns */}
+              <circle cx="-8" cy="-10" r="16" fill="#f8fafc" className="smoke-w1" style={{ animationDelay: '0.08s' }} opacity="0.22" />
+              <circle cx="6" cy="-15" r="15" fill="#f1f5f9" className="smoke-w2" style={{ animationDelay: '0.14s' }} opacity="0.2" />
+              <circle cx="-2" cy="-25" r="18" fill="#e2e8f0" className="smoke-w3" style={{ animationDelay: '0.22s' }} opacity="0.18" />
+              
+              <circle cx="8" cy="-35" r="22" fill="#f8fafc" className="smoke-w1" style={{ animationDelay: '0.3s' }} opacity="0.18" />
+              <circle cx="-6" cy="-45" r="20" fill="#f1f5f9" className="smoke-w2" style={{ animationDelay: '0.38s' }} opacity="0.15" />
+              
+              {/* Dissipating top wisps */}
+              <circle cx="2" cy="-60" r="24" fill="#f8fafc" className="smoke-w3" style={{ animationDelay: '0.48s' }} opacity="0.12" />
+              <circle cx="-4" cy="-80" r="26" fill="#f1f5f9" className="smoke-w1" style={{ animationDelay: '0.62s' }} opacity="0.15" />
+              <circle cx="4" cy="-100" r="28" fill="#e2e8f0" className="smoke-w2" style={{ animationDelay: '0.78s' }} opacity="0.1" />
             </g>
 
-            {/* 3. Rising Fire Burst Glow (At the base of the explosion) */}
-            <g filter="url(#volumetric-blur)">
-              <circle cx="0" cy="5" r="16" fill="url(#fire-grad)" className="fire-burst" />
-              <circle cx="-8" cy="10" r="12" fill="url(#fire-grad)" className="fire-burst" style={{ animationDelay: '0.05s' }} />
-              <circle cx="8" cy="8" r="11" fill="url(#fire-grad)" className="fire-burst" style={{ animationDelay: '0.08s' }} />
-            </g>
+            {/* 2. Spark lines (Deterministic generation based on index to prevent mismatch) */}
+            {Array.from({ length: 32 }).map((_, i) => {
+              const angle = i * 11.25 + (i % 3) * 4.5; // 32 lines rotated around 360deg
+              const length = 55 + (i % 5) * 19; // Varying lengths: 55px to 131px
+              const delay = (i % 7) * 0.015; // Varying start delays: 0s to 0.09s
+              const duration = 0.35 + (i % 4) * 0.08; // Varying speed: 0.35s to 0.59s
+              return (
+                <line
+                  key={i}
+                  x1="0"
+                  y1="0"
+                  x2={length}
+                  y2="0"
+                  stroke="#ff6b35"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  transform={`rotate(${angle})`}
+                  style={{
+                    strokeDasharray: '18, 150',
+                    animation: `streak-out ${duration}s cubic-bezier(0.1, 0.8, 0.25, 1) ${delay}s forwards`,
+                  }}
+                />
+              );
+            })}
 
-            {/* 4. Arched Spark Particles Spray */}
-            <circle r="4" fill="#fff" stroke="#fde047" strokeWidth="1" className="spark-particle" style={{ '--spark-x': '-85px', '--spark-y': '-45px' } as any} />
-            <circle r="3" fill="#fde047" className="spark-particle" style={{ '--spark-x': '75px', '--spark-y': '-65px', animationDelay: '0.03s' } as any} />
-            <circle r="4" fill="#f97316" className="spark-particle" style={{ '--spark-x': '-45px', '--spark-y': '-125px', animationDelay: '0.06s' } as any} />
-            <circle r="2.5" fill="#fff" stroke="#f97316" strokeWidth="1" className="spark-particle" style={{ '--spark-x': '95px', '--spark-y': '-35px', animationDelay: '0.04s' } as any} />
-            <circle r="3.5" fill="#fde047" className="spark-particle" style={{ '--spark-x': '-95px', '--spark-y': '-95px', animationDelay: '0.09s' } as any} />
-            <circle r="2" fill="#ef4444" className="spark-particle" style={{ '--spark-x': '55px', '--spark-y': '-115px', animationDelay: '0.07s' } as any} />
-            <circle r="3" fill="#fff" className="spark-particle" style={{ '--spark-x': '-25px', '--spark-y': '-150px', animationDelay: '0.12s' } as any} />
-            <circle r="4" fill="#fde047" className="spark-particle" style={{ '--spark-x': '35px', '--spark-y': '-135px', animationDelay: '0.11s' } as any} />
+            {/* 3. Small White-Hot Core Flash */}
+            <circle r="14" fill="#ff7a3b" opacity="0.65" filter="url(#volumetric-blur)" />
+            <circle r="5.5" fill="#ffffff" />
           </g>
         )}
       </g>
