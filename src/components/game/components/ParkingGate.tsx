@@ -63,10 +63,11 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
         useGameStore.getState().pressButton('btn2', true);
       }, 5000);
 
-      // Simulate car clearing the Loop Detector (releases button after 5.6 seconds)
+      // Hold the Loop Detector pressed for 3.0 seconds (releases at 8.0 seconds total)
+      // This gives the gate ample time (takes 2.5 seconds to travel 100% -> 0%) to fully close
       releaseTimeoutRef.current = setTimeout(() => {
         useGameStore.getState().pressButton('btn2', false);
-      }, 5600);
+      }, 8000);
 
       // Reset the car driving state after the animation finishes (1.6 seconds from start)
       animTimeoutRef.current = setTimeout(() => {

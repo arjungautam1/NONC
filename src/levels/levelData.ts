@@ -1723,19 +1723,20 @@ export const levels: Level[] = [
   {
     id: 19,
     title: 'Smart Parking Barrier',
-    description: 'Build a premium automatic parking barrier gate system using a custom Delmi smart cabinet, loop detector, and limit switches.',
+    description: 'Build a premium automatic parking barrier gate system using a custom Delmi smart cabinet, loop detector, and timer relays.',
     instructions: [
       'Welcome to the Smart Parking Barrier project! We are using our new premium Delmi cabinet.',
-      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1. Open Relay A2 to PSU (-).',
-      'Latching Open: Connect PSU (+) through the NC contact of Open Limit (limit_top) to Open Relay COM. Connect Open Relay NO to Open Relay A1. Connect Open Relay NO to Actuator (+) POS (in).',
-      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1. Close Relay A2 to PSU (-).',
-      'Latching Close: Connect PSU (+) through the NC contact of Closed Limit (limit_bottom) to Close Relay COM. Connect Close Relay NO to Close Relay A1. Connect Close Relay NO to Actuator (-) NEG (out).',
-      'Power the circuit and scan the CDVI Reader to watch the white-and-red barrier gate arm swing up, and click the Loop Detector to watch it swing down!'
+      'Control Loop (Open): Connect CDVI Reader 12V and GND to PSU (+)/(-). Connect Reader TRIG to Open Relay A1 and Open Timer A1. Connect all Coil A2 terminals to PSU (-).',
+      'Latching Open: Connect PSU (+) to Open Timer COM. Connect Open Timer NC to Open Relay COM. Connect Open Relay NO to Open Relay A1. Connect Open Relay NO to Gate (+) POS (in).',
+      'Control Loop (Close): Connect Loop Detector IN to PSU (+), and OUT to Close Relay A1 and Close Timer A1. Connect all Coil A2 terminals to PSU (-).',
+      'Latching Close: Connect PSU (+) to Close Timer COM. Connect Close Timer NC to Close Relay COM. Connect Close Relay NO to Close Relay A1. Connect Close Relay NO to Gate (-) NEG (out).',
+      'Power the circuit and scan the CDVI Reader to watch the barrier arm swing up, and click the Loop Detector to watch it swing down!'
     ],
     goals: [
-      'Connect CDVI Reader to open the smart gate via Open Relay',
-      'Use limit switches to stop the barrier arm at fully open and closed positions',
-      'Activate Loop Detector to lower the smart barrier arm back down'
+      'Connect CDVI Reader to trigger Open Relay and Open Timer',
+      'Latch Open Relay through the Open Timer Normally Closed (NC) contact',
+      'Connect Loop Detector to trigger Close Relay and Close Timer',
+      'Latch Close Relay through the Close Timer Normally Closed (NC) contact'
     ],
     inventory: [],
     preplacedComponents: [
@@ -1777,9 +1778,39 @@ export const levels: Level[] = [
         state: {}
       },
       {
+        id: 'timer_open',
+        type: 'timer_relay',
+        x: 430,
+        y: 150,
+        label: 'Open Timer',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
+          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
+          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+        ],
+        state: {}
+      },
+      {
+        id: 'timer_close',
+        type: 'timer_relay',
+        x: 430,
+        y: 350,
+        label: 'Close Timer',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: -35, y: 30 },
+          { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
+          { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
+        ],
+        state: {}
+      },
+      {
         id: 'relay_open',
         type: 'relay',
-        x: 420,
+        x: 600,
         y: 150,
         label: 'Open Relay',
         terminals: [
@@ -1794,7 +1825,7 @@ export const levels: Level[] = [
       {
         id: 'relay_close',
         type: 'relay',
-        x: 420,
+        x: 600,
         y: 350,
         label: 'Close Relay',
         terminals: [
@@ -1803,30 +1834,6 @@ export const levels: Level[] = [
           { id: 'com', name: 'COM', type: 'com', x: 35, y: -30 },
           { id: 'nc', name: 'NC', type: 'nc', x: 35, y: 0 },
           { id: 'no', name: 'NO', type: 'no', x: 35, y: 30 }
-        ],
-        state: {}
-      },
-      {
-        id: 'limit_top',
-        type: 'limit_switch',
-        x: 600,
-        y: 150,
-        label: 'Open Limit Switch',
-        terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
-        ],
-        state: {}
-      },
-      {
-        id: 'limit_bottom',
-        type: 'limit_switch',
-        x: 600,
-        y: 350,
-        label: 'Closed Limit Switch',
-        terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
         ],
         state: {}
       },
@@ -1845,10 +1852,10 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Open Circuit: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1.',
-      'Open Latch: PSU (+) -> Open Limit IN. Open Limit OUT -> Open Relay COM. Open Relay NO -> Open Relay A1 (latch) & Actuator POS.',
-      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1.',
-      'Close Latch: PSU (+) -> Closed Limit IN. Closed Limit OUT -> Close Relay COM. Close Relay NO -> Close Relay A1 (latch) & Actuator NEG.'
+      'Open Loop: PSU (+) -> Reader 12V. Reader GND -> PSU (-). Reader TRIG -> Open Relay A1 & Open Timer A1. Open Relay A2 & Open Timer A2 -> PSU (-).',
+      'Open Latch: PSU (+) -> Open Timer COM. Open Timer NC -> Open Relay COM. Open Relay NO -> Open Relay A1 (latch) & Gate POS.',
+      'Close Loop: PSU (+) -> Loop Detector IN. Loop Detector OUT -> Close Relay A1 & Close Timer A1. Close Relay A2 & Close Timer A2 -> PSU (-).',
+      'Close Latch: PSU (+) -> Close Timer COM. Close Timer NC -> Close Relay COM. Close Relay NO -> Close Relay A1 (latch) & Gate NEG.'
     ],
     successCriteria: (components, _wires, _nodeVoltages, _isEnergized) => {
       const act = components.find(c => c.id === 'act1');
