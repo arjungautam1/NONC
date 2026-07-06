@@ -867,7 +867,7 @@ export const Workspace: React.FC = () => {
 
           {/* 1. Placed components casing layer */}
           {components.map(comp => {
-          const isEnergized = simulation.energizedComponents.has(comp.id);
+          const isEnergized = isRunning && simulation.energizedComponents.has(comp.id);
           const isFaulty = simulation.faultLocation?.split(':')[0] === comp.id;
 
           return (
