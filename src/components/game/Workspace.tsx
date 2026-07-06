@@ -1376,7 +1376,7 @@ export const Workspace: React.FC = () => {
 
             {/* Glowing neon active backlight */}
             {isRunning && (
-              <rect x="10" y="10" width="44" height="56" rx="3" fill="#ef4444" opacity="0.3" filter="url(#red-glow)" />
+              <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="#ef4444" opacity="0.35" filter="url(#red-glow)" />
             )}
 
             {/* Rocker Key Body */}
@@ -1384,13 +1384,13 @@ export const Workspace: React.FC = () => {
               // ON state: bottom half "I" is pressed down, top half "O" is tilted up (shadowed)
               <g>
                 {/* Top tilted-away half "O" */}
-                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,38 L 10,38 Z" fill="url(#topTiltedGrad)" />
+                <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,38 Z" fill="url(#topTiltedGrad)" />
                 
                 {/* Bottom pressed-in half "I" (brightly illuminated) */}
-                <path d="M 10,38 L 54,38 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#bottomPressedGrad)" />
+                <path d="M 10,38 L 54,38 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#bottomPressedGrad)" />
 
                 {/* Textured Grid overlay */}
-                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#wafflePattern)" />
+                <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#wafflePattern)" />
 
                 {/* High contrast line in middle pivot */}
                 <line x1="10" y1="38" x2="54" y2="38" stroke="#7f1d1d" strokeWidth="1.5" />
@@ -1404,13 +1404,13 @@ export const Workspace: React.FC = () => {
               // OFF state: top half "O" is pressed down, bottom half "I" is tilted up (shadowed)
               <g>
                 {/* Top pressed-in half "O" */}
-                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,38 L 10,38 Z" fill="url(#topPressedGrad)" />
+                <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,38 Z" fill="url(#topPressedGrad)" />
                 
                 {/* Bottom tilted-away half "I" (shadowed) */}
-                <path d="M 10,38 L 54,38 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#bottomTiltedGrad)" />
+                <path d="M 10,38 L 54,38 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#bottomTiltedGrad)" />
 
                 {/* Textured Grid overlay */}
-                <path d="M 10,13 Q 10,10 13,10 L 51,10 Q 54,10 54,13 L 54,63 Q 54,66 51,66 L 13,66 Q 10,66 10,63 Z" fill="url(#wafflePattern)" />
+                <path d="M 10,38 L 10,18 Q 10,12 13,12 Q 32,9 51,12 Q 54,12 54,18 L 54,58 Q 54,64 51,64 Q 32,67 13,64 Q 10,64 10,58 Z" fill="url(#wafflePattern)" />
 
                 {/* High contrast line in middle pivot */}
                 <line x1="10" y1="38" x2="54" y2="38" stroke="#450a0a" strokeWidth="1.5" />
