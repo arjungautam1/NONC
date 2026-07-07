@@ -38,7 +38,7 @@ export function solveCircuit(
   // Keep track of relay coils energized in this iteration
   let coilStates: Record<string, boolean> = {};
   components.forEach(c => {
-    if (c.type === 'relay') {
+    if (c.type === 'relay' || c.type === 'relay_dpdt') {
       coilStates[c.id] = c.state.energized || false;
     }
   });
@@ -91,6 +91,24 @@ export function solveCircuit(
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
         } else {
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        }
+      } else if (c.type === 'relay_dpdt') {
+        const isEnergized = coilStates[c.id];
+        if (isEnergized) {
+          addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
+          addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'no2'));
+        } else {
+          addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'nc1'));
+          addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
+        }
+      } else if (c.type === 'rocker_switch_3pos') {
+        const switchState = c.state.toggled as any;
+        if (switchState === 'left') {
+          addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'l1'));
+          addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'l2'));
+        } else if (switchState === 'right') {
+          addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'r1'));
+          addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'r2'));
         }
       } else if (c.type === 'timer_relay') {
         const isDelayedActive = c.state.delayedActive || false;
@@ -296,7 +314,7 @@ export function solveCircuit(
       } else if (c.type === 'motor' || c.type === 'buzzer' || c.type === 'roland_fan') {
         inKey = getTerminalKey(c.id, 'in');
         outKey = getTerminalKey(c.id, 'out');
-      } else if (c.type === 'relay') {
+      } else if (c.type === 'relay' || c.type === 'relay_dpdt') {
         isCoil = true;
         inKey = getTerminalKey(c.id, 'coil_a');
         outKey = getTerminalKey(c.id, 'coil_b');
@@ -453,7 +471,7 @@ export function queryMultimeter(
       else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'roland_fan') resistance += 45.0;
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
-      else if (c.type === 'relay' || c.type === 'timer_relay') resistance += 80.0;
+      else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'timer_relay') resistance += 80.0;
       else if (c.type === 'maglock') resistance += 120.0;
       else if (c.type === 'card_reader') resistance += 100.0;
     });
@@ -503,6 +521,25 @@ function checkPathBetween(
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'relay_dpdt') {
+      addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
+      const isEnergized = c.state.energized;
+      if (isEnergized) {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'no2'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'nc1'));
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
+      }
+    } else if (c.type === 'rocker_switch_3pos') {
+      const switchState = c.state.toggled as any;
+      if (switchState === 'left') {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'l1'));
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'l2'));
+      } else if (switchState === 'right') {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'r1'));
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'r2'));
       }
     } else if (c.type === 'timer_relay') {
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));

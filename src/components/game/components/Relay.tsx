@@ -155,4 +155,172 @@ export const Relay: React.FC<ComponentProps> = ({ component }) => {
     </g>
   );
 };
-export default Relay;
+
+export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
+  const isEnergized = component.state.energized || false;
+
+  return (
+    <g>
+      {/* Outer Enclosure (Delmi Slate Blue Glass style) */}
+      <rect
+        x="-50"
+        y="-60"
+        width="100"
+        height="120"
+        rx="6"
+        fill="#0f172a"
+        fillOpacity="0.88"
+        stroke="#2563eb"
+        strokeWidth="1.8"
+        filter="drop-shadow(0 4px 10px rgba(0,0,0,0.4))"
+      />
+
+      {/* Internal shine accent line */}
+      <rect
+        x="-46"
+        y="-56"
+        width="92"
+        height="112"
+        rx="4"
+        fill="none"
+        stroke="#60a5fa"
+        strokeWidth="0.6"
+        opacity="0.15"
+      />
+
+      {/* 2. Connection traces */}
+      {/* Left side traces (Pole 1) */}
+      <line x1="-45" y1="-30" x2="-32" y2="-30" stroke="#3b82f6" strokeWidth="1.2" />
+      <line x1="-45" y1="0" x2="-32" y2="0" stroke="#3b82f6" strokeWidth="1.2" />
+      <line x1="-45" y1="30" x2="-32" y2="30" stroke="#3b82f6" strokeWidth="1.2" />
+
+      {/* Right side traces (Pole 2) */}
+      <line x1="45" y1="-30" x2="32" y2="-30" stroke="#3b82f6" strokeWidth="1.2" />
+      <line x1="45" y1="0" x2="32" y2="0" stroke="#3b82f6" strokeWidth="1.2" />
+      <line x1="45" y1="30" x2="32" y2="30" stroke="#3b82f6" strokeWidth="1.2" />
+
+      {/* Coil traces */}
+      <line x1="-35" y1="45" x2="-5" y2="20" stroke="#ca8a04" strokeWidth="1.2" />
+      <line x1="35" y1="45" x2="5" y2="20" stroke="#ca8a04" strokeWidth="1.2" />
+
+      {/* 3. Central Solenoid Electromagnetic Coil */}
+      <g transform="translate(0, 0)">
+        {/* Core bar */}
+        <rect x="-4.5" y="-18" width="9" height="38" rx="1" fill="#4b5563" />
+        
+        {/* Coil windings */}
+        {[-14, -10, -6, -2, 2, 6, 10, 14].map((yVal) => (
+          <path
+            key={yVal}
+            d={`M -4.5 ${yVal} C 5.5 ${yVal - 1.5}, 5.5 ${yVal + 1.5}, -4.5 ${yVal + 2}`}
+            fill="none"
+            stroke={isEnergized ? '#fbbf24' : '#b45309'}
+            strokeWidth="1.8"
+            style={{ transition: 'stroke 0.15s ease' }}
+          />
+        ))}
+
+        {/* Pulsing magnetic fields when energized */}
+        {isEnergized && (
+          <g className="animate-pulse-magnetic">
+            <ellipse cx="0" cy="0" rx="16" ry="26" fill="none" stroke="#facc15" strokeWidth="1.2" strokeDasharray="3,3" />
+          </g>
+        )}
+      </g>
+
+      {/* 4. Left Armature Spring & Contacts (Pole 1) */}
+      <circle cx="-32" cy="-30" r="1.8" fill="#94a3b8" />
+      <circle cx="-32" cy="0" r="1.8" fill="#94a3b8" />
+      <circle cx="-32" cy="30" r="1.8" fill="#94a3b8" />
+
+      <line
+        x1="-32"
+        y1="-30"
+        x2="-32"
+        y2={isEnergized ? 30 : 0}
+        stroke={isEnergized ? '#10b981' : '#cbd5e1'}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        style={{ transition: 'y2 0.08s cubic-bezier(0.25, 1, 0.5, 1), stroke 0.08s ease' }}
+      />
+      <circle
+        cx="-32"
+        cy={isEnergized ? 30 : 0}
+        r="2.6"
+        fill="#f8fafc"
+        stroke="#475569"
+        strokeWidth="0.6"
+        style={{ transition: 'cy 0.08s cubic-bezier(0.25, 1, 0.5, 1)' }}
+      />
+
+      {/* 5. Right Armature Spring & Contacts (Pole 2) */}
+      <circle cx="32" cy="-30" r="1.8" fill="#94a3b8" />
+      <circle cx="32" cy="0" r="1.8" fill="#94a3b8" />
+      <circle cx="32" cy="30" r="1.8" fill="#94a3b8" />
+
+      <line
+        x1="32"
+        y1="-30"
+        x2="32"
+        y2={isEnergized ? 30 : 0}
+        stroke={isEnergized ? '#10b981' : '#cbd5e1'}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        style={{ transition: 'y2 0.08s cubic-bezier(0.25, 1, 0.5, 1), stroke 0.08s ease' }}
+      />
+      <circle
+        cx="32"
+        cy={isEnergized ? 30 : 0}
+        r="2.6"
+        fill="#f8fafc"
+        stroke="#475569"
+        strokeWidth="0.6"
+        style={{ transition: 'cy 0.08s cubic-bezier(0.25, 1, 0.5, 1)' }}
+      />
+
+      {/* 6. Text Labels */}
+      {/* Coil A1/A2 */}
+      <text x="-26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">A1</text>
+      <text x="26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">A2</text>
+      <text x="0" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
+
+      {/* Left Pole Labels */}
+      <text x="-24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">COM1</text>
+      <text x="-24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NC1</text>
+      <text x="-24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NO1</text>
+
+      {/* Right Pole Labels */}
+      <text x="24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">COM2</text>
+      <text x="24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC2</text>
+      <text x="24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO2</text>
+
+      {/* Active Indicator LED */}
+      <circle
+        cx="0"
+        cy="-46"
+        r="2.2"
+        fill={isEnergized ? '#10b981' : '#334155'}
+        stroke={isEnergized ? '#a7f3d0' : '#1e293b'}
+        strokeWidth="0.4"
+        style={{ filter: isEnergized ? 'drop-shadow(0 0 3px #10b981)' : 'none' }}
+      />
+      <text
+        x="0"
+        y="-38"
+        fill={isEnergized ? '#10b981' : '#64748b'}
+        fontSize="4.5"
+        fontWeight="bold"
+        fontFamily="monospace"
+        textAnchor="middle"
+      >
+        {isEnergized ? 'ACTIVE' : 'OFF'}
+      </text>
+
+      {/* Outer Label text */}
+      <text x="0" y="74" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+        {component.label}
+      </text>
+    </g>
+  );
+};
+

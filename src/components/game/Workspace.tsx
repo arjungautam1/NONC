@@ -14,9 +14,10 @@ export const Workspace: React.FC = () => {
     toggleSimulation,
     simulation,
     updateComponentPosition,
-    addComponent,
     addWire,
     removeWire,
+    spliceWire,
+    spliceAndConnectWire,
     multimeter,
     setProbe,
     probeMode,
@@ -713,43 +714,7 @@ export const Workspace: React.FC = () => {
   };
 
   const spliceWireAtCoords = (wire: Wire, x: number, y: number) => {
-    const junctionId = `junction_${Date.now()}`;
-    const junctionComponent: CircuitComponent = {
-      id: junctionId,
-      type: 'junction',
-      x,
-      y,
-      label: '',
-      terminals: [{ id: 'port', name: 'Joint', type: 'in', x: 0, y: 0 }],
-      state: { color: wire.color }
-    };
-
-    // Add junction component to store
-    addComponent(junctionComponent);
-
-    // Remove original wire
-    removeWire(wire.id);
-
-    // Create two new wires to connect original start & end to the new junction
-    addWire(
-      wire.fromComponentId,
-      wire.fromTerminalId,
-      junctionId,
-      'port',
-      wire.color,
-      []
-    );
-
-    addWire(
-      junctionId,
-      'port',
-      wire.toComponentId,
-      wire.toTerminalId,
-      wire.color,
-      []
-    );
-
-    return junctionId;
+    return spliceWire(wire.id, x, y);
   };
 
   // Check if a wire has current flowing through it
@@ -990,14 +955,14 @@ export const Workspace: React.FC = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   if (drawingWireStart) {
-                    // SPLICING: Create a junction at the click point, and connect the currently drawn wire to it!
+                    // SPLICING: Create a junction at the click point, and connect the currently drawn wire to it atomically!
                     const coords = getSVGCoords(e as any);
-                    const junctionId = spliceWireAtCoords(wire, coords.x, coords.y);
-                    addWire(
+                    spliceAndConnectWire(
+                      wire.id,
+                      coords.x,
+                      coords.y,
                       drawingWireStart.componentId,
                       drawingWireStart.terminalId,
-                      junctionId,
-                      'port',
                       activeColor,
                       tempWaypoints
                     );
@@ -1092,13 +1057,14 @@ export const Workspace: React.FC = () => {
                     const midX = (p1.x + p2.x) / 2;
                     const midY = (p1.y + p2.y) / 2;
                     const junctionId = spliceWireAtCoords(wire, midX, midY);
-                    
-                    // Immediately start drawing a wire from this new junction!
-                    setDrawingWireStart({ componentId: junctionId, terminalId: 'port' });
-                    setActiveColor(wire.color);
-                    setMousePos({ x: midX, y: midY });
-                    setPointerDownCoords({ x: midX, y: midY });
-                    setSelectedWireId(null);
+                    if (junctionId) {
+                      // Immediately start drawing a wire from this new junction!
+                      setDrawingWireStart({ componentId: junctionId, terminalId: 'port' });
+                      setActiveColor(wire.color);
+                      setMousePos({ x: midX, y: midY });
+                      setPointerDownCoords({ x: midX, y: midY });
+                      setSelectedWireId(null);
+                    }
                   }}
                 >
                   <title>Splice Wire / Extend Joint</title>

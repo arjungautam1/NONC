@@ -58,6 +58,16 @@ interface GameState {
     waypoints?: { x: number; y: number }[]
   ) => void;
   removeWire: (id: string) => void;
+  spliceWire: (wireId: string, x: number, y: number) => string | null;
+  spliceAndConnectWire: (
+    wireId: string,
+    x: number,
+    y: number,
+    fromCId: string,
+    fromTId: string,
+    color: 'red' | 'black' | 'green' | 'orange',
+    waypoints?: { x: number; y: number }[]
+  ) => void;
   
   undo: () => void;
   redo: () => void;
@@ -536,6 +546,119 @@ export const useGameStore = create<GameState>((set, get) => {
       const newWires = get().wires.filter(w => w.id !== id);
       set({ wires: newWires });
       runSimulation(get().components, newWires, get().isRunning);
+    },
+
+    spliceWire: (wireId, x, y) => {
+      const wire = get().wires.find(w => w.id === wireId);
+      if (!wire) return null;
+
+      saveToHistory(get().components, get().wires);
+      soundManager.playClick();
+
+      const junctionId = `junction_${Date.now()}`;
+      const junctionComponent: CircuitComponent = {
+        id: junctionId,
+        type: 'junction',
+        x,
+        y,
+        label: '',
+        terminals: [{ id: 'port', name: 'Joint', type: 'in', x: 0, y: 0 }],
+        state: { color: wire.color }
+      };
+
+      const newComponents = [...get().components, junctionComponent];
+      const filteredWires = get().wires.filter(w => w.id !== wireId);
+
+      const splitWire1: Wire = {
+        id: `wire_${Date.now()}_1`,
+        fromComponentId: wire.fromComponentId,
+        fromTerminalId: wire.fromTerminalId,
+        toComponentId: junctionId,
+        toTerminalId: 'port',
+        color: wire.color,
+        waypoints: []
+      };
+
+      const splitWire2: Wire = {
+        id: `wire_${Date.now()}_2`,
+        fromComponentId: junctionId,
+        fromTerminalId: 'port',
+        toComponentId: wire.toComponentId,
+        toTerminalId: wire.toTerminalId,
+        color: wire.color,
+        waypoints: []
+      };
+
+      const updatedWires = [...filteredWires, splitWire1, splitWire2];
+
+      set({
+        components: newComponents,
+        wires: updatedWires
+      });
+
+      runSimulation(newComponents, updatedWires, get().isRunning);
+      return junctionId;
+    },
+
+    spliceAndConnectWire: (wireId, x, y, fromCId, fromTId, color, waypoints = []) => {
+      const wire = get().wires.find(w => w.id === wireId);
+      if (!wire) return;
+
+      saveToHistory(get().components, get().wires);
+      soundManager.playWire();
+
+      const junctionId = `junction_${Date.now()}`;
+      const junctionComponent: CircuitComponent = {
+        id: junctionId,
+        type: 'junction',
+        x,
+        y,
+        label: '',
+        terminals: [{ id: 'port', name: 'Joint', type: 'in', x: 0, y: 0 }],
+        state: { color: wire.color }
+      };
+
+      const newComponents = [...get().components, junctionComponent];
+      const filteredWires = get().wires.filter(w => w.id !== wireId);
+
+      const splitWire1: Wire = {
+        id: `wire_${Date.now()}_1`,
+        fromComponentId: wire.fromComponentId,
+        fromTerminalId: wire.fromTerminalId,
+        toComponentId: junctionId,
+        toTerminalId: 'port',
+        color: wire.color,
+        waypoints: []
+      };
+
+      const splitWire2: Wire = {
+        id: `wire_${Date.now()}_2`,
+        fromComponentId: junctionId,
+        fromTerminalId: 'port',
+        toComponentId: wire.toComponentId,
+        toTerminalId: wire.toTerminalId,
+        color: wire.color,
+        waypoints: []
+      };
+
+      const connectionWire: Wire = {
+        id: `wire_${Date.now()}_3`,
+        fromComponentId: fromCId,
+        fromTerminalId: fromTId,
+        toComponentId: junctionId,
+        toTerminalId: 'port',
+        color,
+        waypoints
+      };
+
+      const updatedWires = [...filteredWires, splitWire1, splitWire2, connectionWire];
+
+      set({
+        components: newComponents,
+        wires: updatedWires
+      });
+
+      runSimulation(newComponents, updatedWires, get().isRunning);
     },
 
     undo: () => {

@@ -2,8 +2,8 @@ import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { Battery, PowerSupply } from './Battery';
 import { Bulb, LED, IndicatorLamp } from './Bulb';
-import { SwitchNO, SwitchNC, SelectorSwitch } from './Switch';
-import { Relay } from './Relay';
+import { SwitchNO, SwitchNC, SelectorSwitch, RockerSwitch3Pos } from './Switch';
+import { Relay, RelayDPDT } from './Relay';
 import { Fuse } from './Fuse';
 import { Motor } from './Motor';
 import { Buzzer } from './Buzzer';
@@ -95,6 +95,10 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
           style={{ filter: isEnergized ? 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.9))' : 'none' }}
         />
       );
+    case 'rocker_switch_3pos':
+      return <RockerSwitch3Pos component={component} />;
+    case 'relay_dpdt':
+      return <RelayDPDT component={component} />;
     default:
       return null;
   }

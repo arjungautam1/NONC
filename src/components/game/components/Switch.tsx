@@ -2,6 +2,7 @@ import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { useGameStore } from '../../../store/useGameStore';
 import { getTerminalKey } from '../../../simulation/circuitSolver';
+import { soundManager } from '../../../audio/soundManager';
 
 interface ComponentProps {
   component: CircuitComponent;
@@ -13,17 +14,27 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   const isRunning = useGameStore(state => state.isRunning);
   
   const isPressed = component.state.pressed || false;
+  const isMomentaryRef = React.useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    // @ts-ignore
-    e.target.setPointerCapture(e.pointerId);
-    pressButton(component.id, true);
+    if (e.shiftKey) {
+      isMomentaryRef.current = false;
+      pressButton(component.id, !isPressed);
+    } else {
+      isMomentaryRef.current = true;
+      // @ts-ignore
+      e.currentTarget.setPointerCapture(e.pointerId);
+      pressButton(component.id, true);
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
     e.stopPropagation();
-    pressButton(component.id, false);
+    if (isMomentaryRef.current) {
+      pressButton(component.id, false);
+      isMomentaryRef.current = false;
+    }
   };
 
   // Determine voltage presence at switch terminals
@@ -114,14 +125,7 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    // @ts-ignore
-    e.target.setPointerCapture(e.pointerId);
-    pressButton(component.id, true);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    pressButton(component.id, false);
+    pressButton(component.id, !isPressed);
   };
 
   // Determine voltage presence at switch terminals
@@ -134,7 +138,6 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
       transform="translate(-40, -40)"
       className="cursor-pointer select-none"
       onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
     >
       {/* DIN Rail mounting plate */}
       <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
@@ -332,6 +335,126 @@ export const SelectorSwitch: React.FC<ComponentProps> = ({ component }) => {
           <stop offset="100%" stopColor="#111827" />
         </linearGradient>
       </defs>
+    </g>
+  );
+};
+
+export const RockerSwitch3Pos: React.FC<ComponentProps> = ({ component }) => {
+  const setComponentState = useGameStore(state => state.setComponentState);
+  
+  const toggled = (component.state.toggled as any) || 'off';
+
+  const handleLeftDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    // @ts-ignore
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setComponentState(component.id, 'toggled', 'left');
+    soundManager.playClick();
+  };
+
+  const handleRightDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    // @ts-ignore
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setComponentState(component.id, 'toggled', 'right');
+    soundManager.playClick();
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    setComponentState(component.id, 'toggled', 'off');
+    soundManager.playClick();
+  };
+
+  return (
+    <g 
+      transform="translate(-45, -45)" 
+      className="select-none"
+    >
+      {/* Outer Housing */}
+      <rect x="5" y="5" width="80" height="80" rx="8" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
+      <rect x="18" y="1" width="54" height="4" fill="#71717a" opacity="0.6" />
+      <rect x="18" y="85" width="54" height="4" fill="#71717a" opacity="0.6" />
+
+      {/* Switch cavity bezel */}
+      <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
+
+      {/* Rocker Toggle Mechanism */}
+      {toggled === 'left' ? (
+        // Pressed Left (Left side is sunken/darker, Right side is raised/lighter casting shadow)
+        <g>
+          {/* Left sunken side */}
+          <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
+          {/* Right raised side */}
+          <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
+        </g>
+      ) : toggled === 'right' ? (
+        // Pressed Right (Right side is sunken/darker, Left side is raised/lighter casting shadow)
+        <g>
+          {/* Right sunken side */}
+          <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
+          {/* Left raised side */}
+          <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
+        </g>
+      ) : (
+        // Balanced (Center OFF - Flat level switch)
+        <rect x="18" y="17" width="54" height="56" fill="#27272a" rx="2" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />
+      )}
+
+      {/* Triangle Arrow Markings */}
+      {/* Left Arrow */}
+      <polygon 
+        points="26,45 34,40 34,50" 
+        fill={toggled === 'left' ? '#ffffff' : '#a1a1aa'} 
+        style={{ pointerEvents: 'none', transition: 'fill 0.1s' }} 
+      />
+      {/* Center OFF circle */}
+      <circle 
+        cx="45" 
+        cy="45" 
+        r="4.5" 
+        fill="none" 
+        stroke={toggled === 'off' ? '#ffffff' : '#a1a1aa'} 
+        strokeWidth="2" 
+        style={{ pointerEvents: 'none', transition: 'stroke 0.1s' }} 
+      />
+      {/* Right Arrow */}
+      <polygon 
+        points="64,45 56,40 56,50" 
+        fill={toggled === 'right' ? '#ffffff' : '#a1a1aa'} 
+        style={{ pointerEvents: 'none', transition: 'fill 0.1s' }} 
+      />
+
+      {/* Interactive Transparent Hitboxes for pointer clicks */}
+      {/* Left side click target */}
+      <rect 
+        x="15" 
+        y="15" 
+        width="30" 
+        height="60" 
+        fill="transparent" 
+        className="cursor-pointer" 
+        onPointerDown={handleLeftDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      />
+      {/* Right side click target */}
+      <rect 
+        x="45" 
+        y="15" 
+        width="30" 
+        height="60" 
+        fill="transparent" 
+        className="cursor-pointer" 
+        onPointerDown={handleRightDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      />
+
+      {/* Text label underneath */}
+      <text x="45" y="102" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+        {component.label}
+      </text>
     </g>
   );
 };

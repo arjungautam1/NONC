@@ -23,7 +23,9 @@ export type ComponentType =
   | 'transformer'
   | 'roland_fan'
   | 'parking_gate'
-  | 'junction';
+  | 'junction'
+  | 'rocker_switch_3pos'
+  | 'relay_dpdt';
 
 export type TerminalType =
   | 'pos'
@@ -37,7 +39,17 @@ export type TerminalType =
   | 'coil_a'
   | 'coil_b'
   | 'out_a'
-  | 'out_b';
+  | 'out_b'
+  | 'l1'
+  | 'com1'
+  | 'r1'
+  | 'l2'
+  | 'com2'
+  | 'r2'
+  | 'no1'
+  | 'nc1'
+  | 'no2'
+  | 'nc2';
 
 export interface Terminal {
   id: string;

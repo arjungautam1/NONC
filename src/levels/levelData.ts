@@ -751,18 +751,21 @@ export const levels: Level[] = [
   {
     id: 10,
     title: 'Traffic Light Switch Challenge',
-    description: 'Wire a selector switch to alternate between Red and Green bulbs.',
+    description: 'Wire a 3-position momentary rocker switch to alternate red and green light outputs via a DPDT relay.',
     instructions: [
-      'A Selector Switch alternates between two output terminals (out_a and out_b).',
-      'Wire the PSU (+) to the Selector Switch IN.',
-      'Wire Selector Switch out_a to the GREEN bulb, and out_b to the RED bulb.',
-      'Wire both bulb outputs back to the PSU (-) to complete their circuits.',
-      'Toggle the Selector Switch to verify you can switch between red and green!'
+      'Use the 3-position momentary rocker switch to control two lights.',
+      'Wire the PSU (+) to the Rocker Switch COM1 terminal.',
+      'Wire the Rocker Switch L1 output to the Relay Coil A1 terminal, and Relay Coil A2 back to the PSU (-).',
+      'Wire a set of relay contacts: PSU (+) to Relay COM1, and Relay NO1 to the GREEN Lamp IN.',
+      'Wire the Rocker Switch R1 output directly to the RED Lamp IN.',
+      'Wire both Lamp OUT terminals back to the PSU (-) to complete their return loops.',
+      'Hold the switch Left (momentary) to activate the relay and light GREEN. Hold the switch Right (momentary) to light RED directly.'
     ],
     goals: [
-      'Wire Selector Switch to split positive current',
-      'Connect GREEN bulb to selector position A, RED bulb to position B',
-      'Toggle the switch to alternate light indicators'
+      'Connect Rocker Switch COM1 to PSU (+)',
+      'Connect Rocker Switch L1 to Relay Coil A1, and R1 to RED Lamp IN',
+      'Connect Relay contacts COM1 to PSU (+), and NO1 to GREEN Lamp IN',
+      'Hold switch Left to light GREEN, and Right to light RED'
     ],
     inventory: [],
     preplacedComponents: [
@@ -780,22 +783,43 @@ export const levels: Level[] = [
       },
       {
         id: 'sw1',
-        type: 'switch_selector',
-        x: 350,
-        y: 250,
-        label: 'Mode Switch',
+        type: 'rocker_switch_3pos',
+        x: 340,
+        y: 180,
+        label: '3-Pos Rocker',
         terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -35, y: 0 },
-          { id: 'out_a', name: 'OUT A', type: 'out_a', x: 35, y: -15 },
-          { id: 'out_b', name: 'OUT B', type: 'out_b', x: 35, y: 15 }
+          { id: 'com1', name: 'COM1', type: 'com1', x: -40, y: 0 },
+          { id: 'l1', name: 'L1', type: 'l1', x: -40, y: -25 },
+          { id: 'r1', name: 'R1', type: 'r1', x: -40, y: 25 },
+          { id: 'com2', name: 'COM2', type: 'com2', x: 40, y: 0 },
+          { id: 'l2', name: 'L2', type: 'l2', x: 40, y: -25 },
+          { id: 'r2', name: 'R2', type: 'r2', x: 40, y: 25 }
+        ],
+        state: {}
+      },
+      {
+        id: 'relay1',
+        type: 'relay_dpdt',
+        x: 340,
+        y: 380,
+        label: 'DPDT Relay',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: 45 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: 45 },
+          { id: 'com1', name: 'COM1', type: 'com1', x: -45, y: -30 },
+          { id: 'nc1', name: 'NC1', type: 'nc1', x: -45, y: 0 },
+          { id: 'no1', name: 'NO1', type: 'no1', x: -45, y: 30 },
+          { id: 'com2', name: 'COM2', type: 'com2', x: 45, y: -30 },
+          { id: 'nc2', name: 'NC2', type: 'nc2', x: 45, y: 0 },
+          { id: 'no2', name: 'NO2', type: 'no2', x: 45, y: 30 }
         ],
         state: {}
       },
       {
         id: 'red_lamp',
         type: 'lamp_indicator',
-        x: 620,
-        y: 150,
+        x: 640,
+        y: 180,
         label: 'RED Lamp',
         terminals: [
           { id: 'in', name: 'IN', type: 'in', x: -20, y: 20 },
@@ -806,8 +830,8 @@ export const levels: Level[] = [
       {
         id: 'green_lamp',
         type: 'lamp_indicator',
-        x: 620,
-        y: 350,
+        x: 640,
+        y: 380,
         label: 'GREEN Lamp',
         terminals: [
           { id: 'in', name: 'IN', type: 'in', x: -20, y: 20 },
@@ -818,20 +842,21 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Connect PSU (+) to Selector IN.',
-      'Connect Selector OUT A to GREEN Lamp IN.',
-      'Connect Selector OUT B to RED Lamp IN.',
-      'Connect both Lamp OUT terminals to PSU (-).',
-      'Toggle the Selector Switch in the workspace to test.'
+      'Connect PSU (+) to Rocker Switch COM1.',
+      'Connect Rocker L1 to Relay A1, and Relay A2 to PSU (-).',
+      'Connect PSU (+) to Relay COM1, and Relay NO1 to GREEN Lamp IN.',
+      'Connect Rocker R1 to RED Lamp IN.',
+      'Connect both Lamp OUT terminals back to PSU (-).',
+      'Hold the switch Left (A) to test the green path, and Right (B) to test the red path.'
     ],
     successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
       const sw = components.find(c => c.id === 'sw1');
-      const isToggled = sw?.state.toggled;
+      const toggled = sw?.state.toggled as any;
 
-      if (!isToggled && isEnergized('green_lamp') && !isEnergized('red_lamp')) {
+      if (toggled === 'left' && isEnergized('green_lamp') && !isEnergized('red_lamp')) {
         sw!.state.testPassedA = true;
       }
-      if (isToggled && isEnergized('red_lamp') && !isEnergized('green_lamp')) {
+      if (toggled === 'right' && isEnergized('red_lamp') && !isEnergized('green_lamp')) {
         sw!.state.testPassedB = true;
       }
 
@@ -841,7 +866,7 @@ export const levels: Level[] = [
 
       return {
         success: false,
-        feedback: 'The lights should switch: position A lights GREEN, position B lights RED. Toggle the switch to show both.'
+        feedback: 'The lights should switch: position Left lights GREEN (via Relay), position Right lights RED (directly). Try holding both directions.'
       };
     }
   },
