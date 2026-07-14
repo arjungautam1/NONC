@@ -1913,5 +1913,188 @@ export const levels: Level[] = [
         feedback: 'Wire the automatic gate so that scanning the CDVI Reader raises the gate to 100%, and clicking the Loop Detector lowers it back to 0%.'
       };
     }
+  },
+  {
+    id: 20,
+    title: 'Altronix Security Control Logic',
+    description: 'Wire a commercial access control scenario with an Altronix DPDT relay, request-to-exit momentary button, override switch, led strips, door lock, and siren.',
+    instructions: [
+      'Welcome to the Altronix Security Control project! Let\'s construct the request-to-exit scenario.',
+      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button IN (in). Wire RCI 909S Momentary Button OUT (out) to Altronix Relay Coil A1 (coil_a). Wire Altronix Relay Coil A2 (coil_b) to PSU (-) output (neg).',
+      'Indicator LEDs: Wire PSU (+) to Altronix Relay COM1 (com1). Wire Relay NC1 (nc1) to Red LED Strip IN (in). Wire Relay NO1 (no1) to Green LED Strip IN (in). Wire both Red & Green LED Strip OUT (out) terminals to PSU (-).',
+      'Door Lock Loop: Wire PSU (+) to Altronix Relay NC2 (nc2). Wire Relay COM2 (com2) to Door Lock IN (in). Wire Door Lock OUT (out) to PSU (-).',
+      'Maintained Switch & Siren Loop: Wire PSU (+) to Maintained Switch IN (in). Wire Maintained Switch B (out_b) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren IN (in). Wire Siren OUT (out) to PSU (-).',
+      'Power the simulator and test both states: hold the momentary button to unlock the door in position A, then toggle the switch to position B and hold momentary to trigger the siren and lock override!'
+    ],
+    goals: [
+      'Wire Momentary Switch to trigger Altronix Relay Coil',
+      'Wire LED indicator strips to show status (Red: default, Green: active)',
+      'Wire Maglock through NC contact so door is locked by default',
+      'Wire Override Maintained Switch to route power to Siren and keep door locked'
+    ],
+    inventory: [],
+    preplacedComponents: [
+      {
+        id: 'ps1',
+        type: 'power_supply',
+        x: 100,
+        y: 130,
+        label: '12VDC Power Supply',
+        terminals: [
+          { id: 'pos', name: '(+)', type: 'pos', x: -25, y: 15 },
+          { id: 'neg', name: '(-)', type: 'neg', x: 25, y: 15 }
+        ],
+        state: {}
+      },
+      {
+        id: 'btn_momentary',
+        type: 'button_no',
+        x: 100,
+        y: 280,
+        label: 'RCI 909S Momentary',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
+        ],
+        state: {}
+      },
+      {
+        id: 'sw_maintained',
+        type: 'switch_selector',
+        x: 100,
+        y: 430,
+        label: 'Maintained Switch',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
+          { id: 'out_a', name: 'A', type: 'out_a', x: 30, y: -20 },
+          { id: 'out_b', name: 'B', type: 'out_b', x: 30, y: 20 }
+        ],
+        state: {}
+      },
+      {
+        id: 'relay1',
+        type: 'relay_dpdt',
+        x: 380,
+        y: 280,
+        label: 'Altronix RB1224 Relay',
+        terminals: [
+          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: 45 },
+          { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: 45 },
+          { id: 'com1', name: 'COM1', type: 'com1', x: -45, y: -30 },
+          { id: 'nc1', name: 'NC1', type: 'nc1', x: -45, y: 0 },
+          { id: 'no1', name: 'NO1', type: 'no1', x: -45, y: 30 },
+          { id: 'com2', name: 'COM2', type: 'com2', x: 45, y: -30 },
+          { id: 'nc2', name: 'NC2', type: 'nc2', x: 45, y: 0 },
+          { id: 'no2', name: 'NO2', type: 'no2', x: 45, y: 30 }
+        ],
+        state: {}
+      },
+      {
+        id: 'led_red',
+        type: 'led_strip',
+        x: 650,
+        y: 120,
+        label: 'Red LED Strip',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -25, y: 15 },
+          { id: 'out', name: 'OUT', type: 'out', x: 25, y: 15 }
+        ],
+        state: { color: 'red' }
+      },
+      {
+        id: 'led_green',
+        type: 'led_strip',
+        x: 650,
+        y: 220,
+        label: 'Green LED Strip',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -25, y: 15 },
+          { id: 'out', name: 'OUT', type: 'out', x: 25, y: 15 }
+        ],
+        state: { color: 'green' }
+      },
+      {
+        id: 'lock1',
+        type: 'maglock',
+        x: 650,
+        y: 340,
+        label: 'Door Strike / Maglock',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 15 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 15 }
+        ],
+        state: {}
+      },
+      {
+        id: 'siren1',
+        type: 'buzzer',
+        x: 650,
+        y: 450,
+        label: 'Siren',
+        terminals: [
+          { id: 'in', name: 'IN', type: 'in', x: -30, y: 20 },
+          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 20 }
+        ],
+        state: {}
+      }
+    ],
+    preplacedWires: [],
+    hints: [
+      'Momentary Control: PSU (+) -> Momentary IN. Momentary OUT -> Relay A1. Relay A2 -> PSU (-).',
+      'LED Indicators: PSU (+) -> Relay COM1. Relay NC1 -> Red LED IN. Relay NO1 -> Green LED IN. LED OUT terminals -> PSU (-).',
+      'Door Lock Loop: PSU (+) -> Relay NC2. Relay COM2 -> Maglock IN. Maglock OUT -> PSU (-).',
+      'Maintained Selector & Siren: PSU (+) -> Maintained Switch IN. Maintained Switch B -> Relay COM2. Relay NO2 -> Siren IN. Siren OUT -> PSU (-).'
+    ],
+    successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
+      const momentary = components.find(c => c.id === 'btn_momentary');
+      const maintained = components.find(c => c.id === 'sw_maintained');
+      const isMomPressed = momentary?.state.pressed || false;
+      const isMaintActive = maintained?.state.toggled || false;
+
+      const redOn = isEnergized('led_red');
+      const greenOn = isEnergized('led_green');
+      const lockOn = isEnergized('lock1');
+      const sirenOn = isEnergized('siren1');
+
+      // Verify defaults when not pressing anything
+      if (!isMomPressed) {
+        if (!redOn || greenOn || !lockOn || sirenOn) {
+          return {
+            success: false,
+            feedback: 'Verify idle wiring: when the Momentary switch is NOT pressed, Red LED must be ON, Green LED must be OFF, Door Lock must be LOCKED (energized), and Siren must be OFF.'
+          };
+        }
+      }
+
+      // Test State 1: Normal Scenario
+      if (!isMaintActive && isMomPressed) {
+        if (!redOn && greenOn && !lockOn && !sirenOn) {
+          maintained!.state.testPassedNormal = true;
+        }
+      }
+
+      // Test State 2: Maintained Switch Clicked Scenario
+      if (isMaintActive && isMomPressed) {
+        if (!redOn && greenOn && lockOn && sirenOn) {
+          maintained!.state.testPassedMaintained = true;
+        }
+      }
+
+      if (maintained?.state.testPassedNormal && maintained?.state.testPassedMaintained) {
+        return { success: true };
+      }
+
+      if (!maintained?.state.testPassedNormal) {
+        return {
+          success: false,
+          feedback: 'Test Normal Scenario: with Maintained switch at A, hold Momentary. Green LED must light, Red LED turn OFF, and Door Lock UNLOCK (de-energize).'
+        };
+      }
+
+      return {
+        success: false,
+        feedback: 'Test Maintained Scenario: toggle Maintained switch to B, hold Momentary. Green LED must light, Door Lock must stay LOCKED, and Siren must sound!'
+      };
+    }
   }
 ];

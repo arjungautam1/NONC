@@ -133,7 +133,7 @@ export const useGameStore = create<GameState>((set, get) => {
         if (isEnergized) {
           if (c.type === 'motor' || c.type === 'roland_fan') soundManager.startHum(c.id, 'motor');
           else if (c.type === 'buzzer') soundManager.startHum(c.id, 'buzzer');
-          else if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator') {
+          else if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator' || c.type === 'led_strip') {
             soundManager.startHum(c.id, 'bulb');
           }
         } else {

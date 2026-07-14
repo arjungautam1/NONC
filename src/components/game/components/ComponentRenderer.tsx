@@ -1,7 +1,7 @@
 import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { Battery, PowerSupply } from './Battery';
-import { Bulb, LED, IndicatorLamp } from './Bulb';
+import { Bulb, LED, IndicatorLamp, LEDStrip } from './Bulb';
 import { SwitchNO, SwitchNC, SelectorSwitch, RockerSwitch3Pos } from './Switch';
 import { Relay, RelayDPDT } from './Relay';
 import { Fuse } from './Fuse';
@@ -99,6 +99,8 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <RockerSwitch3Pos component={component} />;
     case 'relay_dpdt':
       return <RelayDPDT component={component} />;
+    case 'led_strip':
+      return <LEDStrip component={component} isEnergized={isEnergized} />;
     default:
       return null;
   }

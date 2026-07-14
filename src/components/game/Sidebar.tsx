@@ -95,6 +95,12 @@ export const Sidebar: React.FC = () => {
       if (goalIndex === 2) return btn?.state.pressed || simulation.nodeVoltages['relay_close:coil_a'] > 0 || simulation.nodeVoltages['timer_close:coil_a'] > 0;
       if (goalIndex === 3) return simulation.nodeVoltages['timer_close:com'] > 0 && simulation.nodeVoltages['relay_close:com'] > 0;
     }
+    if (currentLevelIndex === 19) { // Level 20
+      if (goalIndex === 0) return simulation.nodeVoltages['relay1:coil_a'] > 0 || simulation.energizedComponents.has('relay1');
+      if (goalIndex === 1) return simulation.energizedComponents.has('led_red') || simulation.energizedComponents.has('led_green');
+      if (goalIndex === 2) return simulation.energizedComponents.has('lock1');
+      if (goalIndex === 3) return simulation.energizedComponents.has('siren1');
+    }
     
     return false;
   };

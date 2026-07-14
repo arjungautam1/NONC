@@ -201,3 +201,104 @@ export const IndicatorLamp: React.FC<ComponentProps> = ({ component, isEnergized
     </g>
   );
 };
+
+export const LEDStrip: React.FC<ComponentProps> = ({ component, isEnergized }) => {
+  const color = component.state.color || 'red';
+  
+  // Choose colors
+  const glowColor = color === 'green' ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+  const bodyColorOn = color === 'green' ? '#4ade80' : '#f87171';
+  const bodyColorOff = color === 'green' ? '#14532d' : '#7f1d1d';
+  const lensStroke = color === 'green' ? '#15803d' : '#b91c1c';
+  const gradId = `ledStripGrad_${component.id}`;
+
+  return (
+    <g transform="translate(-40, -15)">
+      {/* 1. Glowing background aura */}
+      {isEnergized && (
+        <rect
+          x="-5"
+          y="-5"
+          width="90"
+          height="40"
+          rx="8"
+          fill={glowColor}
+          opacity="0.25"
+          style={{ filter: 'blur(6px)' }}
+          className="animate-pulse"
+        />
+      )}
+
+      {/* 2. Main mounting bezel / base (black textured plastic) */}
+      <rect
+        x="0"
+        y="0"
+        width="80"
+        height="30"
+        rx="4"
+        fill="#1e293b"
+        stroke="#0f172a"
+        strokeWidth="1.5"
+        filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"
+      />
+
+      {/* Mounting Screw Holes */}
+      <circle cx="6" cy="15" r="2.5" fill="#0f172a" />
+      <circle cx="6" cy="15" r="1.5" fill="#475569" />
+      <circle cx="74" cy="15" r="2.5" fill="#0f172a" />
+      <circle cx="74" cy="15" r="1.5" fill="#475569" />
+
+      {/* 3. Outer Lens Enclosure */}
+      <rect
+        x="15"
+        y="5"
+        width="50"
+        height="20"
+        rx="2"
+        fill={isEnergized ? bodyColorOn : `url(#${gradId})`}
+        stroke={lensStroke}
+        strokeWidth="1.5"
+        style={{ transition: 'fill 0.15s ease' }}
+      />
+
+      {/* 4. Multiple LED Dots inside the strip */}
+      {[20, 27.5, 35, 42.5, 50, 57.5].map((cxVal, idx) => (
+        <g key={idx}>
+          {/* Inner diode bulb */}
+          <circle
+            cx={cxVal}
+            cy="15"
+            r="2.2"
+            fill={isEnergized ? '#ffffff' : '#cbd5e1'}
+            opacity={isEnergized ? 0.95 : 0.4}
+            style={{ transition: 'fill 0.15s ease' }}
+          />
+          {/* Glowing ring */}
+          {isEnergized && (
+            <circle
+              cx={cxVal}
+              cy="15"
+              r="4.5"
+              fill="none"
+              stroke={color === 'green' ? '#86efac' : '#fca5a5'}
+              strokeWidth="0.8"
+              opacity="0.8"
+            />
+          )}
+        </g>
+      ))}
+
+      {/* Text label underneath */}
+      <text x="40" y="46" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+        {component.label}
+      </text>
+
+      <defs>
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={color === 'green' ? '#22c55e' : '#ef4444'} stopOpacity="0.2" />
+          <stop offset="100%" stopColor={bodyColorOff} stopOpacity="0.5" />
+        </linearGradient>
+      </defs>
+    </g>
+  );
+};

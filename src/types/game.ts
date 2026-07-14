@@ -25,7 +25,8 @@ export type ComponentType =
   | 'parking_gate'
   | 'junction'
   | 'rocker_switch_3pos'
-  | 'relay_dpdt';
+  | 'relay_dpdt'
+  | 'led_strip';
 
 export type TerminalType =
   | 'pos'
