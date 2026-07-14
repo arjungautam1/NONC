@@ -627,6 +627,16 @@ function getComponentsInPath(
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
       }
+    } else if (c.type === 'relay_dpdt') {
+      addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
+      const isEnergized = c.state.energized;
+      if (isEnergized) {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'no2'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'nc1'));
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
+      }
     } else if (c.type === 'timer_relay') {
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
       if (c.state.delayedActive) {

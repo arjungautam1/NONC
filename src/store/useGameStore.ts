@@ -154,7 +154,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
     // Update relay mechanical energized status and timer relay countdowns in component state so visuals update
     const updatedComponents = currentComponents.map(c => {
-      if (c.type === 'relay') {
+      if (c.type === 'relay' || c.type === 'relay_dpdt') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
         if (isEnergized !== c.state.energized) {
           if (isEnergized) soundManager.playClick();
