@@ -98,6 +98,7 @@ export function solveCircuit(
         const targetOut = c.state.toggled ? 'no' : 'nc';
         addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
       } else if (c.type === 'relay') {
+        addConnection(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
         const isEnergized = coilStates[c.id];
         if (isEnergized) {
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
@@ -105,6 +106,7 @@ export function solveCircuit(
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
         }
       } else if (c.type === 'relay_dpdt') {
+        addConnection(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
         const isEnergized = coilStates[c.id];
         if (isEnergized) {
           addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
