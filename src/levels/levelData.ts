@@ -804,14 +804,14 @@ export const levels: Level[] = [
         y: 380,
         label: 'DPDT Relay',
         terminals: [
-          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: 45 },
-          { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: 45 },
-          { id: 'com1', name: 'COM1', type: 'com1', x: -45, y: -30 },
-          { id: 'nc1', name: 'NC1', type: 'nc1', x: -45, y: 0 },
-          { id: 'no1', name: 'NO1', type: 'no1', x: -45, y: 30 },
-          { id: 'com2', name: 'COM2', type: 'com2', x: 45, y: -30 },
-          { id: 'nc2', name: 'NC2', type: 'nc2', x: 45, y: 0 },
-          { id: 'no2', name: 'NO2', type: 'no2', x: 45, y: 30 }
+          { id: 'coil_b', name: 'NEG-', type: 'coil_b', x: 35, y: -55 },
+          { id: 'com1', name: 'COM1', type: 'com1', x: 12, y: -55 },
+          { id: 'nc1', name: 'NC1', type: 'nc1', x: -12, y: -55 },
+          { id: 'no1', name: 'NO1', type: 'no1', x: -35, y: -55 },
+          { id: 'coil_a', name: 'POS+', type: 'coil_a', x: 35, y: 55 },
+          { id: 'com2', name: 'COM2', type: 'com2', x: 12, y: 55 },
+          { id: 'nc2', name: 'NC2', type: 'nc2', x: -12, y: 55 },
+          { id: 'no2', name: 'NO2', type: 'no2', x: -35, y: 55 }
         ],
         state: {}
       },
@@ -1979,14 +1979,14 @@ export const levels: Level[] = [
         y: 280,
         label: '',
         terminals: [
-          { id: 'coil_a', name: '+Ve', type: 'coil_a', x: -35, y: 45 },
-          { id: 'coil_b', name: '-Ve', type: 'coil_b', x: 35, y: 45 },
-          { id: 'com1', name: 'C', type: 'com1', x: -45, y: -30 },
-          { id: 'nc1', name: 'NC', type: 'nc1', x: -45, y: 0 },
-          { id: 'no1', name: 'NO', type: 'no1', x: -45, y: 30 },
-          { id: 'com2', name: 'C', type: 'com2', x: 45, y: -30 },
-          { id: 'nc2', name: 'NC', type: 'nc2', x: 45, y: 0 },
-          { id: 'no2', name: 'NO', type: 'no2', x: 45, y: 30 }
+          { id: 'coil_b', name: 'NEG-', type: 'coil_b', x: 35, y: -55 },
+          { id: 'com1', name: 'COM1', type: 'com1', x: 12, y: -55 },
+          { id: 'nc1', name: 'NC1', type: 'nc1', x: -12, y: -55 },
+          { id: 'no1', name: 'NO1', type: 'no1', x: -35, y: -55 },
+          { id: 'coil_a', name: 'POS+', type: 'coil_a', x: 35, y: 55 },
+          { id: 'com2', name: 'COM2', type: 'com2', x: 12, y: 55 },
+          { id: 'nc2', name: 'NC2', type: 'nc2', x: -12, y: 55 },
+          { id: 'no2', name: 'NO2', type: 'no2', x: -35, y: 55 }
         ],
         state: {}
       },

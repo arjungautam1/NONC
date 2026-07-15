@@ -1364,15 +1364,9 @@ export const Workspace: React.FC = () => {
                           let anchor: 'middle' | 'start' | 'end' = 'middle';
 
                           if (comp.type === 'relay_dpdt') {
-                            if (term.id === 'com1' || term.id === 'nc1' || term.id === 'no1' || term.id === 'coil_a') {
-                              labelX = -13;
-                              labelY = 3;
-                              anchor = 'end';
-                            } else if (term.id === 'com2' || term.id === 'nc2' || term.id === 'no2' || term.id === 'coil_b') {
-                              labelX = 13;
-                              labelY = 3;
-                              anchor = 'start';
-                            }
+                            labelX = 0;
+                            labelY = term.y < 0 ? -12 : 14;
+                            anchor = 'middle';
                           }
 
                           return (

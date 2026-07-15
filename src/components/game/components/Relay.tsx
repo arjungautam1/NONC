@@ -159,6 +159,14 @@ export const Relay: React.FC<ComponentProps> = ({ component }) => {
 export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
   const isEnergized = component.state.energized || false;
 
+  // Helper for terminal screw graphics
+  const renderScrew = (x: number, y: number) => (
+    <g key={`screw-${x}-${y}`}>
+      <circle cx={x} cy={y} r="3.2" fill="#475569" stroke="#64748b" strokeWidth="0.8" />
+      <line x1={x - 2} y1={y - 1} x2={x + 2} y2={y + 1} stroke="#1e293b" strokeWidth="0.8" />
+    </g>
+  );
+
   return (
     <g>
       {/* Outer Enclosure (Delmi Slate Blue Glass style) */}
@@ -188,31 +196,35 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         opacity="0.15"
       />
 
-      {/* 2. Connection traces */}
-      {/* Left side traces (Pole 1) */}
-      <line x1="-45" y1="-30" x2="-32" y2="-30" stroke="#3b82f6" strokeWidth="1.2" />
-      <line x1="-45" y1="0" x2="-32" y2="0" stroke="#3b82f6" strokeWidth="1.2" />
-      <line x1="-45" y1="30" x2="-32" y2="30" stroke="#3b82f6" strokeWidth="1.2" />
+      {/* Terminal block headers */}
+      <rect x="-45" y="-58" width="90" height="12" rx="2" fill="#1e293b" stroke="#334155" strokeWidth="1" />
+      <rect x="-45" y="46" width="90" height="12" rx="2" fill="#1e293b" stroke="#334155" strokeWidth="1" />
 
-      {/* Right side traces (Pole 2) */}
-      <line x1="45" y1="-30" x2="32" y2="-30" stroke="#3b82f6" strokeWidth="1.2" />
-      <line x1="45" y1="0" x2="32" y2="0" stroke="#3b82f6" strokeWidth="1.2" />
-      <line x1="45" y1="30" x2="32" y2="30" stroke="#3b82f6" strokeWidth="1.2" />
+      {/* Connection traces */}
+      {/* Pole 1 (Top Left Switch) Traces */}
+      <path d="M 12 -46 L 12 -34 L -25 -34 L -25 -25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -12 -46 L -12 -30 L -25 -30" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -35 -46 L -35 25 L -25 25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
 
-      {/* Coil traces */}
-      <line x1="-35" y1="45" x2="-5" y2="20" stroke="#ca8a04" strokeWidth="1.2" />
-      <line x1="35" y1="45" x2="5" y2="20" stroke="#ca8a04" strokeWidth="1.2" />
+      {/* Pole 2 (Bottom Left Switch) Traces */}
+      <path d="M 12 46 L 12 34 L -5 34 L -5 25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -12 46 L -12 30 L -5 30" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -35 46 L -35 -25 L -5 -25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
 
-      {/* 3. Central Solenoid Electromagnetic Coil */}
-      <g transform="translate(0, 0)">
+      {/* Coil Traces */}
+      <path d="M 35 -46 L 35 -25 L 22 -25 L 22 -18" fill="none" stroke="#ca8a04" strokeWidth="1.2" />
+      <path d="M 35 46 L 35 25 L 22 25 L 22 18" fill="none" stroke="#ca8a04" strokeWidth="1.2" />
+
+      {/* 3. Electromagnetic Coil (Right Side) */}
+      <g transform="translate(22, 0)">
         {/* Core bar */}
-        <rect x="-4.5" y="-18" width="9" height="38" rx="1" fill="#4b5563" />
+        <rect x="-3" y="-18" width="6" height="36" rx="1" fill="#4b5563" />
         
         {/* Coil windings */}
         {[-14, -10, -6, -2, 2, 6, 10, 14].map((yVal) => (
           <path
             key={yVal}
-            d={`M -4.5 ${yVal} C 5.5 ${yVal - 1.5}, 5.5 ${yVal + 1.5}, -4.5 ${yVal + 2}`}
+            d={`M -3 ${yVal} C 5 ${yVal - 1.5}, 5 ${yVal + 1.5}, -3 ${yVal + 2}`}
             fill="none"
             stroke={isEnergized ? '#fbbf24' : '#b45309'}
             strokeWidth="1.8"
@@ -223,30 +235,30 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         {/* Pulsing magnetic fields when energized */}
         {isEnergized && (
           <g className="animate-pulse-magnetic">
-            <ellipse cx="0" cy="0" rx="16" ry="26" fill="none" stroke="#facc15" strokeWidth="1.2" strokeDasharray="3,3" />
+            <ellipse cx="0" cy="0" rx="14" ry="24" fill="none" stroke="#facc15" strokeWidth="1" strokeDasharray="2,2" />
           </g>
         )}
       </g>
 
       {/* 4. Left Armature Spring & Contacts (Pole 1) */}
-      <circle cx="-32" cy="-30" r="1.8" fill="#94a3b8" />
-      <circle cx="-32" cy="0" r="1.8" fill="#94a3b8" />
-      <circle cx="-32" cy="30" r="1.8" fill="#94a3b8" />
+      <circle cx="-25" cy="-25" r="1.5" fill="#94a3b8" />
+      <circle cx="-25" cy="0" r="1.5" fill="#94a3b8" />
+      <circle cx="-25" cy="25" r="1.5" fill="#94a3b8" />
 
       <line
-        x1="-32"
-        y1="-30"
-        x2="-32"
-        y2={isEnergized ? 30 : 0}
+        x1="-25"
+        y1="-25"
+        x2="-25"
+        y2={isEnergized ? 25 : 0}
         stroke={isEnergized ? '#10b981' : '#cbd5e1'}
         strokeWidth="2.4"
         strokeLinecap="round"
         style={{ transition: 'y2 0.08s cubic-bezier(0.25, 1, 0.5, 1), stroke 0.08s ease' }}
       />
       <circle
-        cx="-32"
-        cy={isEnergized ? 30 : 0}
-        r="2.6"
+        cx="-25"
+        cy={isEnergized ? 25 : 0}
+        r="2.2"
         fill="#f8fafc"
         stroke="#475569"
         strokeWidth="0.6"
@@ -254,37 +266,50 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
       />
 
       {/* 5. Right Armature Spring & Contacts (Pole 2) */}
-      <circle cx="32" cy="-30" r="1.8" fill="#94a3b8" />
-      <circle cx="32" cy="0" r="1.8" fill="#94a3b8" />
-      <circle cx="32" cy="30" r="1.8" fill="#94a3b8" />
+      <circle cx="-5" cy="25" r="1.5" fill="#94a3b8" />
+      <circle cx="-5" cy="0" r="1.5" fill="#94a3b8" />
+      <circle cx="-5" cy="-25" r="1.5" fill="#94a3b8" />
 
       <line
-        x1="32"
-        y1="-30"
-        x2="32"
-        y2={isEnergized ? 30 : 0}
+        x1="-5"
+        y1="25"
+        x2="-5"
+        y2={isEnergized ? -25 : 0}
         stroke={isEnergized ? '#10b981' : '#cbd5e1'}
         strokeWidth="2.4"
         strokeLinecap="round"
         style={{ transition: 'y2 0.08s cubic-bezier(0.25, 1, 0.5, 1), stroke 0.08s ease' }}
       />
       <circle
-        cx="32"
-        cy={isEnergized ? 30 : 0}
-        r="2.6"
+        cx="-5"
+        cy={isEnergized ? -25 : 0}
+        r="2.2"
         fill="#f8fafc"
         stroke="#475569"
         strokeWidth="0.6"
         style={{ transition: 'cy 0.08s cubic-bezier(0.25, 1, 0.5, 1)' }}
       />
 
-      {/* 6. Text Labels */}
-      <text x="0" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
+      {/* Silkscreen text markings inside */}
+      <text x="-35" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NO</text>
+      <text x="-12" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NC</text>
+      <text x="12" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">C</text>
+      <text x="35" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NEG-</text>
+
+      <text x="-35" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NO</text>
+      <text x="-12" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NC</text>
+      <text x="12" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">C</text>
+      <text x="35" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">POS+</text>
+
+      {/* Decorative silkscreen labels */}
+      <text x="22" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
+      <text x="-20" y="32" fill="#1e3a8a" fontSize="7" fontWeight="bold" fontFamily="monospace" textAnchor="middle" opacity="0.5">RB1224</text>
+      <text x="-20" y="-30" fill="#1e3a8a" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="middle" opacity="0.4">ALTRONIX</text>
 
       {/* Active Indicator LED */}
       <circle
-        cx="0"
-        cy="-46"
+        cx="22"
+        cy="-32"
         r="2.2"
         fill={isEnergized ? '#10b981' : '#334155'}
         stroke={isEnergized ? '#a7f3d0' : '#1e293b'}
@@ -292,16 +317,20 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         style={{ filter: isEnergized ? 'drop-shadow(0 0 3px #10b981)' : 'none' }}
       />
       <text
-        x="0"
-        y="-38"
+        x="22"
+        y="-26"
         fill={isEnergized ? '#10b981' : '#64748b'}
         fontSize="4.5"
         fontWeight="bold"
         fontFamily="monospace"
         textAnchor="middle"
       >
-        {isEnergized ? 'ACTIVE' : 'OFF'}
+        {isEnergized ? 'ON' : 'OFF'}
       </text>
+
+      {/* Screw graphics */}
+      {[-35, -12, 12, 35].map(x => renderScrew(x, -52))}
+      {[-35, -12, 12, 35].map(x => renderScrew(x, 52))}
 
       {/* Outer Label text */}
       <text x="0" y="74" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
