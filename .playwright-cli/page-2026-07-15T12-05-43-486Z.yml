@@ -1,0 +1,166 @@
+- generic [ref=e306]:
+  - generic [ref=e307]:
+    - generic [ref=e308]:
+      - generic [ref=e309]:
+        - generic [ref=e310]: Training Institute
+        - generic [ref=e322]:
+          - heading "Electronics Lab" [level=2] [ref=e323]
+          - text: Virtual Training Simulator
+      - button "Dashboard" [ref=e324] [cursor=pointer]
+    - generic [ref=e331]:
+      - generic [ref=e332]:
+        - button "Undo (Ctrl+Z)" [disabled] [ref=e333] [cursor=pointer]
+        - button "Redo (Ctrl+Y)" [disabled] [ref=e338] [cursor=pointer]
+      - button [ref=e342] [cursor=pointer]
+    - generic [ref=e347]:
+      - button "Badges 0/6" [ref=e348] [cursor=pointer]
+      - generic [ref=e353]:
+        - generic [ref=e354]: Solved
+        - generic [ref=e355]: 0 / 20
+  - generic [ref=e356]:
+    - generic [ref=e358]:
+      - generic [ref=e359]:
+        - generic [ref=e360]:
+          - generic [ref=e361]: Training Module
+          - generic [ref=e366]:
+            - generic [ref=e367]: 00:00
+            - button "Collapse Sidebar" [ref=e372] [cursor=pointer]
+        - generic [ref=e375]:
+          - button "Previous Module" [disabled] [ref=e376]
+          - combobox [ref=e380] [cursor=pointer]:
+            - 'option "LVL 1: Complete Circuit Basics" [selected]'
+            - 'option "LVL 2: Understanding Open Circuits"'
+            - 'option "LVL 3: Normally Open (NO) Push Button"'
+            - 'option "LVL 4: Normally Closed (NC) Push Button"'
+            - 'option "LVL 5: Relay Basics & Armature Snap"'
+            - 'option "LVL 6: Relay Normally Open (NO) Control"'
+            - 'option "LVL 7: Relay Normally Closed (NC) Control"'
+            - 'option "LVL 8: Emergency Stop Safety Loop"'
+            - 'option "LVL 9: CDVI Access Control Wiring"'
+            - 'option "LVL 10: Traffic Light Switch Challenge"'
+            - 'option "LVL 11: House Lighting & Ground Loop"'
+            - 'option "LVL 12: Industrial Latching Relay Control"'
+            - 'option "LVL 13: Time-Delay Cooling Fan"'
+            - 'option "LVL 14: Hoistway Safety Limits"'
+            - 'option "LVL 15: Actuator Polarity Reversing"'
+            - 'option "LVL 16: CDVI Transformer Security"'
+            - 'option "LVL 17: The Relay Master Challenge"'
+            - 'option "LVL 18: Automatic Parking Gate"'
+            - 'option "LVL 19: Smart Parking Barrier"'
+            - 'option "LVL 20: Altronix Security Control Logic"'
+          - button "Next Module" [ref=e381] [cursor=pointer]
+        - generic [ref=e384]: Complete Circuit Basics
+      - generic [ref=e385]:
+        - 'button "Power: OFF" [ref=e386] [cursor=pointer]'
+        - button "Reset Circuit Layout" [ref=e391] [cursor=pointer]
+      - generic [ref=e395]:
+        - heading "Module Objectives" [level=3] [ref=e396]
+        - generic [ref=e397]:
+          - generic [ref=e398]: Connect Battery (+) to Bulb (IN)
+          - generic [ref=e403]: Connect Bulb (OUT) to Battery (-)
+          - generic [ref=e408]: Make the lightbulb glow
+      - generic [ref=e413]:
+        - heading "Step-by-Step Guide" [level=3] [ref=e417]
+        - generic [ref=e418]:
+          - generic [ref=e419]:
+            - generic [ref=e420]: "01"
+            - generic [ref=e421]: Welcome to DELMI Lab! In this training level, your goal is to power the lightbulb.
+          - generic [ref=e422]:
+            - generic [ref=e423]: "02"
+            - generic [ref=e424]: A complete circuit requires a continuous path from the Positive (+) terminal to the Negative (-) terminal.
+          - generic [ref=e425]:
+            - generic [ref=e426]: "03"
+            - generic [ref=e427]: Click and drag from the Battery (+) terminal (red) to the Bulb input terminal.
+          - generic [ref=e428]:
+            - generic [ref=e429]: "04"
+            - generic [ref=e430]: Click and drag from the Bulb output terminal to the Battery (-) terminal (black).
+          - generic [ref=e431]:
+            - generic [ref=e432]: "05"
+            - generic [ref=e433]: Once wired, turn on the Simulator power to test your work!
+      - generic [ref=e434]:
+        - generic [ref=e435]:
+          - generic [ref=e436]: 💡 Level Hints
+          - generic [ref=e438]: 0 / 3
+        - button "Reveal Next Hint" [ref=e439] [cursor=pointer]
+      - generic [ref=e443]: Delmi Electronics Lab
+    - generic [ref=e444]:
+      - generic [ref=e445]:
+        - generic [ref=e446]:
+          - generic [ref=e447]:
+            - generic [ref=e448]: Wire
+            - generic [ref=e449]:
+              - button "RED Wire" [ref=e450] [cursor=pointer]
+              - button "BLACK Wire" [ref=e451] [cursor=pointer]
+              - button "GREEN Wire" [ref=e452] [cursor=pointer]
+              - button "ORANGE Wire" [ref=e453] [cursor=pointer]
+          - generic [ref=e454]:
+            - button "+ Wago Connector" [ref=e455] [cursor=pointer]
+            - generic [ref=e458]:
+              - button "Zoom Out" [ref=e459] [cursor=pointer]
+              - generic [ref=e463]: 100%
+              - button "Zoom In" [ref=e464] [cursor=pointer]
+            - button "Schematic" [ref=e468] [cursor=pointer]
+            - 'button "Size: thin" [ref=e473] [cursor=pointer]'
+            - generic [ref=e474]: Select a wire to delete.
+        - img [ref=e478]:
+          - generic [ref=e479]:
+            - generic [ref=e482]:
+              - generic [ref=e486]: +
+              - generic [ref=e487]: "-"
+              - generic [ref=e488]: 12V BATTERY
+            - generic [ref=e489]: Lightbulb
+            - generic [ref=e498]:
+              - generic [ref=e504] [cursor=pointer]:
+                - generic [ref=e505]: (+)
+                - generic [ref=e506]: (+)
+              - generic [ref=e512] [cursor=pointer]:
+                - generic [ref=e513]: (-)
+                - generic [ref=e514]: (-)
+            - generic [ref=e515]:
+              - generic [ref=e521] [cursor=pointer]:
+                - generic [ref=e522]: IN
+                - generic [ref=e523]: IN
+              - generic [ref=e529] [cursor=pointer]:
+                - generic [ref=e530]: OUT
+                - generic [ref=e531]: OUT
+        - generic [ref=e532]:
+          - generic [ref=e533]: System Power
+          - img [ref=e534] [cursor=pointer]:
+            - generic [ref=e538]:
+              - generic [ref=e542]: O
+              - generic [ref=e543]: I
+      - generic [ref=e545]:
+        - generic [ref=e546]:
+          - generic [ref=e547]: Diagnostics
+          - generic [ref=e551]:
+            - generic [ref=e552]: Simulator Inactive
+            - paragraph [ref=e557]: The electrical simulator is turned OFF. Turn on circuit power to test your wiring paths.
+        - generic [ref=e558]:
+          - generic [ref=e559]:
+            - generic [ref=e560]:
+              - generic [ref=e561]:
+                - generic [ref=e562]: DMM-40
+                - generic [ref=e563]: "OFF"
+              - generic [ref=e564]: "OFF"
+            - generic [ref=e565]:
+              - button "OFF" [ref=e566] [cursor=pointer]
+              - button "V" [ref=e567] [cursor=pointer]
+              - button "CONT" [ref=e568] [cursor=pointer]
+              - button "OHM" [ref=e569] [cursor=pointer]
+            - generic [ref=e570]:
+              - generic [ref=e571]:
+                - button "Black Probe (COM) - Click to place" [ref=e572] [cursor=pointer]
+                - generic [ref=e574]: COM
+              - generic [ref=e575]:
+                - button "Red Probe (V/Ω) - Click to place" [ref=e576] [cursor=pointer]
+                - generic [ref=e578]: V Ω
+          - generic [ref=e579]:
+            - generic [ref=e580]:
+              - generic [ref=e581]: 💡 Level Hints
+              - generic [ref=e583]: 0/3
+            - generic [ref=e584]:
+              - paragraph [ref=e586]: Stuck? Click below to reveal step-by-step diagnostic hints.
+              - button "Reveal Hint" [ref=e587] [cursor=pointer]
+        - generic [ref=e593]:
+          - generic [ref=e594]: "Real-world: Basic Flashlight"
+          - paragraph [ref=e600]: A battery supplying continuous current to a bulb through wires, simulating a simple handheld torch.

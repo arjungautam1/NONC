@@ -14,6 +14,7 @@ export const Workspace: React.FC = () => {
     toggleSimulation,
     simulation,
     updateComponentPosition,
+    setComponentState,
     addComponent,
     removeComponent,
     addWire,
@@ -43,6 +44,9 @@ export const Workspace: React.FC = () => {
 
   // Selected wire state for deletion
   const [selectedWireId, setSelectedWireId] = useState<string | null>(null);
+
+  // Hovered component state for controls overlay
+  const [hoveredCompId, setHoveredCompId] = useState<string | null>(null);
 
   // Wire size adjust state
   const [wireSize, setWireSize] = useState<'normal' | 'thin'>('thin');
@@ -296,13 +300,17 @@ export const Workspace: React.FC = () => {
   };
 
   // Local visual adjustment for terminal offsets to align exactly with component graphics
-  const getTerminalLocalPos = (compType: string, term: { id: string; x: number; y: number }) => {
+  const getTerminalLocalPos = (comp: CircuitComponent, term: { id: string; x: number; y: number }) => {
     let x = term.x;
     let y = term.y;
-    if (compType === 'battery') {
+    if (comp.type === 'battery') {
       y = -30; // Move terminal connection points to the top battery caps
-    } else if (compType === 'power_supply') {
+    } else if (comp.type === 'power_supply') {
       y = 43;  // Move terminal connection points to bottom screw strip
+    } else if (comp.type === 'junction') {
+      const scale = comp.state?.scale || 1.0;
+      x = term.x * scale;
+      y = term.y * scale;
     }
     return { x, y };
   };
@@ -313,7 +321,7 @@ export const Workspace: React.FC = () => {
     if (!comp) return { x: 0, y: 0 };
     const term = comp.terminals.find(t => t.id === terminalId);
     if (!term) return { x: comp.x, y: comp.y };
-    const local = getTerminalLocalPos(comp.type, term);
+    const local = getTerminalLocalPos(comp, term);
     return {
       x: comp.x + local.x,
       y: comp.y + local.y
@@ -412,7 +420,7 @@ export const Workspace: React.FC = () => {
     if (!comp) return { x: 0, y: 0 };
     const term = comp.terminals.find(t => t.id === termId);
     if (!term) return { x: 0, y: 0 };
-    const local = getTerminalLocalPos(comp.type, term);
+    const local = getTerminalLocalPos(comp, term);
 
     if (comp.type === 'battery') {
       // Battery terminals are on top, exit upwards
@@ -1013,6 +1021,8 @@ export const Workspace: React.FC = () => {
               onPointerDown={(e) => handleCompPointerDown(e, comp)}
               onPointerMove={handleCompPointerMove}
               onPointerUp={handleCompPointerUp}
+              onPointerOver={() => setHoveredCompId(comp.id)}
+              onPointerOut={() => setHoveredCompId(null)}
               onClick={(e) => {
                 e.stopPropagation();
               }}
@@ -1050,19 +1060,64 @@ export const Workspace: React.FC = () => {
                {/* Specific component graphic */}
               <ComponentRenderer component={comp} isEnergized={isEnergized} />
 
-              {/* Delete button overlay for custom junctions placed by user */}
-              {comp.type === 'junction' && (
+              {/* Sleek, stable control tray (Zoom-Out, Zoom-In, Delete) for custom Wago connectors when hovered */}
+              {hoveredCompId === comp.id && comp.type === 'junction' && (
                 <g 
-                  className="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
-                  transform="translate(24, -12)"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeComponent(comp.id);
-                  }}
+                  transform="translate(0, -22)"
+                  className="cursor-default"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#7f1d1d" strokeWidth="0.8" />
-                  <line x1="-3" y1="-3" x2="3" y2="3" stroke="#ffffff" strokeWidth="1.2" />
-                  <line x1="3" y1="-3" x2="-3" y2="3" stroke="#ffffff" strokeWidth="1.2" />
+                  {/* Background container pill */}
+                  <rect x="-33" y="-10" width="66" height="20" rx="10" fill="#1e293b" stroke="#334155" strokeWidth="1.2" />
+                  
+                  {/* Zoom Out Button (-) */}
+                  <g 
+                    className="cursor-pointer hover:brightness-125 transition-all"
+                    transform="translate(-20, 0)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentScale = comp.state.scale || 1.0;
+                      const newScale = Math.max(0.6, parseFloat((currentScale - 0.1).toFixed(1)));
+                      setComponentState(comp.id, 'scale', newScale);
+                    }}
+                  >
+                    <title>Zoom Out Connector</title>
+                    <circle cx="0" cy="0" r="7" fill="#334155" />
+                    <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
+                  </g>
+
+                  {/* Zoom In Button (+) */}
+                  <g 
+                    className="cursor-pointer hover:brightness-125 transition-all"
+                    transform="translate(0, 0)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentScale = comp.state.scale || 1.0;
+                      const newScale = Math.min(1.6, parseFloat((currentScale + 0.1).toFixed(1)));
+                      setComponentState(comp.id, 'scale', newScale);
+                    }}
+                  >
+                    <title>Zoom In Connector</title>
+                    <circle cx="0" cy="0" r="7" fill="#334155" />
+                    <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
+                    <line x1="0" y1="-3" x2="0" y2="3" stroke="#ffffff" strokeWidth="1.2" />
+                  </g>
+
+                  {/* Delete Button (x) */}
+                  <g 
+                    className="cursor-pointer hover:brightness-125 transition-all"
+                    transform="translate(20, 0)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeComponent(comp.id);
+                      setHoveredCompId(null);
+                    }}
+                  >
+                    <title>Delete Connector</title>
+                    <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#7f1d1d" strokeWidth="0.8" />
+                    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#ffffff" strokeWidth="1.2" />
+                    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#ffffff" strokeWidth="1.2" />
+                  </g>
                 </g>
               )}
             </g>
@@ -1357,7 +1412,7 @@ export const Workspace: React.FC = () => {
                 const hasRedProbe = multimeter.redProbe?.componentId === comp.id && multimeter.redProbe?.terminalId === term.id;
                 const hasBlackProbe = multimeter.blackProbe?.componentId === comp.id && multimeter.blackProbe?.terminalId === term.id;
 
-                const localPos = getTerminalLocalPos(comp.type, term);
+                const localPos = getTerminalLocalPos(comp, term);
 
                 return (
                   <g 
@@ -1371,7 +1426,7 @@ export const Workspace: React.FC = () => {
                     className={probeMode ? 'cursor-cell' : 'cursor-pointer'}
                   >
                     <g 
-                      transform={isHovered ? 'scale(1.4)' : 'scale(1)'} 
+                      transform={isHovered ? (comp.type === 'junction' ? 'scale(1.1)' : 'scale(1.4)') : 'scale(1)'} 
                       style={{ transition: 'transform 0.15s ease' }}
                     >
                       {/* Glowing aura if terminal has positive voltage */}

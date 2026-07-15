@@ -86,9 +86,13 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       };
 
       const wagoColor = '#ea580c'; // Wago levers are always classic bright orange!
+      const scale = component.state?.scale || 1.0;
 
       return (
-        <g style={{ filter: isEnergized ? 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.9))' : 'none' }}>
+        <g 
+          transform={`scale(${scale})`}
+          style={{ filter: isEnergized ? 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.9))' : 'none' }}
+        >
           {/* Main grey/clear body of Wago inline connector */}
           <rect x="-24" y="-12" width="48" height="24" rx="4" fill="#d1d5db" stroke="#9ca3af" strokeWidth="1.2" />
           {/* Transparent casing top highlight */}

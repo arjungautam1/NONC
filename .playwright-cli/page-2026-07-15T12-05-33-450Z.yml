@@ -1,0 +1,98 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: Training Institute
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - heading "Electronics Lab" [level=2] [ref=e21]
+            - generic [ref=e22]: v2.0
+          - paragraph [ref=e23]: Virtual Electronics Training · 20 Modules
+      - generic [ref=e24]:
+        - generic [ref=e25]: 0 Solved
+        - generic [ref=e28]: 0 Badges
+    - generic [ref=e36]:
+      - heading "Master Electronics Circuit Design." [level=2] [ref=e37]: Master ElectronicsCircuit Design.
+      - paragraph [ref=e38]: Build real-world wiring skills through hands-on simulation. From basic circuits to advanced industrial control systems.
+    - generic [ref=e39]:
+      - generic [ref=e48]:
+        - generic [ref=e49]: "0"
+        - generic [ref=e50]: Modules
+      - generic [ref=e56]:
+        - generic [ref=e57]: "0"
+        - generic [ref=e58]: Completed
+      - generic [ref=e63]:
+        - generic [ref=e64]: 0%
+        - generic [ref=e65]: Progress
+    - generic [ref=e67]:
+      - generic [ref=e68]: START
+      - generic [ref=e69]: 0/20 MODULES COMPLETE
+      - generic [ref=e70]: MASTER
+  - main [ref=e71]:
+    - generic [ref=e72]:
+      - heading "Training Modules" [level=3] [ref=e73]
+      - generic [ref=e74]: Click any card to enter the lab →
+    - generic [ref=e75]:
+      - generic [ref=e76] [cursor=pointer]:
+        - generic [ref=e77]: LVL 01
+        - heading "Complete Circuit Basics" [level=3] [ref=e87]
+      - generic [ref=e88] [cursor=pointer]:
+        - generic [ref=e89]: LVL 02
+        - heading "Understanding Open Circuits" [level=3] [ref=e97]
+      - generic [ref=e98] [cursor=pointer]:
+        - generic [ref=e99]: LVL 03
+        - heading "Normally Open (NO) Push Button" [level=3] [ref=e109]
+      - generic [ref=e110] [cursor=pointer]:
+        - generic [ref=e111]: LVL 04
+        - heading "Normally Closed (NC) Push Button" [level=3] [ref=e119]
+      - generic [ref=e120] [cursor=pointer]:
+        - generic [ref=e121]: LVL 05
+        - heading "Relay Basics & Armature Snap" [level=3] [ref=e130]
+      - generic [ref=e131] [cursor=pointer]:
+        - generic [ref=e132]: LVL 06
+        - heading "Relay Normally Open (NO) Control" [level=3] [ref=e139]
+      - generic [ref=e140] [cursor=pointer]:
+        - generic [ref=e141]: LVL 07
+        - heading "Relay Normally Closed (NC) Control" [level=3] [ref=e148]
+      - generic [ref=e149] [cursor=pointer]:
+        - generic [ref=e150]: LVL 08
+        - heading "Emergency Stop Safety Loop" [level=3] [ref=e159]
+      - generic [ref=e160] [cursor=pointer]:
+        - generic [ref=e161]: LVL 09
+        - heading "CDVI Access Control Wiring" [level=3] [ref=e169]
+      - generic [ref=e170] [cursor=pointer]:
+        - generic [ref=e171]: LVL 10
+        - heading "Traffic Light Switch Challenge" [level=3] [ref=e179]
+      - generic [ref=e180] [cursor=pointer]:
+        - generic [ref=e181]: LVL 11
+        - heading "House Lighting & Ground Loop" [level=3] [ref=e194]
+      - generic [ref=e195] [cursor=pointer]:
+        - generic [ref=e196]: LVL 12
+        - heading "Industrial Latching Relay Control" [level=3] [ref=e206]
+      - generic [ref=e207] [cursor=pointer]:
+        - generic [ref=e208]: LVL 13
+        - heading "Time-Delay Cooling Fan" [level=3] [ref=e220]
+      - generic [ref=e221] [cursor=pointer]:
+        - generic [ref=e222]: LVL 14
+        - heading "Hoistway Safety Limits" [level=3] [ref=e229]
+      - generic [ref=e230] [cursor=pointer]:
+        - generic [ref=e231]: LVL 15
+        - heading "Actuator Polarity Reversing" [level=3] [ref=e240]
+      - generic [ref=e241] [cursor=pointer]:
+        - generic [ref=e242]: LVL 16
+        - heading "CDVI Transformer Security" [level=3] [ref=e250]
+      - generic [ref=e251] [cursor=pointer]:
+        - generic [ref=e252]: LVL 17
+        - heading "The Relay Master Challenge" [level=3] [ref=e263]
+      - generic [ref=e264] [cursor=pointer]:
+        - generic [ref=e265]: LVL 18
+        - heading "Automatic Parking Gate" [level=3] [ref=e277]
+      - generic [ref=e278] [cursor=pointer]:
+        - generic [ref=e279]: LVL 19
+        - heading "Smart Parking Barrier" [level=3] [ref=e291]
+      - generic [ref=e292] [cursor=pointer]:
+        - generic [ref=e293]: LVL 20
+        - heading "Altronix Security Control Logic" [level=3] [ref=e300]
+  - contentinfo [ref=e301]:
+    - generic [ref=e302]: Delmi Electronics Corp · Virtual Simulator Suite
+    - generic [ref=e303]: All systems online
