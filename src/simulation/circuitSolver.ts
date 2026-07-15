@@ -76,8 +76,17 @@ export function solveCircuit(
 
     // Add internal component connections depending on state
     components.forEach(c => {
-      if (c.type === 'button_no' && c.state.pressed) {
-        addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+      if (c.type === 'button_no') {
+        const hasCom = c.terminals.some(t => t.id === 'com');
+        if (hasCom) {
+          if (c.state.pressed) {
+            addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+          } else {
+            addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+          }
+        } else if (c.state.pressed) {
+          addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+        }
       } else if (c.type === 'button_nc' && !c.state.pressed) {
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
       } else if (c.type === 'door_sensor' && !c.state.toggled) {
@@ -85,6 +94,9 @@ export function solveCircuit(
       } else if (c.type === 'switch_selector') {
         const targetOut = c.state.toggled ? 'out_b' : 'out_a';
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
+      } else if (c.type === 'rocker_switch_2pos') {
+        const targetOut = c.state.toggled ? 'no' : 'nc';
+        addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
       } else if (c.type === 'relay') {
         const isEnergized = coilStates[c.id];
         if (isEnergized) {
