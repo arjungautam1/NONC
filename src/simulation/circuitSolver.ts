@@ -194,7 +194,7 @@ export function solveCircuit(
     const negSources: string[] = [];
     const sourceVoltages: Record<string, number> = {}; // source terminal -> voltage
 
-    // Phase 1: Process and propagate secondary AC lines from active transformers first
+    // Phase 1: Process and identify active transformers connected to AC outlet
     components.forEach(c => {
       if (c.type === 'transformer') {
         const lKey = getTerminalKey(c.id, 'ac_l');
@@ -203,46 +203,11 @@ export function solveCircuit(
         const isACL = connectedToACL.has(lKey) && connectedToACN.has(nKey);
         const isACN = connectedToACL.has(nKey) && connectedToACN.has(lKey);
 
-        if (isACL || isACN) {
-          c.state.active = true;
-          const out1Key = getTerminalKey(c.id, 'ac_out1');
-          const out2Key = getTerminalKey(c.id, 'ac_out2');
-          
-          connectedToACL.add(out1Key);
-          connectedToACN.add(out2Key);
-
-          // Propagate secondary AC Live from output 1
-          const aclQueueTrans = [out1Key];
-          while (aclQueueTrans.length > 0) {
-            const curr = aclQueueTrans.shift()!;
-            const neighbors = adjList[curr] || new Set();
-            neighbors.forEach(n => {
-              if (!connectedToACL.has(n)) {
-                connectedToACL.add(n);
-                aclQueueTrans.push(n);
-              }
-            });
-          }
-
-          // Propagate secondary AC Neutral from output 2
-          const acnQueueTrans = [out2Key];
-          while (acnQueueTrans.length > 0) {
-            const curr = acnQueueTrans.shift()!;
-            const neighbors = adjList[curr] || new Set();
-            neighbors.forEach(n => {
-              if (!connectedToACN.has(n)) {
-                connectedToACN.add(n);
-                acnQueueTrans.push(n);
-              }
-            });
-          }
-        } else {
-          c.state.active = false;
-        }
+        c.state.active = isACL || isACN;
       }
     });
 
-    // Phase 2: Identify and configure DC power sources (Battery & Power Supply)
+    // Phase 2: Configure initial DC sources (Battery, legacy PSU, and active Transformers outputting +/-)
     components.forEach(c => {
       if (c.type === 'battery') {
         const pKey = getTerminalKey(c.id, 'pos');
@@ -250,6 +215,14 @@ export function solveCircuit(
         posSources.push(pKey);
         negSources.push(nKey);
         sourceVoltages[pKey] = 12; // 12V Battery
+        sourceVoltages[nKey] = 0;
+      } else if (c.type === 'transformer' && c.state.active) {
+        // Active transformer outputs DC + and - (pos and neg terminals)
+        const pKey = getTerminalKey(c.id, 'pos');
+        const nKey = getTerminalKey(c.id, 'neg');
+        posSources.push(pKey);
+        negSources.push(nKey);
+        sourceVoltages[pKey] = 24; // 24VDC from transformer output
         sourceVoltages[nKey] = 0;
       } else if (c.type === 'power_supply') {
         const hasACTerminals = c.terminals.some(t => t.id === 'ac1') && c.terminals.some(t => t.id === 'ac2');
@@ -262,16 +235,54 @@ export function solveCircuit(
           sourceVoltages[pKey] = 24; // 24V Industrial PSU
           sourceVoltages[nKey] = 0;
           c.state.active = true;
-        } else {
-          // Access control power supply board requiring AC power from transformer
+        }
+      }
+    });
+
+    // Temp propagation phase to determine if power supply boards receive DC on their AC inputs
+    const tempConnectedToPos = new Set<string>();
+    const tempConnectedToNeg = new Set<string>();
+
+    const tempPosQueue = [...posSources];
+    tempPosQueue.forEach(s => tempConnectedToPos.add(s));
+    while (tempPosQueue.length > 0) {
+      const curr = tempPosQueue.shift()!;
+      const neighbors = adjList[curr] || new Set();
+      neighbors.forEach(n => {
+        if (!tempConnectedToPos.has(n)) {
+          tempConnectedToPos.add(n);
+          tempPosQueue.push(n);
+        }
+      });
+    }
+
+    const tempNegQueue = [...negSources];
+    tempNegQueue.forEach(s => tempConnectedToNeg.add(s));
+    while (tempNegQueue.length > 0) {
+      const curr = tempNegQueue.shift()!;
+      const neighbors = adjList[curr] || new Set();
+      neighbors.forEach(n => {
+        if (!tempConnectedToNeg.has(n)) {
+          tempConnectedToNeg.add(n);
+          tempNegQueue.push(n);
+        }
+      });
+    }
+
+    // Phase 3: Evaluate AC-input Power Supply boards
+    components.forEach(c => {
+      if (c.type === 'power_supply') {
+        const hasACTerminals = c.terminals.some(t => t.id === 'ac1') && c.terminals.some(t => t.id === 'ac2');
+        if (hasACTerminals) {
           const ac1Key = getTerminalKey(c.id, 'ac1');
           const ac2Key = getTerminalKey(c.id, 'ac2');
-          const isAC1_L = connectedToACL.has(ac1Key);
-          const isAC1_N = connectedToACN.has(ac1Key);
-          const isAC2_L = connectedToACL.has(ac2Key);
-          const isAC2_N = connectedToACN.has(ac2Key);
+          
+          const isAC1_Pos = tempConnectedToPos.has(ac1Key);
+          const isAC1_Neg = tempConnectedToNeg.has(ac1Key);
+          const isAC2_Pos = tempConnectedToPos.has(ac2Key);
+          const isAC2_Neg = tempConnectedToNeg.has(ac2Key);
 
-          if ((isAC1_L && isAC2_N) || (isAC1_N && isAC2_L)) {
+          if ((isAC1_Pos && isAC2_Neg) || (isAC1_Neg && isAC2_Pos)) {
             const pKey = getTerminalKey(c.id, 'pos');
             const nKey = getTerminalKey(c.id, 'neg');
             posSources.push(pKey);

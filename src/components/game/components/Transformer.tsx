@@ -104,10 +104,10 @@ export const Transformer: React.FC<TransformerProps> = ({ component }) => {
         ))}
 
         {/* Labels below screws */}
-        <g fontSize="5.5" fontWeight="black" fill="#475569" fontFamily="monospace" textAnchor="middle">
-          <text x="-20" y="11">16.5V</text>
+        <g fontSize="7" fontWeight="black" fill="#475569" fontFamily="monospace" textAnchor="middle">
+          <text x="-20" y="11" fill="#ef4444">+</text>
           <text x="0" y="11">GND</text>
-          <text x="20" y="11">0V</text>
+          <text x="20" y="11" fill="#3b82f6">-</text>
         </g>
       </g>
 
