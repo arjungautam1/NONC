@@ -284,15 +284,15 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
       <text x="26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">-Ve</text>
       <text x="0" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
 
-      {/* Left Pole Labels */}
-      <text x="-24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">C</text>
-      <text x="-24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NC</text>
-      <text x="-24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NO</text>
-
-      {/* Right Pole Labels */}
-      <text x="24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">C</text>
-      <text x="24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC</text>
-      <text x="24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO</text>
+      {/* Left Pole Labels (Outside casing) */}
+      <text x="-56" y="-27" fill="#cbd5e1" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">C</text>
+      <text x="-56" y="3" fill="#cbd5e1" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC</text>
+      <text x="-56" y="33" fill="#cbd5e1" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO</text>
+      
+      {/* Right Pole Labels (Outside casing) */}
+      <text x="56" y="-27" fill="#cbd5e1" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="start">C</text>
+      <text x="56" y="3" fill="#cbd5e1" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NC</text>
+      <text x="56" y="33" fill="#cbd5e1" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NO</text>
 
       {/* Active Indicator LED */}
       <circle
