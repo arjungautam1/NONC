@@ -28,7 +28,7 @@ export const Workspace: React.FC = () => {
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
-  const [zoomScale, setZoomScale] = useState<number>(1.4);
+  const [zoomScale, setZoomScale] = useState<number>(1.0);
   const [draggedCompId, setDraggedCompId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
@@ -777,11 +777,11 @@ export const Workspace: React.FC = () => {
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
-            {zoomScale !== 1.4 && (
+            {zoomScale !== 1.0 && (
               <button
-                onClick={() => setZoomScale(1.4)}
+                onClick={() => setZoomScale(1.0)}
                 className="px-1.5 h-5 flex items-center justify-center text-[9px] font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded cursor-pointer transition-colors border-l border-white/10 ml-0.5"
-                title="Reset Zoom to 140%"
+                title="Reset Zoom to 100%"
               >
                 Reset
               </button>

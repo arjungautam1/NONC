@@ -26,7 +26,8 @@ export type ComponentType =
   | 'junction'
   | 'rocker_switch_3pos'
   | 'relay_dpdt'
-  | 'led_strip';
+  | 'led_strip'
+  | 'rocker_switch_2pos';
 
 export type TerminalType =
   | 'pos'

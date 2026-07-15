@@ -285,14 +285,14 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
       <text x="0" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
 
       {/* Left Pole Labels */}
-      <text x="-24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">COM1</text>
-      <text x="-24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NC1</text>
-      <text x="-24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NO1</text>
+      <text x="-24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">C</text>
+      <text x="-24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NC</text>
+      <text x="-24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">NO</text>
 
       {/* Right Pole Labels */}
-      <text x="24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">COM2</text>
-      <text x="24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC2</text>
-      <text x="24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO2</text>
+      <text x="24" y="-27" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">C</text>
+      <text x="24" y="3" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC</text>
+      <text x="24" y="33" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO</text>
 
       {/* Active Indicator LED */}
       <circle

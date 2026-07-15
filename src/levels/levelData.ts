@@ -1917,14 +1917,14 @@ export const levels: Level[] = [
   {
     id: 20,
     title: 'Altronix Security Control Logic',
-    description: 'Wire a commercial access control scenario with an Altronix DPDT relay, request-to-exit momentary button, override switch, led strips, door lock, and siren.',
+    description: 'Wire a commercial access control scenario with an Altronix DPDT relay, request-to-exit momentary button (using C, NC, NO contacts), maintained rocker switch, led strips, door lock, and siren.',
     instructions: [
-      'Welcome to the Altronix Security Control project! Let\'s construct the request-to-exit scenario.',
-      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button IN (in). Wire RCI 909S Momentary Button OUT (out) to Altronix Relay Coil A1 (coil_a). Wire Altronix Relay Coil A2 (coil_b) to PSU (-) output (neg).',
+      'Welcome to the Altronix Security Control project! Let\'s construct the request-to-exit scenario using industrial switch contacts.',
+      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil A1 (coil_a). Wire Altronix Relay Coil A2 (coil_b) to PSU (-) output (neg).',
       'Indicator LEDs: Wire PSU (+) to Altronix Relay COM1 (com1). Wire Relay NC1 (nc1) to Red LED Strip IN (in). Wire Relay NO1 (no1) to Green LED Strip IN (in). Wire both Red & Green LED Strip OUT (out) terminals to PSU (-).',
       'Door Lock Loop: Wire PSU (+) to Altronix Relay NC2 (nc2). Wire Relay COM2 (com2) to Door Lock IN (in). Wire Door Lock OUT (out) to PSU (-).',
-      'Maintained Switch & Siren Loop: Wire PSU (+) to Maintained Switch IN (in). Wire Maintained Switch B (out_b) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren IN (in). Wire Siren OUT (out) to PSU (-).',
-      'Power the simulator and test both states: hold the momentary button to unlock the door in position A, then toggle the switch to position B and hold momentary to trigger the siren and lock override!'
+      'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch IN (in). Wire Maintained Rocker Switch B (out_b) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren IN (in). Wire Siren OUT (out) to PSU (-).',
+      'Power the simulator and test both states: hold the momentary button to unlock the door in position A, then toggle the mechanical rocker switch to position B and hold momentary to trigger the siren and lock override!'
     ],
     goals: [
       'Wire Momentary Switch to trigger Altronix Relay Coil',
@@ -1953,17 +1953,18 @@ export const levels: Level[] = [
         y: 280,
         label: 'RCI 909S Momentary',
         terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-          { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
+          { id: 'com', name: 'C', type: 'com', x: -30, y: 15 },
+          { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -25 },
+          { id: 'no', name: 'NO', type: 'no', x: 30, y: 15 }
         ],
         state: {}
       },
       {
         id: 'sw_maintained',
-        type: 'switch_selector',
+        type: 'rocker_switch_2pos',
         x: 100,
         y: 430,
-        label: 'Maintained Switch',
+        label: 'Maintained Rocker Switch',
         terminals: [
           { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
           { id: 'out_a', name: 'A', type: 'out_a', x: 30, y: -20 },
@@ -1980,12 +1981,12 @@ export const levels: Level[] = [
         terminals: [
           { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: 45 },
           { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: 45 },
-          { id: 'com1', name: 'COM1', type: 'com1', x: -45, y: -30 },
-          { id: 'nc1', name: 'NC1', type: 'nc1', x: -45, y: 0 },
-          { id: 'no1', name: 'NO1', type: 'no1', x: -45, y: 30 },
-          { id: 'com2', name: 'COM2', type: 'com2', x: 45, y: -30 },
-          { id: 'nc2', name: 'NC2', type: 'nc2', x: 45, y: 0 },
-          { id: 'no2', name: 'NO2', type: 'no2', x: 45, y: 30 }
+          { id: 'com1', name: 'C', type: 'com1', x: -45, y: -30 },
+          { id: 'nc1', name: 'NC', type: 'nc1', x: -45, y: 0 },
+          { id: 'no1', name: 'NO', type: 'no1', x: -45, y: 30 },
+          { id: 'com2', name: 'C', type: 'com2', x: 45, y: -30 },
+          { id: 'nc2', name: 'NC', type: 'nc2', x: 45, y: 0 },
+          { id: 'no2', name: 'NO', type: 'no2', x: 45, y: 30 }
         ],
         state: {}
       },
@@ -2040,10 +2041,10 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Momentary Control: PSU (+) -> Momentary IN. Momentary OUT -> Relay A1. Relay A2 -> PSU (-).',
-      'LED Indicators: PSU (+) -> Relay COM1. Relay NC1 -> Red LED IN. Relay NO1 -> Green LED IN. LED OUT terminals -> PSU (-).',
-      'Door Lock Loop: PSU (+) -> Relay NC2. Relay COM2 -> Maglock IN. Maglock OUT -> PSU (-).',
-      'Maintained Selector & Siren: PSU (+) -> Maintained Switch IN. Maintained Switch B -> Relay COM2. Relay NO2 -> Siren IN. Siren OUT -> PSU (-).'
+      'Momentary Control: PSU (+) -> Momentary COM (com). Momentary NO (no) -> Relay A1. Relay A2 -> PSU (-).',
+      'LED Indicators: PSU (+) -> Relay C (com1). Relay NC (nc1) -> Red LED IN. Relay NO (no1) -> Green LED IN. LED OUT terminals -> PSU (-).',
+      'Door Lock Loop: PSU (+) -> Relay NC (nc2). Relay C (com2) -> Maglock IN. Maglock OUT -> PSU (-).',
+      'Maintained Rocker Switch & Siren: PSU (+) -> Maintained Switch IN. Maintained Switch B -> Relay C (com2). Relay NO (no2) -> Siren IN. Siren OUT -> PSU (-).'
     ],
     successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
       const momentary = components.find(c => c.id === 'btn_momentary');

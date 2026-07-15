@@ -37,10 +37,10 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
     }
   };
 
-  // Determine voltage presence at switch terminals
-  const inKey = getTerminalKey(component.id, 'in');
-  const outKey = getTerminalKey(component.id, 'out');
-  const hasVoltage = isRunning && (nodeVoltages[inKey] > 0 || nodeVoltages[outKey] > 0);
+  const hasCom = component.terminals.some(t => t.id === 'com');
+  const inKey = hasCom ? getTerminalKey(component.id, 'com') : getTerminalKey(component.id, 'in');
+  const outKey = hasCom ? getTerminalKey(component.id, 'no') : getTerminalKey(component.id, 'out');
+  const hasVoltage = isRunning && (nodeVoltages[inKey] > 0 || nodeVoltages[outKey] > 0 || (hasCom && nodeVoltages[getTerminalKey(component.id, 'nc')] > 0));
 
   return (
     <g 
@@ -69,36 +69,60 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
         style={{ transition: 'all 0.1s ease' }}
       />
 
-      {/* Contact terminal internally schematic overlay - connects exactly to X=10 and X=70 */}
-      <path d="M10 40 L25 40 M55 40 L70 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
-      
-      {isPressed ? (
-        // Connected (Closed contact)
-        <path d="M25 40 L55 40" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
-      ) : (
-        // Blocked contact: draw angled armature and dotted connection gap
+      {hasCom ? (
         <g>
-          {/* Angled open arm */}
-          <line x1="25" y1="40" x2="52" y2="28" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
-          
-          {/* Dotted bridge path showing current is blocked here */}
-          <line 
-            x1="25" 
-            y1="40" 
-            x2="55" 
-            y2="40" 
-            stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
-            strokeWidth={hasVoltage ? 2.5 : 1.5}
-            strokeDasharray="2,3" 
-            filter={hasVoltage ? "url(#yellow-glow)" : "none"}
-            opacity={hasVoltage ? 0.95 : 0.4} 
-          />
+          {/* C (COM) lead */}
+          <path d="M10 40 L25 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+          {/* NC lead */}
+          <path d="M55 25 L70 25" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+          {/* NO lead */}
+          <path d="M55 55 L70 55" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Contact points */}
+          <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+          <circle cx="55" cy="25" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+          <circle cx="55" cy="55" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+
+          {isPressed ? (
+            // Connected to NO
+            <g>
+              <line x1="25" y1="40" x2="55" y2="55" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
+              <line x1="25" y1="40" x2="55" y2="25" stroke="#4b5563" strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
+            </g>
+          ) : (
+            // Connected to NC
+            <g>
+              <line x1="25" y1="40" x2="55" y2="25" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
+              <line x1="25" y1="40" x2="55" y2="55" stroke={hasVoltage ? "#fbbf24" : "#4b5563"} strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
+            </g>
+          )}
+        </g>
+      ) : (
+        <g>
+          {/* Original SPST NO Button visuals */}
+          <path d="M10 40 L25 40 M55 40 L70 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+          {isPressed ? (
+            <path d="M25 40 L55 40" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
+          ) : (
+            <g>
+              <line x1="25" y1="40" x2="52" y2="28" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+              <line 
+                x1="25" 
+                y1="40" 
+                x2="55" 
+                y2="40" 
+                stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
+                strokeWidth={hasVoltage ? 2.5 : 1.5}
+                strokeDasharray="2,3" 
+                filter={hasVoltage ? "url(#yellow-glow)" : "none"}
+                opacity={hasVoltage ? 0.95 : 0.4} 
+              />
+            </g>
+          )}
+          <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+          <circle cx="55" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
         </g>
       )}
-
-      {/* Terminal anchor dots */}
-      <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-      <circle cx="55" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
 
       {/* Text label */}
       <text x="40" y="93" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
@@ -453,6 +477,90 @@ export const RockerSwitch3Pos: React.FC<ComponentProps> = ({ component }) => {
 
       {/* Text label underneath */}
       <text x="45" y="102" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+        {component.label}
+      </text>
+    </g>
+  );
+};
+
+export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
+  const toggleSwitch = useGameStore(state => state.toggleSwitch);
+  const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const isRunning = useGameStore(state => state.isRunning);
+  
+  const isToggled = component.state.toggled || false;
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    toggleSwitch(component.id);
+    soundManager.playClick();
+  };
+
+  // Determine voltage presence at switch input
+  const inKey = getTerminalKey(component.id, 'in');
+  const hasVoltage = isRunning && nodeVoltages[inKey] > 0;
+
+  return (
+    <g 
+      transform="translate(-45, -45)" 
+      className="select-none cursor-pointer"
+      onPointerDown={handlePointerDown}
+    >
+      {/* Outer Housing */}
+      <rect x="5" y="5" width="80" height="80" rx="8" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
+      <rect x="18" y="1" width="54" height="4" fill="#71717a" opacity="0.6" />
+      <rect x="18" y="85" width="54" height="4" fill="#71717a" opacity="0.6" />
+
+      {/* Switch cavity bezel */}
+      <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
+
+      {/* Rocker Toggle Mechanism */}
+      {!isToggled ? (
+        // Position A - Left side raised, Right side sunken
+        <g>
+          {/* Right sunken side */}
+          <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
+          {/* Left raised side */}
+          <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
+          {/* Indicator label */}
+          <text x="31.5" y="49" fill="#10b981" fontSize="10" fontWeight="bold" textAnchor="middle">A</text>
+        </g>
+      ) : (
+        // Position B - Right side raised, Left side sunken
+        <g>
+          {/* Left sunken side */}
+          <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
+          {/* Right raised side */}
+          <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
+          {/* Indicator label */}
+          <text x="58.5" y="49" fill="#10b981" fontSize="10" fontWeight="bold" textAnchor="middle">B</text>
+        </g>
+      )}
+
+      {/* Schematic overlay inside (X=10 to X=80) */}
+      <line x1="10" y1="45" x2="25" y2="45" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="55" y1="30" x2="80" y2="30" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="55" y1="60" x2="80" y2="60" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+
+      {/* Toggle contact line */}
+      {!isToggled ? (
+        <g>
+          <line x1="25" y1="45" x2="55" y2="30" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="25" y1="45" x2="55" y2="60" stroke={hasVoltage ? "#fbbf24" : "#4b5563"} strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
+        </g>
+      ) : (
+        <g>
+          <line x1="25" y1="45" x2="55" y2="60" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="25" y1="45" x2="55" y2="30" stroke={hasVoltage ? "#fbbf24" : "#4b5563"} strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
+        </g>
+      )}
+
+      <circle cx="25" cy="45" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      <circle cx="55" cy="30" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+      <circle cx="55" cy="60" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+
+      {/* Label */}
+      <text x="45" y="103" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
         {component.label}
       </text>
     </g>
