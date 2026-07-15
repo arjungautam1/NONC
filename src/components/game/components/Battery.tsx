@@ -104,10 +104,14 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         <line x1="2" y1="-1.8" x2="2" y2="1.8" stroke="#ca8a04" strokeWidth="0.8" />
       </g>
 
-      {/* Transformer block on PCB (Yellow wrapped coil) */}
-      <rect x="52" y="14" width="32" height="32" rx="3" fill="#eab308" stroke="#ca8a04" strokeWidth="1.5" />
-      <rect x="58" y="20" width="20" height="20" rx="1" fill="#1e293b" />
-      <text x="68" y="32" fill="#ca8a04" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">T1</text>
+      {/* Cylindrical Power Capacitor replacing T1 */}
+      <g transform="translate(68, 30)">
+        <rect x="-8" y="-14" width="16" height="28" rx="2" fill="#020617" opacity="0.4" />
+        <rect x="-8" y="-14" width="16" height="28" rx="2" fill="#1e293b" stroke="#475569" strokeWidth="1" />
+        <rect x="-3" y="-14" width="4" height="28" fill="#eab308" opacity="0.9" />
+        <rect x="-8" y="-14" width="16" height="4" fill="#94a3b8" />
+        <text x="12" y="4" fill="#cbd5e1" fontSize="6" fontWeight="bold" fontFamily="monospace">C1</text>
+      </g>
 
       {/* Heatsink element */}
       <rect x="100" y="14" width="22" height="18" fill="#334155" />
