@@ -393,6 +393,10 @@ export const Workspace: React.FC = () => {
       // Power supply and timer relay terminals are on bottom, exit downwards
       return { x: 0, y: 22 };
     }
+    if (comp.type === 'relay_dpdt') {
+      // DPDT relay top terminals exit upwards, bottom terminals exit downwards
+      return { x: 0, y: local.y < 0 ? -22 : 22 };
+    }
 
     // Default left/right horizontal exits for other components
     if (local.x > 5) return { x: 22, y: 0 };
