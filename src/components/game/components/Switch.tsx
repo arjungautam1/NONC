@@ -494,6 +494,7 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
   const isRunning = useGameStore(state => state.isRunning);
   
   const isToggled = component.state.toggled || false;
+  const stateLabel = isToggled ? 'ON' : 'OFF';
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
@@ -560,9 +561,36 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       <circle cx="55" cy="30" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
       <circle cx="55" cy="60" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
 
+      {/* State readout */}
+      <rect
+        x="31"
+        y="76"
+        width="28"
+        height="14"
+        rx="3"
+        fill={isToggled ? '#14532d' : '#3f3f46'}
+        stroke={isToggled ? '#22c55e' : '#71717a'}
+        strokeWidth="1"
+      />
+      <text
+        x="45"
+        y="86"
+        fill={isToggled ? '#dcfce7' : '#e4e4e7'}
+        fontSize="9"
+        fontWeight="bold"
+        textAnchor="middle"
+        fontFamily="monospace"
+        style={{ pointerEvents: 'none' }}
+      >
+        {stateLabel}
+      </text>
+
       {/* Label */}
-      <text x="45" y="103" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
+      <text x="45" y="105" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
         {component.label}
+      </text>
+      <text x="45" y="117" fill={isToggled ? '#86efac' : '#a1a1aa'} fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+        {stateLabel}
       </text>
     </g>
   );

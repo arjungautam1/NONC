@@ -990,12 +990,24 @@ export const Workspace: React.FC = () => {
 
           const inter = getLineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
           if (inter) {
-            intersections.push({
-              x: inter.x,
-              y: inter.y,
-              segmentIndex: k,
-              ratio: inter.ratio
-            });
+            const op1 = getTerminalPos(otherWire.fromComponentId, otherWire.fromTerminalId);
+            const op2 = otherWire.toComponentId ? getTerminalPos(otherWire.toComponentId, otherWire.toTerminalId) : null;
+            const p2 = wire.toComponentId ? getTerminalPos(wire.toComponentId, wire.toTerminalId) : null;
+
+            const distToP1 = Math.hypot(inter.x - p1.x, inter.y - p1.y);
+            const distToP2 = p2 ? Math.hypot(inter.x - p2.x, inter.y - p2.y) : Infinity;
+            const distToOp1 = Math.hypot(inter.x - op1.x, inter.y - op1.y);
+            const distToOp2 = op2 ? Math.hypot(inter.x - op2.x, inter.y - op2.y) : Infinity;
+
+            // Only add bridge if the crossing is far enough from all terminal ports
+            if (distToP1 > 28 && distToP2 > 28 && distToOp1 > 28 && distToOp2 > 28) {
+              intersections.push({
+                x: inter.x,
+                y: inter.y,
+                segmentIndex: k,
+                ratio: inter.ratio
+              });
+            }
           }
         }
       }

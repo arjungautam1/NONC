@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   Clock,
   BookOpen,
-  Compass
+  Compass,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -29,6 +31,8 @@ export const Sidebar: React.FC = () => {
   } = useGameStore();
 
   const level = levels[currentLevelIndex];
+  const [guideHidden, setGuideHidden] = React.useState(false);
+  const [hintsHidden, setHintsHidden] = React.useState(false);
 
   // Helper to format timer
   const formatTime = (secs: number) => {
@@ -259,12 +263,23 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* 4. Instructions list (Independent scrollable area) */}
+        {!guideHidden ? (
         <div className="p-3 flex-1 flex flex-col min-h-0">
-          <div className="flex items-center gap-1.5 mb-2.5 shrink-0">
-            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
-            <h3 className="text-[9px] font-bold tracking-widest text-slate-500 uppercase">
-              Step-by-Step Guide
-            </h3>
+          <div className="flex items-center justify-between gap-2 mb-2.5 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+              <h3 className="text-[9px] font-bold tracking-widest text-slate-500 uppercase">
+                Step-by-Step Guide
+              </h3>
+            </div>
+            <button
+              onClick={() => setGuideHidden(true)}
+              className="h-6 px-2 rounded border border-white/10 bg-white/[0.02] hover:bg-white/[0.07] text-[9px] font-bold uppercase text-slate-400 hover:text-white cursor-pointer transition-all flex items-center gap-1"
+              title="Hide guide"
+            >
+              <EyeOff className="w-3 h-3" />
+              Hide
+            </button>
           </div>
           
           <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 min-h-0 custom-scrollbar">
@@ -281,17 +296,37 @@ export const Sidebar: React.FC = () => {
             ))}
           </div>
         </div>
+        ) : (
+          <div className="p-3 flex-1 flex items-center justify-center min-h-0">
+            <button
+              onClick={() => setGuideHidden(false)}
+              className="w-full py-2 rounded-lg border border-indigo-500/20 bg-indigo-500/10 hover:bg-indigo-500/15 text-indigo-300 text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1.5"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Show Guide
+            </button>
+          </div>
+        )}
 
         {/* 4.5. Level Hints Section */}
-        {level.hints && level.hints.length > 0 && (
+        {level.hints && level.hints.length > 0 && !hintsHidden && (
           <div className="p-3 border-t border-white/10 bg-slate-950/20 flex flex-col gap-2 shrink-0 select-none">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400 font-mono">💡 Level Hints</span>
               </div>
-              <span className="text-[9px] font-mono text-slate-500 font-bold">
-                {Math.min(score.hintsUsed, level.hints.length)} / {level.hints.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-mono text-slate-500 font-bold">
+                  {Math.min(score.hintsUsed, level.hints.length)} / {level.hints.length}
+                </span>
+                <button
+                  onClick={() => setHintsHidden(true)}
+                  className="p-1 rounded hover:bg-white/10 text-slate-500 hover:text-white cursor-pointer transition-all"
+                  title="Hide hints"
+                >
+                  <EyeOff className="w-3 h-3" />
+                </button>
+              </div>
             </div>
 
             {/* Revealed Active Hint */}
@@ -313,6 +348,18 @@ export const Sidebar: React.FC = () => {
             >
               <span>{score.hintsUsed < level.hints.length ? 'Reveal Next Hint' : 'Next Hint (Cycle)'}</span>
               <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {level.hints && level.hints.length > 0 && hintsHidden && (
+          <div className="p-2.5 border-t border-white/10 bg-slate-950/20 shrink-0">
+            <button
+              onClick={() => setHintsHidden(false)}
+              className="w-full py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 text-amber-400 text-[9px] font-bold uppercase cursor-pointer transition-all flex items-center justify-center gap-1.5"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Show Hints
             </button>
           </div>
         )}

@@ -11,6 +11,7 @@ import {
   Activity,
   Briefcase,
   ChevronRight,
+  ChevronDown,
   X
 } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
@@ -123,6 +124,8 @@ export const HelpOverlay: React.FC = () => {
     setProbe,
     setProbeMode,
     sidebarOpen,
+    bottomPanelOpen,
+    toggleBottomPanel,
     useHint,
     shortCircuitPopup,
     dismissShortCircuitPopup
@@ -281,7 +284,16 @@ export const HelpOverlay: React.FC = () => {
       )}
 
       {/* 2. Interactive Diagnostic Console (Panel) */}
+      {bottomPanelOpen ? (
       <div className={`fixed bottom-0 left-0 ${sidebarOpen ? 'md:left-[320px]' : 'md:left-0'} right-0 h-44 md:h-40 bg-[#090d14]/94 border-t border-white/10 flex flex-col md:flex-row p-2 md:p-2.5 gap-2 md:gap-3 pointer-events-auto z-10 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-[0_-18px_40px_rgba(0,0,0,0.26)] overflow-y-auto md:overflow-hidden`}>
+        <button
+          onClick={toggleBottomPanel}
+          className="absolute right-2 top-2 z-20 h-7 px-2 rounded border border-white/10 bg-slate-950/80 hover:bg-slate-900 text-[9px] font-bold uppercase text-slate-400 hover:text-white cursor-pointer transition-all flex items-center gap-1"
+          title="Hide multimeter and bottom panel"
+        >
+          Hide
+          <ChevronDown className="w-3 h-3" />
+        </button>
 
         {/* Diagnostic Status Box */}
         <div className="hidden xl:flex w-72 border border-white/10 bg-white/[0.035] rounded-md p-3 flex-col gap-2">
@@ -480,6 +492,16 @@ export const HelpOverlay: React.FC = () => {
           })()}
         </div>
       </div>
+      ) : (
+        <button
+          onClick={toggleBottomPanel}
+          className={`fixed bottom-3 ${sidebarOpen ? 'left-3 md:left-[332px]' : 'left-3 md:left-10'} z-20 pointer-events-auto h-9 px-3 rounded-md border border-white/10 bg-[#090d14]/94 hover:bg-[#111827] text-slate-300 hover:text-white shadow-lg backdrop-blur-xl text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all flex items-center gap-2`}
+          title="Show multimeter"
+        >
+          <Activity className="w-3.5 h-3.5 text-emerald-400" />
+          Show Multimeter
+        </button>
+      )}
 
       {/* 3. Level Complete Floating Notification Card */}
       {levelCompleted && !isDismissed && (
