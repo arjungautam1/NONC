@@ -1997,8 +1997,8 @@ export const levels: Level[] = [
         y: 120,
         label: 'Red LED Strip',
         terminals: [
-          { id: 'in', name: '+', type: 'in', x: -25, y: 15 },
-          { id: 'out', name: '-', type: 'out', x: 25, y: 15 }
+          { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+          { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
         ],
         state: { color: 'red' }
       },
@@ -2009,8 +2009,8 @@ export const levels: Level[] = [
         y: 220,
         label: 'Green LED Strip',
         terminals: [
-          { id: 'in', name: '+', type: 'in', x: -25, y: 15 },
-          { id: 'out', name: '-', type: 'out', x: 25, y: 15 }
+          { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+          { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
         ],
         state: { color: 'green' }
       },
@@ -2021,8 +2021,8 @@ export const levels: Level[] = [
         y: 340,
         label: 'Door Strike / Maglock',
         terminals: [
-          { id: 'in', name: '+', type: 'in', x: -30, y: 15 },
-          { id: 'out', name: '-', type: 'out', x: 30, y: 15 }
+          { id: 'in', name: '+', type: 'in', x: -70, y: 10 },
+          { id: 'out', name: '-', type: 'out', x: 70, y: 10 }
         ],
         state: {}
       },
@@ -2033,8 +2033,8 @@ export const levels: Level[] = [
         y: 450,
         label: 'Siren',
         terminals: [
-          { id: 'in', name: '+', type: 'in', x: -30, y: 20 },
-          { id: 'out', name: '-', type: 'out', x: 30, y: 20 }
+          { id: 'in', name: '+', type: 'in', x: -50, y: 15 },
+          { id: 'out', name: '-', type: 'out', x: 50, y: 15 }
         ],
         state: {}
       }

@@ -1270,9 +1270,31 @@ export const Workspace: React.FC = () => {
                       ) : (
                         // Don't show static label for timer_relay – board SVG already prints labels on the PCB
                         comp.type !== 'timer_relay' && comp.type !== 'junction' && (
-                          <text y="-10" fill="#a4b0cb" fontSize="7" fontWeight="bold" textAnchor="middle" opacity="0.6">
-                            {term.name}
-                          </text>
+                          <g>
+                            {/* High contrast dark stroke background outline */}
+                            <text
+                              y="-10"
+                              fill="none"
+                              stroke="#09090b"
+                              strokeWidth="3.5"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
+                              fontSize="8.5"
+                              fontWeight="900"
+                              textAnchor="middle"
+                            >
+                              {term.name}
+                            </text>
+                            <text
+                              y="-10"
+                              fill={term.name === '+' ? '#fb7185' : term.name === '-' ? '#38bdf8' : '#f8fafc'}
+                              fontSize="8.5"
+                              fontWeight="900"
+                              textAnchor="middle"
+                            >
+                              {term.name}
+                            </text>
+                          </g>
                         )
                       )}
                     </g>
