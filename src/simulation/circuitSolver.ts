@@ -145,6 +145,11 @@ export function solveCircuit(
         if (isActive) {
           addConnection(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
         }
+      } else if (c.type === 'junction') {
+        const ports = c.terminals.map(t => getTerminalKey(c.id, t.id));
+        for (let i = 0; i < ports.length - 1; i++) {
+          addConnection(ports[i], ports[i + 1]);
+        }
       }
       // Note: loads (bulb, led, motor, buzzer, coil) are NOT shorted internally. They act as resistance loads.
     });
@@ -588,6 +593,11 @@ function checkPathBetween(
       if (c.state.active) {
         addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
       }
+    } else if (c.type === 'junction') {
+      const ports = c.terminals.map(t => getTerminalKey(c.id, t.id));
+      for (let i = 0; i < ports.length - 1; i++) {
+        addConn(ports[i], ports[i + 1]);
+      }
     }
   });
 
@@ -693,6 +703,11 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {
         addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+      }
+    } else if (c.type === 'junction') {
+      const ports = c.terminals.map(t => getTerminalKey(c.id, t.id));
+      for (let i = 0; i < ports.length - 1; i++) {
+        addConn(ports[i], ports[i + 1]);
       }
     }
   });

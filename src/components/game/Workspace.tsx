@@ -424,6 +424,10 @@ export const Workspace: React.FC = () => {
       // DPDT relay top terminals exit upwards, bottom terminals exit downwards
       return { x: 0, y: local.y < 0 ? -22 : 22 };
     }
+    if (comp.type === 'junction') {
+      // Junction (Wago connector) ports exit downwards
+      return { x: 0, y: 15 };
+    }
 
     // Default left/right horizontal exits for other components
     if (local.x > 5) return { x: 22, y: 0 };

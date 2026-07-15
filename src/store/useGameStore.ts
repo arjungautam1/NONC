@@ -588,7 +588,13 @@ export const useGameStore = create<GameState>((set, get) => {
         x,
         y,
         label: '',
-        terminals: [{ id: 'port', name: 'Joint', type: 'in', x: 0, y: 0 }],
+        terminals: [
+          { id: 'port_0', name: 'Port 1', type: 'in', x: -16, y: 12 },
+          { id: 'port_1', name: 'Port 2', type: 'in', x: -8, y: 12 },
+          { id: 'port_2', name: 'Port 3', type: 'in', x: 0, y: 12 },
+          { id: 'port_3', name: 'Port 4', type: 'in', x: 8, y: 12 },
+          { id: 'port_4', name: 'Port 5', type: 'in', x: 16, y: 12 }
+        ],
         state: { color: wire.color }
       };
 
@@ -600,7 +606,7 @@ export const useGameStore = create<GameState>((set, get) => {
         fromComponentId: wire.fromComponentId,
         fromTerminalId: wire.fromTerminalId,
         toComponentId: junctionId,
-        toTerminalId: 'port',
+        toTerminalId: 'port_0',
         color: wire.color,
         waypoints: waypoints1
       };
@@ -608,7 +614,7 @@ export const useGameStore = create<GameState>((set, get) => {
       const splitWire2: Wire = {
         id: `wire_${Date.now()}_2`,
         fromComponentId: junctionId,
-        fromTerminalId: 'port',
+        fromTerminalId: 'port_1',
         toComponentId: wire.toComponentId,
         toTerminalId: wire.toTerminalId,
         color: wire.color,
@@ -640,7 +646,13 @@ export const useGameStore = create<GameState>((set, get) => {
         x,
         y,
         label: '',
-        terminals: [{ id: 'port', name: 'Joint', type: 'in', x: 0, y: 0 }],
+        terminals: [
+          { id: 'port_0', name: 'Port 1', type: 'in', x: -16, y: 12 },
+          { id: 'port_1', name: 'Port 2', type: 'in', x: -8, y: 12 },
+          { id: 'port_2', name: 'Port 3', type: 'in', x: 0, y: 12 },
+          { id: 'port_3', name: 'Port 4', type: 'in', x: 8, y: 12 },
+          { id: 'port_4', name: 'Port 5', type: 'in', x: 16, y: 12 }
+        ],
         state: { color: wire.color }
       };
 
@@ -652,7 +664,7 @@ export const useGameStore = create<GameState>((set, get) => {
         fromComponentId: wire.fromComponentId,
         fromTerminalId: wire.fromTerminalId,
         toComponentId: junctionId,
-        toTerminalId: 'port',
+        toTerminalId: 'port_0',
         color: wire.color,
         waypoints: waypoints1
       };
@@ -660,7 +672,7 @@ export const useGameStore = create<GameState>((set, get) => {
       const splitWire2: Wire = {
         id: `wire_${Date.now()}_2`,
         fromComponentId: junctionId,
-        fromTerminalId: 'port',
+        fromTerminalId: 'port_1',
         toComponentId: wire.toComponentId,
         toTerminalId: wire.toTerminalId,
         color: wire.color,
@@ -672,7 +684,7 @@ export const useGameStore = create<GameState>((set, get) => {
         fromComponentId: fromCId,
         fromTerminalId: fromTId,
         toComponentId: junctionId,
-        toTerminalId: 'port',
+        toTerminalId: 'port_2',
         color,
         waypoints
       };
