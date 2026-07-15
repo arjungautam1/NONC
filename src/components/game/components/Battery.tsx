@@ -46,7 +46,6 @@ export const Battery: React.FC<ComponentProps> = () => {
 
 export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
   const isActive = component.state.active ?? true;
-  const hasACTerminals = component.terminals.some(t => t.id === 'ac1') && component.terminals.some(t => t.id === 'ac2');
 
   return (
     <g transform="translate(-75, -50)">
@@ -66,11 +65,11 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
       {/* Cabinet inside shadow */}
       <rect x="4" y="4" width="142" height="92" rx="4" fill="#0f172a" opacity="0.95" />
 
-      {/* Green PCB Board */}
-      <rect x="8" y="8" width="134" height="84" rx="3" fill="#15803d" stroke="#16a34a" strokeWidth="1" />
+      {/* Blue PCB Board */}
+      <rect x="8" y="8" width="134" height="84" rx="3" fill="#1e3a8a" stroke="#2563eb" strokeWidth="1.2" />
 
-      {/* PCB circuit traces (decorative lines) */}
-      <g stroke="#22c55e" strokeWidth="0.8" opacity="0.3" fill="none">
+      {/* PCB circuit traces (decorative blue lines) */}
+      <g stroke="#3b82f6" strokeWidth="0.8" opacity="0.35" fill="none">
         <path d="M 15 20 H 130 V 60 H 15 Z" />
         <path d="M 20 25 L 40 45" />
         <path d="M 120 25 L 100 45" />
@@ -78,27 +77,49 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         <circle cx="90" cy="30" r="1.5" />
       </g>
 
-      {/* Large capacitor (cylindrical component) */}
-      <rect x="20" y="16" width="16" height="30" rx="2" fill="#1e293b" stroke="#475569" strokeWidth="1" />
-      <rect x="20" y="16" width="16" height="5" fill="#94a3b8" />
-      <line x1="28" y1="16" x2="28" y2="10" stroke="#e2e8f0" strokeWidth="1.5" />
+      {/* Cylindrical Capacitor */}
+      <rect x="18" y="14" width="14" height="26" rx="2" fill="#1e293b" stroke="#475569" strokeWidth="1" />
+      <rect x="18" y="14" width="14" height="4" fill="#64748b" />
+      <line x1="25" y1="14" x2="25" y2="8" stroke="#cbd5e1" strokeWidth="1.5" />
+
+      {/* Orange Ceramic Disc Capacitor */}
+      <circle cx="38" cy="20" r="3.5" fill="#ea580c" stroke="#c2410c" strokeWidth="0.8" />
+      <line x1="38" y1="23.5" x2="38" y2="28" stroke="#cbd5e1" strokeWidth="1" />
+
+      {/* Resistor 1 */}
+      <g transform="translate(102, 38)">
+        <line x1="-10" y1="0" x2="10" y2="0" stroke="#94a3b8" strokeWidth="0.8" />
+        <rect x="-5" y="-1.8" width="10" height="3.6" rx="1" fill="#fed7aa" stroke="#ea580c" strokeWidth="0.5" />
+        <line x1="-2" y1="-1.8" x2="-2" y2="1.8" stroke="#b91c1c" strokeWidth="0.8" />
+        <line x1="0" y1="-1.8" x2="0" y2="1.8" stroke="#b91c1c" strokeWidth="0.8" />
+        <line x1="2" y1="-1.8" x2="2" y2="1.8" stroke="#ca8a04" strokeWidth="0.8" />
+      </g>
+
+      {/* Resistor 2 */}
+      <g transform="translate(108, 48)">
+        <line x1="-10" y1="0" x2="10" y2="0" stroke="#94a3b8" strokeWidth="0.8" />
+        <rect x="-5" y="-1.8" width="10" height="3.6" rx="1" fill="#fed7aa" stroke="#ea580c" strokeWidth="0.5" />
+        <line x1="-2" y1="-1.8" x2="-2" y2="1.8" stroke="#059669" strokeWidth="0.8" />
+        <line x1="0" y1="-1.8" x2="0" y2="1.8" stroke="#d97706" strokeWidth="0.8" />
+        <line x1="2" y1="-1.8" x2="2" y2="1.8" stroke="#ca8a04" strokeWidth="0.8" />
+      </g>
 
       {/* Transformer block on PCB (Yellow wrapped coil) */}
-      <rect x="50" y="14" width="36" height="36" rx="3" fill="#eab308" stroke="#ca8a04" strokeWidth="1.5" />
-      <rect x="56" y="20" width="24" height="24" rx="1" fill="#1e293b" />
-      <text x="68" y="34" fill="#ca8a04" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">T1</text>
+      <rect x="52" y="14" width="32" height="32" rx="3" fill="#eab308" stroke="#ca8a04" strokeWidth="1.5" />
+      <rect x="58" y="20" width="20" height="20" rx="1" fill="#1e293b" />
+      <text x="68" y="32" fill="#ca8a04" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">T1</text>
 
       {/* Heatsink element */}
-      <rect x="100" y="14" width="24" height="20" fill="#334155" />
-      <rect x="102" y="10" width="3" height="4" fill="#cbd5e1" />
-      <rect x="109" y="10" width="3" height="4" fill="#cbd5e1" />
-      <rect x="116" y="10" width="3" height="4" fill="#cbd5e1" />
+      <rect x="100" y="14" width="22" height="18" fill="#334155" />
+      <rect x="102" y="10" width="2" height="4" fill="#cbd5e1" />
+      <rect x="109" y="10" width="2" height="4" fill="#cbd5e1" />
+      <rect x="116" y="10" width="2" height="4" fill="#cbd5e1" />
 
       {/* LED indicators */}
       {/* Green DC OK LED */}
       <circle
         cx="35"
-        cy="61"
+        cy="58"
         r="3.5"
         fill={isActive ? '#22c55e' : '#1e293b'}
         stroke={isActive ? '#4ade80' : '#475569'}
@@ -106,56 +127,63 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         className={isActive ? 'animate-pulse' : ''}
         style={{ filter: isActive ? 'drop-shadow(0 0 3px #22c55e)' : 'none' }}
       />
-      <text x="44" y="64" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">DC OK</text>
+      <text x="44" y="61" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">DC OK</text>
 
       {/* Red AC present LED */}
       <circle
         cx="95"
-        cy="61"
+        cy="58"
         r="3.5"
         fill={isActive ? '#ef4444' : '#1e293b'}
         stroke={isActive ? '#f87171' : '#475569'}
         strokeWidth="0.8"
         style={{ filter: isActive ? 'drop-shadow(0 0 3px #ef4444)' : 'none' }}
       />
-      <text x="104" y="64" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">AC ON</text>
+      <text x="104" y="61" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">AC ON</text>
 
       {/* Cabinet identification */}
-      <text x="135" y="76" fill="#facc15" fontSize="6.5" fontWeight="bold" textAnchor="end" fontFamily="sans-serif">
+      <text x="135" y="72" fill="#facc15" fontSize="6.5" fontWeight="bold" textAnchor="end" fontFamily="sans-serif">
         ALTRONIX AL600
       </text>
 
-      {/* Screw terminal strip at the bottom */}
-      <rect x="12" y="78" width="126" height="15" fill="#1e293b" rx="2" stroke="#475569" strokeWidth="1" />
-      
-      {/* Draw 4 screws */}
-      {[-45, -15, 15, 45].map((slotX, idx) => {
-        const xPos = 75 + slotX;
+      {/* Screw terminal blocks and labels dynamically mapped to terminal definitions */}
+      {component.terminals.map((term) => {
+        const xPos = 75 + term.x;
+        const yPos = 50 + term.y;
+        
+        let labelColor = '#cbd5e1';
+        if (term.id === 'pos' || term.id === 'dc_pos') labelColor = '#f87171';
+        else if (term.id === 'neg' || term.id === 'dc_neg') labelColor = '#60a5fa';
+        else if (term.id === 'gnd') labelColor = '#4ade80';
+        else if (term.id.startsWith('ac')) labelColor = '#facc15';
+
         return (
-          <g key={idx} transform={`translate(${xPos}, 85.5)`}>
-            <circle cx="0" cy="0" r="4.5" fill="url(#silverGrad)" stroke="#64748b" strokeWidth="0.5" />
-            <line x1="-3" y1="-1" x2="3" y2="1" stroke="#334155" strokeWidth="0.8" />
-            <line x1="-1" y1="-3" x2="1" y2="3" stroke="#334155" strokeWidth="0.8" />
+          <g key={term.id}>
+            {/* Pocket behind the terminal screw */}
+            <rect x={xPos - 11} y={yPos - 10} width="22" height="18" fill="#1e293b" rx="2" stroke="#475569" strokeWidth="0.8" />
+            
+            {/* Terminal screw */}
+            <g transform={`translate(${xPos}, ${yPos - 1})`}>
+              <circle cx="0" cy="0" r="4.5" fill="url(#silverGrad)" stroke="#64748b" strokeWidth="0.5" />
+              <line x1="-3" y1="-1" x2="3" y2="1" stroke="#334155" strokeWidth="0.8" />
+              <line x1="-1" y1="-3" x2="1" y2="3" stroke="#334155" strokeWidth="0.8" />
+            </g>
+            
+            {/* Label text placed just above the pocket */}
+            <text
+              x={xPos}
+              y={yPos - 13}
+              fill={labelColor}
+              fontSize="7"
+              fontWeight="900"
+              fontFamily="monospace"
+              textAnchor="middle"
+            >
+              {term.name}
+            </text>
           </g>
         );
       })}
-
-      {/* Text labels for terminals */}
-      <g fontSize="6.5" fontWeight="900" fill="#cbd5e1" fontFamily="monospace" textAnchor="middle">
-        {hasACTerminals ? (
-          <>
-            <text x="30" y="75">AC</text>
-            <text x="60" y="75">AC</text>
-            <text x="90" y="75" fill="#ef4444">(+)</text>
-            <text x="120" y="75" fill="#60a5fa">(-)</text>
-          </>
-        ) : (
-          <>
-            <text x="35" y="75" fill="#ef4444">(+)</text>
-            <text x="115" y="75" fill="#60a5fa">(-)</text>
-          </>
-        )}
-      </g>
 
       <defs>
         {/* Silver screw gradient */}
