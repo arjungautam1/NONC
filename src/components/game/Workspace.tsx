@@ -327,6 +327,33 @@ export const Workspace: React.FC = () => {
     return `M ${x1} ${y1} C ${x1} ${y1 + sag}, ${x2} ${y2 + sag}, ${x2} ${y2}`;
   };
 
+  // Helper to find the actual visual midpoint/center of a wire, taking sag/waypoints into account
+  const getWireCenterPos = (wire: Wire) => {
+    const p1 = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
+    const p2 = getTerminalPos(wire.toComponentId, wire.toTerminalId);
+    
+    const waypoints = wire.waypoints || [];
+    if (waypoints.length > 0) {
+      const midIdx = Math.floor(waypoints.length / 2);
+      if (waypoints.length % 2 === 1) {
+        return waypoints[midIdx];
+      } else {
+        const w1 = waypoints[midIdx - 1];
+        const w2 = waypoints[midIdx];
+        return { x: (w1.x + w2.x) / 2, y: (w1.y + w2.y) / 2 };
+      }
+    }
+    
+    // Bezier curve midpoint calculation including the 0.75 * sag factor
+    const dx = Math.abs(p2.x - p1.x);
+    const dy = Math.abs(p2.y - p1.y);
+    const sag = Math.max(30, Math.min(100, (dx + dy) * 0.15));
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2 + sag * 0.75
+    };
+  };
+
   const getSplitWaypoints = (wire: Wire, x: number, y: number) => {
     const pStart = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
     const pEnd = getTerminalPos(wire.toComponentId, wire.toTerminalId);
@@ -981,8 +1008,6 @@ export const Workspace: React.FC = () => {
 
         {/* 2. Wire connections layer */}
         {wires.map((wire, index) => {
-          const p1 = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
-          const p2 = getTerminalPos(wire.toComponentId, wire.toTerminalId);
           const pathD = getWirePathWithCrossings(index, wires);
           const isSelected = selectedWireId === wire.id;
           const isAnimating = isWireAnimating(wire);
@@ -1102,49 +1127,53 @@ export const Workspace: React.FC = () => {
               )}
 
               {/* Delete trigger button in middle of wire */}
-              {isSelected && (
-                <g 
-                  transform={`translate(${(p1.x + p2.x) / 2 + 12}, ${(p1.y + p2.y) / 2 + 15})`}
-                  className="cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeWire(wire.id);
-                    setSelectedWireId(null);
-                  }}
-                >
-                  <title>Delete Wire</title>
-                  <circle cx="0" cy="0" r="10" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1" />
-                  <line x1="-4" y1="-4" x2="4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
-                  <line x1="4" y1="-4" x2="-4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
-                </g>
-              )}
+              {isSelected && (() => {
+                const center = getWireCenterPos(wire);
+                return (
+                  <g 
+                    transform={`translate(${center.x + 12}, ${center.y})`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeWire(wire.id);
+                      setSelectedWireId(null);
+                    }}
+                  >
+                    <title>Delete Wire</title>
+                    <circle cx="0" cy="0" r="10" fill="#ef4444" stroke="#7f1d1d" strokeWidth="1" />
+                    <line x1="-4" y1="-4" x2="4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
+                    <line x1="4" y1="-4" x2="-4" y2="4" stroke="#ffffff" strokeWidth="1.5" />
+                  </g>
+                );
+              })()}
 
               {/* Splice / Extend button next to Delete button */}
-              {isSelected && (
-                <g 
-                  transform={`translate(${(p1.x + p2.x) / 2 - 12}, ${(p1.y + p2.y) / 2 + 15})`}
-                  className="cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const midX = (p1.x + p2.x) / 2;
-                    const midY = (p1.y + p2.y) / 2;
-                    const junctionId = spliceWireAtCoords(wire, midX, midY);
-                    if (junctionId) {
-                      // Immediately start drawing a wire from this new junction!
-                      setDrawingWireStart({ componentId: junctionId, terminalId: 'port' });
-                      setActiveColor(wire.color);
-                      setMousePos({ x: midX, y: midY });
-                      setPointerDownCoords({ x: midX, y: midY });
-                      setSelectedWireId(null);
-                    }
-                  }}
-                >
-                  <title>Splice Wire / Extend Joint</title>
-                  <circle cx="0" cy="0" r="10" fill="#2563eb" stroke="#1e3a8a" strokeWidth="1" />
-                  <line x1="-5" y1="0" x2="5" y2="0" stroke="#ffffff" strokeWidth="1.8" />
-                  <line x1="0" y1="-5" x2="0" y2="5" stroke="#ffffff" strokeWidth="1.8" />
-                </g>
-              )}
+              {isSelected && (() => {
+                const center = getWireCenterPos(wire);
+                return (
+                  <g 
+                    transform={`translate(${center.x - 12}, ${center.y})`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const junctionId = spliceWireAtCoords(wire, center.x, center.y);
+                      if (junctionId) {
+                        // Immediately start drawing a wire from this new junction!
+                        setDrawingWireStart({ componentId: junctionId, terminalId: 'port' });
+                        setActiveColor(wire.color);
+                        setMousePos({ x: center.x, y: center.y });
+                        setPointerDownCoords({ x: center.x, y: center.y });
+                        setSelectedWireId(null);
+                      }
+                    }}
+                  >
+                    <title>Splice Wire / Extend Joint</title>
+                    <circle cx="0" cy="0" r="10" fill="#2563eb" stroke="#1e3a8a" strokeWidth="1" />
+                    <line x1="-5" y1="0" x2="5" y2="0" stroke="#ffffff" strokeWidth="1.8" />
+                    <line x1="0" y1="-5" x2="0" y2="5" stroke="#ffffff" strokeWidth="1.8" />
+                  </g>
+                );
+              })()}
 
               {/* Waypoint markers for selected wire */}
               {isSelected && wire.waypoints && wire.waypoints.map((wp, idx) => (
