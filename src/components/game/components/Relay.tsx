@@ -303,8 +303,8 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
 
       {/* Decorative silkscreen labels */}
       <text x="22" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
-      <text x="-20" y="32" fill="#1e3a8a" fontSize="7" fontWeight="bold" fontFamily="monospace" textAnchor="middle" opacity="0.5">RB1224</text>
-      <text x="-20" y="-30" fill="#1e3a8a" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="middle" opacity="0.4">ALTRONIX</text>
+      <text x="-20" y="30" fill="#94a3b8" fontSize="12" fontWeight="900" fontFamily="sans-serif" textAnchor="middle" opacity="0.15">RB1224</text>
+      <text x="-20" y="-30" fill="#94a3b8" fontSize="6.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.15">ALTRONIX</text>
 
       {/* Active Indicator LED */}
       <circle
