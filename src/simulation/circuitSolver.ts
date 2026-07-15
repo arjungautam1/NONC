@@ -518,9 +518,12 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'door_sensor' && !c.state.toggled) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'switch_selector' || c.type === 'rocker_switch_2pos') {
+    } else if (c.type === 'switch_selector') {
       const targetOut = c.state.toggled ? 'out_b' : 'out_a';
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
+    } else if (c.type === 'rocker_switch_2pos') {
+      const targetOut = c.state.toggled ? 'no' : 'nc';
+      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
     } else if (c.type === 'relay') {
       // Connect coil
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
@@ -634,9 +637,12 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'door_sensor' && !c.state.toggled) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'switch_selector' || c.type === 'rocker_switch_2pos') {
+    } else if (c.type === 'switch_selector') {
       const targetOut = c.state.toggled ? 'out_b' : 'out_a';
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
+    } else if (c.type === 'rocker_switch_2pos') {
+      const targetOut = c.state.toggled ? 'no' : 'nc';
+      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
     } else if (c.type === 'relay') {
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
       const isEnergized = c.state.energized;

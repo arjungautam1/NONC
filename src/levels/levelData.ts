@@ -1923,8 +1923,8 @@ export const levels: Level[] = [
       'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil +Ve (coil_a). Wire Altronix Relay Coil -Ve (coil_b) to PSU (-) output (neg).',
       'Indicator LEDs: Wire PSU (+) to Altronix Relay COM1 (com1). Wire Relay NC1 (nc1) to Red LED Strip + (in). Wire Relay NO1 (no1) to Green LED Strip + (in). Wire both Red & Green LED Strip - (out) terminals to PSU (-).',
       'Door Lock Loop: Wire PSU (+) to Altronix Relay NC2 (nc2). Wire Relay COM2 (com2) to Door Lock + (in). Wire Door Lock - (out) to PSU (-).',
-      'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch IN (in). Wire Maintained Rocker Switch B (out_b) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren + (in). Wire Siren - (out) to PSU (-).',
-      'Power the simulator and test both states: hold the momentary button to unlock the door in position A, then toggle the mechanical rocker switch to position B and hold momentary to trigger the siren and lock override!'
+      'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch COM (com). Wire Maintained Rocker Switch NO (no) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren + (in). Wire Siren - (out) to PSU (-).',
+      'Power the simulator and test both states: hold the momentary button to unlock the door in position NC (untoggled), then toggle the mechanical rocker switch to position NO (toggled) and hold momentary to trigger the siren and lock override!'
     ],
     goals: [
       'Wire Momentary Switch to trigger Altronix Relay Coil',
@@ -1966,9 +1966,9 @@ export const levels: Level[] = [
         y: 430,
         label: 'Maintained Rocker Switch',
         terminals: [
-          { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-          { id: 'out_a', name: 'A', type: 'out_a', x: 30, y: -20 },
-          { id: 'out_b', name: 'B', type: 'out_b', x: 30, y: 20 }
+          { id: 'com', name: 'C', type: 'in', x: -30, y: 0 },
+          { id: 'nc', name: 'NC', type: 'out_a', x: 30, y: -20 },
+          { id: 'no', name: 'NO', type: 'out_b', x: 30, y: 20 }
         ],
         state: {}
       },
@@ -2044,7 +2044,7 @@ export const levels: Level[] = [
       'Momentary Control: PSU (+) -> Momentary COM (com). Momentary NO (no) -> Relay +Ve (coil_a). Relay -Ve (coil_b) -> PSU (-).',
       'LED Indicators: PSU (+) -> Relay C (com1). Relay NC (nc1) -> Red LED + (in). Relay NO (no1) -> Green LED + (in). LED - (out) terminals -> PSU (-).',
       'Door Lock Loop: PSU (+) -> Relay NC (nc2). Relay C (com2) -> Maglock + (in). Maglock - (out) -> PSU (-).',
-      'Maintained Rocker Switch & Siren: PSU (+) -> Maintained Switch IN. Maintained Switch B -> Relay C (com2). Relay NO (no2) -> Siren + (in). Siren - (out) -> PSU (-).'
+      'Maintained Rocker Switch & Siren: PSU (+) -> Maintained Switch COM (com). Maintained Switch NO (no) -> Relay C (com2). Relay NO (no2) -> Siren + (in). Siren - (out) -> PSU (-).'
     ],
     successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
       const momentary = components.find(c => c.id === 'btn_momentary');
@@ -2088,13 +2088,13 @@ export const levels: Level[] = [
       if (!maintained?.state.testPassedNormal) {
         return {
           success: false,
-          feedback: 'Test Normal Scenario: with Maintained switch at A, hold Momentary. Green LED must light, Red LED turn OFF, and Door Lock UNLOCK (de-energize).'
+          feedback: 'Test Normal Scenario: with Maintained switch at NC, hold Momentary. Green LED must light, Red LED turn OFF, and Door Lock UNLOCK (de-energize).'
         };
       }
 
       return {
         success: false,
-        feedback: 'Test Maintained Scenario: toggle Maintained switch to B, hold Momentary. Green LED must light, Door Lock must stay LOCKED, and Siren must sound!'
+        feedback: 'Test Maintained Scenario: toggle Maintained switch to NO, hold Momentary. Green LED must light, Door Lock must stay LOCKED, and Siren must sound!'
       };
     }
   }
