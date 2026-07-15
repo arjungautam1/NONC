@@ -1920,7 +1920,7 @@ export const levels: Level[] = [
     description: 'Wire a commercial access control scenario with an Altronix DPDT relay, request-to-exit momentary button (using C, NC, NO contacts), maintained rocker switch, led strips, door lock, and siren.',
     instructions: [
       'Welcome to the Altronix Security Control project! Let\'s construct the request-to-exit scenario using industrial switch contacts.',
-      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil A1 (coil_a). Wire Altronix Relay Coil A2 (coil_b) to PSU (-) output (neg).',
+      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil +Ve (coil_a). Wire Altronix Relay Coil -Ve (coil_b) to PSU (-) output (neg).',
       'Indicator LEDs: Wire PSU (+) to Altronix Relay COM1 (com1). Wire Relay NC1 (nc1) to Red LED Strip IN (in). Wire Relay NO1 (no1) to Green LED Strip IN (in). Wire both Red & Green LED Strip OUT (out) terminals to PSU (-).',
       'Door Lock Loop: Wire PSU (+) to Altronix Relay NC2 (nc2). Wire Relay COM2 (com2) to Door Lock IN (in). Wire Door Lock OUT (out) to PSU (-).',
       'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch IN (in). Wire Maintained Rocker Switch B (out_b) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren IN (in). Wire Siren OUT (out) to PSU (-).',
@@ -1979,8 +1979,8 @@ export const levels: Level[] = [
         y: 280,
         label: 'Altronix RB1224 Relay',
         terminals: [
-          { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: 45 },
-          { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: 45 },
+          { id: 'coil_a', name: '+Ve', type: 'coil_a', x: -35, y: 45 },
+          { id: 'coil_b', name: '-Ve', type: 'coil_b', x: 35, y: 45 },
           { id: 'com1', name: 'C', type: 'com1', x: -45, y: -30 },
           { id: 'nc1', name: 'NC', type: 'nc1', x: -45, y: 0 },
           { id: 'no1', name: 'NO', type: 'no1', x: -45, y: 30 },
@@ -2041,7 +2041,7 @@ export const levels: Level[] = [
     ],
     preplacedWires: [],
     hints: [
-      'Momentary Control: PSU (+) -> Momentary COM (com). Momentary NO (no) -> Relay A1. Relay A2 -> PSU (-).',
+      'Momentary Control: PSU (+) -> Momentary COM (com). Momentary NO (no) -> Relay +Ve (coil_a). Relay -Ve (coil_b) -> PSU (-).',
       'LED Indicators: PSU (+) -> Relay C (com1). Relay NC (nc1) -> Red LED IN. Relay NO (no1) -> Green LED IN. LED OUT terminals -> PSU (-).',
       'Door Lock Loop: PSU (+) -> Relay NC (nc2). Relay C (com2) -> Maglock IN. Maglock OUT -> PSU (-).',
       'Maintained Rocker Switch & Siren: PSU (+) -> Maintained Switch IN. Maintained Switch B -> Relay C (com2). Relay NO (no2) -> Siren IN. Siren OUT -> PSU (-).'

@@ -279,9 +279,9 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
       />
 
       {/* 6. Text Labels */}
-      {/* Coil A1/A2 */}
-      <text x="-26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">A1</text>
-      <text x="26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">A2</text>
+      {/* Coil +Ve/-Ve */}
+      <text x="-26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="start">+Ve</text>
+      <text x="26" y="52" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="end">-Ve</text>
       <text x="0" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
 
       {/* Left Pole Labels */}
