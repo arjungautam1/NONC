@@ -527,8 +527,6 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
           <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
           {/* Left raised side */}
           <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
-          {/* Indicator label */}
-          <text x="31.5" y="49" fill="#10b981" fontSize="8" fontWeight="bold" textAnchor="middle">NC</text>
         </g>
       ) : (
         // Position B - Right side raised, Left side sunken (NO active)
@@ -537,8 +535,6 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
           <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
           {/* Right raised side */}
           <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
-          {/* Indicator label */}
-          <text x="58.5" y="49" fill="#10b981" fontSize="8" fontWeight="bold" textAnchor="middle">NO</text>
         </g>
       )}
 
