@@ -1424,7 +1424,7 @@ export const levels: Level[] = [
         id: 'smps',
         type: 'transformer',
         x: 80,
-        y: 160,
+        y: 120,
         label: 'AC/AC Transformer',
         terminals: [
           { id: 'pos', name: '(+)', type: 'pos', x: -20, y: 35 },
@@ -1435,8 +1435,8 @@ export const levels: Level[] = [
       {
         id: 'psu1',
         type: 'power_supply',
-        x: 300,
-        y: 160,
+        x: 80,
+        y: 300,
         label: 'Altronix Board',
         terminals: [
           { id: 'ac1', name: 'AC', type: 'in', x: -45, y: 35 },
@@ -1449,8 +1449,8 @@ export const levels: Level[] = [
       {
         id: 'reader1',
         type: 'card_reader',
-        x: 520,
-        y: 350,
+        x: 300,
+        y: 300,
         label: 'CDVI Reader',
         terminals: [
           { id: 'pos', name: '12V', type: 'pos', x: -30, y: 25 },
@@ -1462,8 +1462,8 @@ export const levels: Level[] = [
       {
         id: 'relay1',
         type: 'relay',
-        x: 520,
-        y: 160,
+        x: 300,
+        y: 120,
         label: 'Isolation Relay',
         terminals: [
           { id: 'coil_a', name: 'A1', type: 'coil_a', x: -35, y: -30 },
@@ -1477,8 +1477,8 @@ export const levels: Level[] = [
       {
         id: 'lock1',
         type: 'maglock',
-        x: 820,
-        y: 250,
+        x: 520,
+        y: 210,
         label: 'CDVI Maglock',
         terminals: [
           { id: 'in', name: 'IN', type: 'in', x: -30, y: 15 },
@@ -1939,7 +1939,7 @@ export const levels: Level[] = [
         id: 'smps',
         type: 'transformer',
         x: 80,
-        y: 130,
+        y: 120,
         label: 'AC/AC Transformer',
         terminals: [
           { id: 'pos', name: '(+)', type: 'pos', x: -20, y: 35 },
@@ -1950,8 +1950,8 @@ export const levels: Level[] = [
       {
         id: 'ps1',
         type: 'power_supply',
-        x: 260,
-        y: 130,
+        x: 80,
+        y: 300,
         label: 'Altronix Board',
         terminals: [
           { id: 'ac1', name: 'AC', type: 'in', x: -45, y: 35 },
@@ -1964,8 +1964,8 @@ export const levels: Level[] = [
       {
         id: 'btn_momentary',
         type: 'button_no',
-        x: 100,
-        y: 280,
+        x: 300,
+        y: 120,
         label: 'Momentary Switch',
         terminals: [
           { id: 'com', name: 'C', type: 'com', x: -30, y: 15 },
@@ -1977,8 +1977,8 @@ export const levels: Level[] = [
       {
         id: 'sw_maintained',
         type: 'rocker_switch_2pos',
-        x: 100,
-        y: 430,
+        x: 300,
+        y: 280,
         label: 'Maintained Switch',
         terminals: [
           { id: 'com', name: 'C', type: 'in', x: -30, y: 0 },
@@ -1990,8 +1990,8 @@ export const levels: Level[] = [
       {
         id: 'relay1',
         type: 'relay_dpdt',
-        x: 380,
-        y: 280,
+        x: 300,
+        y: 440,
         label: 'Altronix Relay',
         terminals: [
           { id: 'coil_b', name: '-', type: 'coil_b', x: 35, y: -55 },
@@ -2008,7 +2008,7 @@ export const levels: Level[] = [
       {
         id: 'led_red',
         type: 'led_strip',
-        x: 650,
+        x: 560,
         y: 120,
         label: 'Red Status LED',
         terminals: [
@@ -2020,7 +2020,7 @@ export const levels: Level[] = [
       {
         id: 'led_green',
         type: 'led_strip',
-        x: 650,
+        x: 560,
         y: 220,
         label: 'Green Status LED',
         terminals: [
@@ -2032,7 +2032,7 @@ export const levels: Level[] = [
       {
         id: 'lock1',
         type: 'maglock',
-        x: 650,
+        x: 560,
         y: 340,
         label: 'Fail-Secure Lock',
         terminals: [
@@ -2044,7 +2044,7 @@ export const levels: Level[] = [
       {
         id: 'siren1',
         type: 'buzzer',
-        x: 650,
+        x: 560,
         y: 450,
         label: 'Siren',
         terminals: [
