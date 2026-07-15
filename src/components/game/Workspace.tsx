@@ -1269,33 +1269,53 @@ export const Workspace: React.FC = () => {
                         )
                       ) : (
                         // Don't show static label for timer_relay – board SVG already prints labels on the PCB
-                        comp.type !== 'timer_relay' && comp.type !== 'junction' && (
-                          <g>
-                            {/* High contrast dark stroke background outline */}
-                            <text
-                              y="-10"
-                              fill="none"
-                              stroke="#09090b"
-                              strokeWidth="3.5"
-                              strokeLinejoin="round"
-                              strokeLinecap="round"
-                              fontSize="8.5"
-                              fontWeight="900"
-                              textAnchor="middle"
-                            >
-                              {term.name}
-                            </text>
-                            <text
-                              y="-10"
-                              fill={term.name === '+' ? '#fb7185' : term.name === '-' ? '#38bdf8' : '#f8fafc'}
-                              fontSize="8.5"
-                              fontWeight="900"
-                              textAnchor="middle"
-                            >
-                              {term.name}
-                            </text>
-                          </g>
-                        )
+                        comp.type !== 'timer_relay' && comp.type !== 'junction' && (() => {
+                          let labelX = 0;
+                          let labelY = -10;
+                          let anchor: 'middle' | 'start' | 'end' = 'middle';
+
+                          if (comp.type === 'relay_dpdt') {
+                            if (term.id === 'com1' || term.id === 'nc1' || term.id === 'no1' || term.id === 'coil_a') {
+                              labelX = -13;
+                              labelY = 3;
+                              anchor = 'end';
+                            } else if (term.id === 'com2' || term.id === 'nc2' || term.id === 'no2' || term.id === 'coil_b') {
+                              labelX = 13;
+                              labelY = 3;
+                              anchor = 'start';
+                            }
+                          }
+
+                          return (
+                            <g transform={`translate(${labelX}, ${labelY})`}>
+                              {/* High contrast dark stroke background outline */}
+                              <text
+                                x="0"
+                                y="0"
+                                fill="none"
+                                stroke="#09090b"
+                                strokeWidth="3.5"
+                                strokeLinejoin="round"
+                                strokeLinecap="round"
+                                fontSize="8.5"
+                                fontWeight="900"
+                                textAnchor={anchor}
+                              >
+                                {term.name}
+                              </text>
+                              <text
+                                x="0"
+                                y="0"
+                                fill={term.name === '+' ? '#fb7185' : term.name === '-' ? '#38bdf8' : '#f8fafc'}
+                                fontSize="8.5"
+                                fontWeight="900"
+                                textAnchor={anchor}
+                              >
+                                {term.name}
+                              </text>
+                            </g>
+                          );
+                        })()
                       )}
                     </g>
                   </g>
