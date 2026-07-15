@@ -43,7 +43,7 @@ export const Workspace: React.FC = () => {
   const [selectedWireId, setSelectedWireId] = useState<string | null>(null);
 
   // Wire size adjust state
-  const [wireSize, setWireSize] = useState<'normal' | 'thin'>('normal');
+  const [wireSize, setWireSize] = useState<'normal' | 'thin'>('thin');
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
