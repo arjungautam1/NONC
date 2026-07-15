@@ -6,6 +6,9 @@ import { getTerminalKey } from '../../simulation/circuitSolver';
 import { Info, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
 
+const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
+const SPLICE_CONNECTOR_MAX_SCALE = 2.4;
+
 export const Workspace: React.FC = () => {
   const {
     components,
@@ -19,6 +22,7 @@ export const Workspace: React.FC = () => {
     removeComponent,
     addWire,
     removeWire,
+    updateWireWaypoints,
     spliceWire,
     spliceAndConnectWire,
     multimeter,
@@ -44,6 +48,12 @@ export const Workspace: React.FC = () => {
 
   // Selected wire state for deletion
   const [selectedWireId, setSelectedWireId] = useState<string | null>(null);
+  const [draggingWireRoute, setDraggingWireRoute] = useState<{
+    wireId: string;
+    waypointIndex: number | null;
+    start: { x: number; y: number };
+    originalWaypoints: { x: number; y: number }[];
+  } | null>(null);
 
   // Hovered component state for controls overlay
   const [hoveredCompId, setHoveredCompId] = useState<string | null>(null);
@@ -162,6 +172,7 @@ export const Workspace: React.FC = () => {
   const handleCompPointerDown = (e: React.PointerEvent, comp: CircuitComponent) => {
     if (probeMode) return;
     const target = e.target as SVGElement;
+    if (target.closest('.connector-control')) return;
     if (target.classList.contains('terminal-hitbox')) return;
     e.stopPropagation();
     setDraggedCompId(comp.id);
@@ -193,6 +204,8 @@ export const Workspace: React.FC = () => {
   // Wire Drawing — blocked in probe mode
   const handleTerminalPointerDown = (e: React.PointerEvent, componentId: string, terminalId: string) => {
     if (probeMode) return;
+    const target = e.target as SVGElement;
+    if (target.closest('.terminal-branch-control')) return;
     e.stopPropagation();
     if (drawingWireStart) {
       // Already routing, let pointerup on the terminal complete it
@@ -216,6 +229,32 @@ export const Workspace: React.FC = () => {
     setDrawingWireStart({ componentId, terminalId });
     setMousePos(coords);
     setPointerDownCoords(coords);
+  };
+
+  const getTerminalWireCount = (componentId: string, terminalId: string) => {
+    return wires.filter(w =>
+      (w.fromComponentId === componentId && w.fromTerminalId === terminalId) ||
+      (w.toComponentId === componentId && w.toTerminalId === terminalId)
+    ).length;
+  };
+
+  const getTerminalBranchColor = (componentId: string, terminalId: string) => {
+    const existingWire = wires.find(w =>
+      (w.fromComponentId === componentId && w.fromTerminalId === terminalId) ||
+      (w.toComponentId === componentId && w.toTerminalId === terminalId)
+    );
+    return existingWire?.color || activeColor;
+  };
+
+  const startBranchFromTerminal = (componentId: string, terminalId: string) => {
+    const branchColor = getTerminalBranchColor(componentId, terminalId);
+    setActiveColor(branchColor);
+    setDrawingWireStart({ componentId, terminalId });
+    setMousePos(getTerminalPos(componentId, terminalId));
+    setPointerDownCoords(getTerminalPos(componentId, terminalId));
+    setTempWaypoints([]);
+    setSelectedWireId(null);
+    soundManager.playClick();
   };
 
   const handleTerminalPointerUp = (e: React.PointerEvent, componentId: string, terminalId: string) => {
@@ -308,7 +347,7 @@ export const Workspace: React.FC = () => {
     } else if (comp.type === 'power_supply') {
       y = 43;  // Move terminal connection points to bottom screw strip
     } else if (comp.type === 'junction') {
-      const scale = comp.state?.scale || 1.0;
+      const scale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
       x = term.x * scale;
       y = term.y * scale;
     }
@@ -362,6 +401,57 @@ export const Workspace: React.FC = () => {
       x: (p1.x + p2.x) / 2,
       y: (p1.y + p2.y) / 2 + sag * 0.75
     };
+  };
+
+  const getEditableWaypointsForWire = (wire: Wire) => {
+    if (wire.waypoints && wire.waypoints.length > 0) return wire.waypoints;
+    return [getWireCenterPos(wire)];
+  };
+
+  const beginWireRouteDrag = (
+    e: React.PointerEvent,
+    wire: Wire,
+    waypointIndex: number | null
+  ) => {
+    e.stopPropagation();
+    const coords = getSVGCoords(e);
+    const originalWaypoints = getEditableWaypointsForWire(wire);
+    setSelectedWireId(wire.id);
+    setDraggingWireRoute({
+      wireId: wire.id,
+      waypointIndex,
+      start: coords,
+      originalWaypoints
+    });
+    updateWireWaypoints(wire.id, originalWaypoints);
+    // @ts-ignore
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const handleWireRouteDragMove = (e: React.PointerEvent) => {
+    if (!draggingWireRoute) return;
+    e.stopPropagation();
+    const wire = wires.find(w => w.id === draggingWireRoute.wireId);
+    if (!wire) return;
+
+    const coords = getSVGCoords(e);
+    const dx = coords.x - draggingWireRoute.start.x;
+    const dy = coords.y - draggingWireRoute.start.y;
+
+    const nextWaypoints = draggingWireRoute.originalWaypoints.map((wp, idx) => {
+      if (draggingWireRoute.waypointIndex !== null && idx !== draggingWireRoute.waypointIndex) {
+        return wp;
+      }
+      return nudgePointOutsideDevices({ x: wp.x + dx, y: wp.y + dy }, wire);
+    });
+
+    updateWireWaypoints(wire.id, nextWaypoints);
+  };
+
+  const handleWireRouteDragEnd = (e: React.PointerEvent) => {
+    if (!draggingWireRoute) return;
+    e.stopPropagation();
+    setDraggingWireRoute(null);
   };
 
   const getSplitWaypoints = (wire: Wire, x: number, y: number) => {
@@ -435,14 +525,156 @@ export const Workspace: React.FC = () => {
       return { x: 0, y: local.y < 0 ? -22 : 22 };
     }
     if (comp.type === 'junction') {
-      // Junction (Wago connector) ports exit downwards
-      return { x: 0, y: 15 };
+      const scale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
+      // Junction connector ports exit downwards, scaled with component size
+      return { x: 0, y: 25 * scale };
     }
 
     // Default left/right horizontal exits for other components
     if (local.x > 5) return { x: 22, y: 0 };
     if (local.x < -5) return { x: -22, y: 0 };
     return { x: 0, y: 0 };
+  };
+
+  const getComponentType = (componentId: string) => components.find(c => c.id === componentId)?.type;
+
+  const getComponentBounds = (comp: CircuitComponent, padding = 18) => {
+    if (comp.type === 'junction') {
+      const scale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
+      return {
+        left: comp.x - 26 * scale - padding,
+        right: comp.x + 26 * scale + padding,
+        top: comp.y - 14 * scale - padding,
+        bottom: comp.y + 26 * scale + padding
+      };
+    }
+
+    return {
+      left: comp.x - 62 - padding,
+      right: comp.x + 62 + padding,
+      top: comp.y - 62 - padding,
+      bottom: comp.y + 62 + padding
+    };
+  };
+
+  const getWireObstacles = (wire?: Wire | null) => {
+    return components
+      .filter(comp => comp.id !== wire?.fromComponentId && comp.id !== wire?.toComponentId)
+      .map(comp => getComponentBounds(comp));
+  };
+
+  const laneCrossesObstacle = (laneY: number, x1: number, x2: number, wire: Wire) => {
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    return getWireObstacles(wire).some(bounds =>
+      laneY >= bounds.top &&
+      laneY <= bounds.bottom &&
+      maxX >= bounds.left &&
+      minX <= bounds.right
+    );
+  };
+
+  const findClearLaneY = (wire: Wire, preferredLaneY: number, x1: number, x2: number) => {
+    let laneY = preferredLaneY;
+    for (let i = 0; i < 8; i++) {
+      if (!laneCrossesObstacle(laneY, x1, x2, wire)) return laneY;
+      laneY += 28;
+    }
+    return laneY;
+  };
+
+  const nudgePointOutsideDevices = (point: { x: number; y: number }, wire?: Wire | null) => {
+    const hit = getWireObstacles(wire).find(bounds =>
+      point.x >= bounds.left &&
+      point.x <= bounds.right &&
+      point.y >= bounds.top &&
+      point.y <= bounds.bottom
+    );
+
+    if (!hit) return point;
+
+    const options = [
+      { x: point.x, y: hit.top - 12, d: Math.abs(point.y - hit.top) },
+      { x: point.x, y: hit.bottom + 12, d: Math.abs(point.y - hit.bottom) },
+      { x: hit.left - 12, y: point.y, d: Math.abs(point.x - hit.left) },
+      { x: hit.right + 12, y: point.y, d: Math.abs(point.x - hit.right) }
+    ];
+    options.sort((a, b) => a.d - b.d);
+    return { x: options[0].x, y: options[0].y };
+  };
+
+  const getJunctionPortIndex = (terminalId: string) => {
+    const match = terminalId.match(/^port_(\d+)$/);
+    return match ? Number(match[1]) : 2;
+  };
+
+  const getSmartConnectorRoute = (
+    wire: Wire,
+    p1: { x: number; y: number },
+    p2: { x: number; y: number },
+    p1Ext: { x: number; y: number },
+    p2Ext: { x: number; y: number }
+  ) => {
+    const fromIsJunction = getComponentType(wire.fromComponentId) === 'junction';
+    const toIsJunction = getComponentType(wire.toComponentId) === 'junction';
+
+    if (fromIsJunction === toIsJunction) return null;
+
+    const dx = Math.abs(p2Ext.x - p1Ext.x);
+    if (dx < 280) return null;
+
+    const junctionPortIndex = fromIsJunction
+      ? getJunctionPortIndex(wire.fromTerminalId)
+      : getJunctionPortIndex(wire.toTerminalId);
+    const preferredLaneY = Math.max(p1Ext.y, p2Ext.y, p1.y, p2.y) + 18 + junctionPortIndex * 5;
+    const laneY = findClearLaneY(wire, preferredLaneY, p1Ext.x, p2Ext.x);
+
+    return [
+      p1,
+      p1Ext,
+      { x: p1Ext.x, y: laneY },
+      { x: p2Ext.x, y: laneY },
+      p2Ext,
+      p2
+    ];
+  };
+
+  const getStableLaneOffset = (wire: Wire) => {
+    const key = `${wire.fromComponentId}:${wire.fromTerminalId}:${wire.toComponentId}:${wire.toTerminalId}`;
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = (hash + key.charCodeAt(i) * (i + 1)) % 997;
+    }
+    return (hash % 4) * 10;
+  };
+
+  const getSmartLongWireRoute = (
+    wire: Wire,
+    p1: { x: number; y: number },
+    p2: { x: number; y: number },
+    p1Ext: { x: number; y: number },
+    p2Ext: { x: number; y: number }
+  ) => {
+    const dx = Math.abs(p2Ext.x - p1Ext.x);
+    const dy = Math.abs(p2Ext.y - p1Ext.y);
+    const touchesJunction =
+      getComponentType(wire.fromComponentId) === 'junction' ||
+      getComponentType(wire.toComponentId) === 'junction';
+
+    if (touchesJunction && dx < 280) return null;
+    if (dx < 150 || dy < 70) return null;
+
+    const preferredLaneY = Math.max(p1Ext.y, p2Ext.y, p1.y, p2.y) + 28 + getStableLaneOffset(wire);
+    const laneY = findClearLaneY(wire, preferredLaneY, p1Ext.x, p2Ext.x);
+
+    return [
+      p1,
+      p1Ext,
+      { x: p1Ext.x, y: laneY },
+      { x: p2Ext.x, y: laneY },
+      p2Ext,
+      p2
+    ];
   };
 
   // Helper to extract relative terminal offsets and compute exit guide path points
@@ -472,6 +704,14 @@ export const Workspace: React.FC = () => {
     const activeWaypoints = isLiveDrawing
       ? (wire.waypoints ? wire.waypoints.slice(0, -1) : [])
       : (wire.waypoints || []);
+
+    if (!isLiveDrawing && activeWaypoints.length === 0) {
+      const smartConnectorRoute = getSmartConnectorRoute(wire, p1, p2, p1_ext, p2_ext);
+      if (smartConnectorRoute) return smartConnectorRoute;
+
+      const smartLongWireRoute = getSmartLongWireRoute(wire, p1, p2, p1_ext, p2_ext);
+      if (smartLongWireRoute) return smartLongWireRoute;
+    }
 
     // 1. First fillet / exit segment from p1
     let A0 = p1_ext;
@@ -814,22 +1054,35 @@ export const Workspace: React.FC = () => {
     return spliceWire(wire.id, x, y, waypoints1, waypoints2);
   };
 
+  const resizeSpliceConnector = (componentId: string, currentScale: number | undefined, delta: number) => {
+    const baseScale = Math.max(currentScale || SPLICE_CONNECTOR_DEFAULT_SCALE, SPLICE_CONNECTOR_DEFAULT_SCALE);
+    const nextScale = Math.max(
+      SPLICE_CONNECTOR_DEFAULT_SCALE,
+      Math.min(SPLICE_CONNECTOR_MAX_SCALE, parseFloat((baseScale + delta).toFixed(1)))
+    );
+    if (nextScale === baseScale) return;
+    setComponentState(componentId, 'scale', nextScale);
+    setHoveredCompId(componentId);
+    soundManager.playClick();
+  };
+
   const handleAddSpliceConnector = () => {
-    let avgX = 450;
-    let avgY = 220;
+    let connectorX = 680;
+    let connectorY = 280;
     if (components.length > 0) {
-      const sumX = components.reduce((sum, c) => sum + c.x, 0);
-      const sumY = components.reduce((sum, c) => sum + c.y, 0);
-      avgX = sumX / components.length;
-      avgY = sumY / components.length + 50;
+      const rightMostX = Math.max(...components.map(c => c.x));
+      const minY = Math.min(...components.map(c => c.y));
+      const maxY = Math.max(...components.map(c => c.y));
+      connectorX = Math.min(920, rightMostX + 140);
+      connectorY = Math.max(90, Math.min(470, minY + (maxY - minY) / 2));
     }
 
     const junctionId = `junction_${Date.now()}`;
     const newJunction: CircuitComponent = {
       id: junctionId,
       type: 'junction',
-      x: avgX,
-      y: avgY,
+      x: connectorX,
+      y: connectorY,
       label: '',
       terminals: [
         { id: 'port_0', name: 'Port 1', type: 'in', x: -16, y: 12 },
@@ -838,7 +1091,7 @@ export const Workspace: React.FC = () => {
         { id: 'port_3', name: 'Port 4', type: 'in', x: 8, y: 12 },
         { id: 'port_4', name: 'Port 5', type: 'in', x: 16, y: 12 }
       ],
-      state: { color: activeColor }
+      state: { color: activeColor, scale: SPLICE_CONNECTOR_DEFAULT_SCALE }
     };
     addComponent(newJunction);
     soundManager.playClick();
@@ -888,12 +1141,24 @@ export const Workspace: React.FC = () => {
           {/* Add Splice Connector button */}
           <button
             onClick={handleAddSpliceConnector}
-            className="px-2.5 py-1 text-[10px] font-bold bg-[#1e293b] hover:bg-slate-800 text-orange-500 rounded-md cursor-pointer transition-colors border border-white/10 flex items-center gap-1.5 mr-1 hover:border-orange-500/50"
-            title="Place Wago Splice Connector on Canvas"
+            className="px-2.5 py-1 text-[10px] font-bold bg-[#1e293b] hover:bg-slate-800 text-orange-400 rounded-md cursor-pointer transition-colors border border-white/10 flex items-center gap-1.5 mr-1 hover:border-orange-500/50"
+            title="Place Splice Connector on the right side of the circuit"
           >
-            {/* Tiny Wago logo icon */}
-            <span className="w-2 h-2.5 bg-orange-500 rounded-sm inline-block mr-0.5" />
-            <span>+ Wago Connector</span>
+            <svg
+              viewBox="0 0 48 24"
+              className="w-7 h-4 shrink-0"
+              aria-hidden="true"
+            >
+              <rect x="2" y="4" width="44" height="16" rx="4" fill="#d1d5db" stroke="#94a3b8" strokeWidth="1.5" />
+              <rect x="5" y="6" width="38" height="5" rx="2" fill="#f8fafc" opacity="0.65" />
+              {[10, 17, 24, 31, 38].map(x => (
+                <g key={x}>
+                  <rect x={x - 2} y="5" width="4" height="11" rx="1" fill="#ea580c" />
+                  <circle cx={x} cy="17" r="1.6" fill="#111827" />
+                </g>
+              ))}
+            </svg>
+            <span>+ Splice Connector</span>
           </button>
 
           {/* Zoom controls */}
@@ -1013,6 +1278,8 @@ export const Workspace: React.FC = () => {
           {components.map(comp => {
           const isEnergized = isRunning && simulation.energizedComponents.has(comp.id);
           const isFaulty = isRunning && simulation.faultLocation?.split(':')[0] === comp.id;
+          const connectorScale = Math.max(comp.state.scale || SPLICE_CONNECTOR_DEFAULT_SCALE, SPLICE_CONNECTOR_DEFAULT_SCALE);
+          const connectorAtMinScale = connectorScale <= SPLICE_CONNECTOR_DEFAULT_SCALE;
 
           return (
             <g
@@ -1060,11 +1327,14 @@ export const Workspace: React.FC = () => {
                {/* Specific component graphic */}
               <ComponentRenderer component={comp} isEnergized={isEnergized} />
 
-              {/* Sleek, stable control tray (Zoom-Out, Zoom-In, Delete) for custom Wago connectors when hovered */}
+              {/* Sleek, stable control tray (Zoom-Out, Zoom-In, Delete) for custom splice connectors when hovered */}
               {hoveredCompId === comp.id && comp.type === 'junction' && (
                 <g 
                   transform="translate(0, -22)"
-                  className="cursor-default"
+                  className="connector-control cursor-default"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerMove={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Background container pill */}
@@ -1072,29 +1342,31 @@ export const Workspace: React.FC = () => {
                   
                   {/* Zoom Out Button (-) */}
                   <g 
-                    className="cursor-pointer hover:brightness-125 transition-all"
+                    className={`connector-control transition-all ${
+                      connectorAtMinScale ? 'cursor-not-allowed opacity-35' : 'cursor-pointer hover:brightness-125'
+                    }`}
                     transform="translate(-20, 0)"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
-                      const currentScale = comp.state.scale || 1.0;
-                      const newScale = Math.max(0.6, parseFloat((currentScale - 0.1).toFixed(1)));
-                      setComponentState(comp.id, 'scale', newScale);
+                      if (!connectorAtMinScale) {
+                        resizeSpliceConnector(comp.id, connectorScale, -0.1);
+                      }
                     }}
                   >
-                    <title>Zoom Out Connector</title>
+                    <title>{connectorAtMinScale ? 'Connector is at minimum size' : 'Zoom Out Connector'}</title>
                     <circle cx="0" cy="0" r="7" fill="#334155" />
                     <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
                   </g>
 
                   {/* Zoom In Button (+) */}
                   <g 
-                    className="cursor-pointer hover:brightness-125 transition-all"
+                    className="connector-control cursor-pointer hover:brightness-125 transition-all"
                     transform="translate(0, 0)"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
-                      const currentScale = comp.state.scale || 1.0;
-                      const newScale = Math.min(1.6, parseFloat((currentScale + 0.1).toFixed(1)));
-                      setComponentState(comp.id, 'scale', newScale);
+                      resizeSpliceConnector(comp.id, connectorScale, 0.1);
                     }}
                   >
                     <title>Zoom In Connector</title>
@@ -1105,8 +1377,9 @@ export const Workspace: React.FC = () => {
 
                   {/* Delete Button (x) */}
                   <g 
-                    className="cursor-pointer hover:brightness-125 transition-all"
+                    className="connector-control cursor-pointer hover:brightness-125 transition-all"
                     transform="translate(20, 0)"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
                       removeComponent(comp.id);
@@ -1293,18 +1566,40 @@ export const Workspace: React.FC = () => {
                 );
               })()}
 
+              {/* Drag handle to move the wire route while keeping endpoints connected */}
+              {isSelected && (() => {
+                const center = getWireCenterPos(wire);
+                return (
+                  <g 
+                    transform={`translate(${center.x}, ${center.y - 18})`}
+                    className="cursor-grab active:cursor-grabbing"
+                    onPointerDown={(e) => beginWireRouteDrag(e, wire, null)}
+                    onPointerMove={handleWireRouteDragMove}
+                    onPointerUp={handleWireRouteDragEnd}
+                  >
+                    <title>Drag to move wire route</title>
+                    <circle cx="0" cy="0" r="9" fill="#7c3aed" stroke="#ddd6fe" strokeWidth="1.2" />
+                    <path d="M -4 0 L 4 0 M 0 -4 L 0 4" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M -6 -3 L -4 -5 L -2 -3 M 6 3 L 4 5 L 2 3" stroke="#ffffff" strokeWidth="1.1" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                  </g>
+                );
+              })()}
+
               {/* Waypoint markers for selected wire */}
-              {isSelected && wire.waypoints && wire.waypoints.map((wp, idx) => (
+              {isSelected && getEditableWaypointsForWire(wire).map((wp, idx) => (
                 <circle
                   key={`wp-${wire.id}-${idx}`}
                   cx={wp.x}
                   cy={wp.y}
-                  r="3.5"
+                  r="4.5"
                   fill="#ffffff"
                   stroke="#6366f1"
                   strokeWidth="1.5"
-                  opacity="0.8"
-                  pointerEvents="none"
+                  opacity="0.9"
+                  className="cursor-grab active:cursor-grabbing"
+                  onPointerDown={(e) => beginWireRouteDrag(e, wire, idx)}
+                  onPointerMove={handleWireRouteDragMove}
+                  onPointerUp={handleWireRouteDragEnd}
                 />
               ))}
             </g>
@@ -1407,6 +1702,8 @@ export const Workspace: React.FC = () => {
                 const isDrawingStart = drawingWireStart?.componentId === comp.id && drawingWireStart?.terminalId === term.id;
                 const isHovered = hoveredTerminal?.componentId === comp.id && hoveredTerminal?.terminalId === term.id;
                 const isTargeting = !!drawingWireStart;
+                const terminalWireCount = getTerminalWireCount(comp.id, term.id);
+                const canBranchFromTerminal = terminalWireCount > 0 && isHovered && !isTargeting && !probeMode;
 
                 // Check if this terminal has a probe badge
                 const hasRedProbe = multimeter.redProbe?.componentId === comp.id && multimeter.redProbe?.terminalId === term.id;
@@ -1498,6 +1795,34 @@ export const Workspace: React.FC = () => {
                         <g>
                           <circle cx="9" cy="-9" r="7" fill="#334155" stroke="#0f172a" strokeWidth="1.5" />
                           <text x="9" y="-5.5" fill="#94a3b8" fontSize="8" fontWeight="900" textAnchor="middle">B</text>
+                        </g>
+                      )}
+
+                      {/* Direct terminal branching control */}
+                      {canBranchFromTerminal && (
+                        <g
+                          className="terminal-branch-control cursor-pointer"
+                          transform="translate(17, -17)"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onPointerUp={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startBranchFromTerminal(comp.id, term.id);
+                          }}
+                        >
+                          <title>Extend another wire from this terminal</title>
+                          <circle cx="0" cy="0" r="7.5" fill="#2563eb" stroke="#bfdbfe" strokeWidth="1.3" />
+                          <line x1="-3.5" y1="0" x2="3.5" y2="0" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+                          <line x1="0" y1="-3.5" x2="0" y2="3.5" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+                        </g>
+                      )}
+
+                      {terminalWireCount > 1 && !probeMode && (
+                        <g transform="translate(-10, 10)" pointerEvents="none">
+                          <circle cx="0" cy="0" r="6" fill="#0f172a" stroke="#94a3b8" strokeWidth="1" />
+                          <text x="0" y="3" fill="#e2e8f0" fontSize="7" fontWeight="900" textAnchor="middle">
+                            {terminalWireCount}
+                          </text>
                         </g>
                       )}
 

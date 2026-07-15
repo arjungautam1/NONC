@@ -20,6 +20,8 @@ import { RolandFan } from './RolandFan';
 import { ParkingGate } from './ParkingGate';
 import { DoorSensor } from './DoorSensor';
 
+const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
+
 interface ComponentRendererProps {
   component: CircuitComponent;
   isEnergized: boolean;
@@ -85,15 +87,15 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
         );
       };
 
-      const wagoColor = '#ea580c'; // Wago levers are always classic bright orange!
-      const scale = component.state?.scale || 1.0;
+      const connectorLeverColor = '#ea580c';
+      const scale = component.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
 
       return (
         <g 
           transform={`scale(${scale})`}
           style={{ filter: isEnergized ? 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.9))' : 'none' }}
         >
-          {/* Main grey/clear body of Wago inline connector */}
+          {/* Main grey/clear body of the inline splice connector */}
           <rect x="-24" y="-12" width="48" height="24" rx="4" fill="#d1d5db" stroke="#9ca3af" strokeWidth="1.2" />
           {/* Transparent casing top highlight */}
           <rect x="-21" y="-9" width="42" height="7" rx="1.5" fill="#f3f4f6" opacity="0.4" />
@@ -113,13 +115,13 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
                 {connected ? (
                   /* Lever closed (flat down, snapping wire) */
                   <g>
-                    <rect x={slotX - 2} y="-4" width="4" height="9" rx="0.6" fill={wagoColor} stroke="#7c2d12" strokeWidth="0.4" />
+                    <rect x={slotX - 2} y="-4" width="4" height="9" rx="0.6" fill={connectorLeverColor} stroke="#7c2d12" strokeWidth="0.4" />
                     <circle cx={slotX} cy="-2.5" r="0.7" fill="#fed7aa" />
                   </g>
                 ) : (
                   /* Lever open (flipped up, waiting for wire insertion) */
                   <g>
-                    <rect x={slotX - 2} y="-11" width="4" height="8" rx="0.6" fill={wagoColor} stroke="#7c2d12" strokeWidth="0.4" />
+                    <rect x={slotX - 2} y="-11" width="4" height="8" rx="0.6" fill={connectorLeverColor} stroke="#7c2d12" strokeWidth="0.4" />
                     {/* Small inner reflection */}
                     <line x1={slotX - 0.8} y1="-10" x2={slotX - 0.8} y2="-5" stroke="#ffedd5" strokeWidth="0.5" opacity="0.8" />
                   </g>

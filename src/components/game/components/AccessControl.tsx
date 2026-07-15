@@ -7,8 +7,10 @@ interface ComponentProps {
 }
 
 export const Maglock: React.FC<ComponentProps> = ({ component }) => {
-  // A maglock is active (locked) when energized, and unlocked when de-energized
-  const isLocked = component.state.active || false;
+  const isPowered = component.state.active || false;
+  const isFailSecure = component.state.failSecure || false;
+  // Fail-safe maglocks lock when powered. Fail-secure locks stay locked without power and unlock when powered.
+  const isLocked = isFailSecure ? !isPowered : isPowered;
 
   return (
     <g transform="translate(-60, -40)">

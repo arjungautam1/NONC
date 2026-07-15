@@ -1922,14 +1922,14 @@ export const levels: Level[] = [
       'Welcome to the Altronix Security Control project! Let\'s construct the request-to-exit scenario using industrial switch contacts.',
       'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil (+) (coil_a). Wire Altronix Relay Coil (-) (coil_b) to PSU (-) output (neg).',
       'Indicator LEDs: Wire PSU (+) to Altronix Relay C (com1). Wire Relay NC (nc1) to Red LED Strip + (in). Wire Relay NO (no1) to Green LED Strip + (in). Wire both Red & Green LED Strip - (out) terminals to PSU (-).',
-      'Door Lock Loop: Wire PSU (+) to Altronix Relay NC (nc2). Wire Relay C (com2) to Door Lock + (in). Wire Door Lock - (out) to PSU (-).',
+      'Fail-Secure Door Lock Loop: Wire PSU (+) to Altronix Relay NO (no2). Wire Relay C (com2) to Door Lock + (in). Wire Door Lock - (out) to PSU (-). The lock is secure with no power and unlocks only when energized.',
       'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch COM (com). Wire Maintained Rocker Switch NO (no) to Altronix Relay C (com2). Wire Relay NO (no2) to Siren + (in). Wire Siren - (out) to PSU (-).',
       'Power the simulator and test both states: hold the momentary button to unlock the door in position NC (untoggled), then toggle the mechanical rocker switch to position NO (toggled) and hold momentary to trigger the siren and lock override!'
     ],
     goals: [
       'Wire Momentary Switch to trigger Altronix Relay Coil',
       'Wire LED indicator strips to show status (Red: default, Green: active)',
-      'Wire Maglock through NC contact so door is locked by default',
+      'Wire fail-secure door lock through NO contact so it unlocks only when powered',
       'Wire Override Maintained Switch to route power to Siren and keep door locked'
     ],
     inventory: [],
@@ -2024,7 +2024,7 @@ export const levels: Level[] = [
           { id: 'in', name: '+', type: 'in', x: -70, y: 10 },
           { id: 'out', name: '-', type: 'out', x: 70, y: 10 }
         ],
-        state: {}
+        state: { failSecure: true }
       },
       {
         id: 'siren1',
@@ -2043,7 +2043,7 @@ export const levels: Level[] = [
     hints: [
       'Momentary Control: PSU (+) -> Momentary COM (com). Momentary NO (no) -> Relay +Ve (coil_a). Relay -Ve (coil_b) -> PSU (-).',
       'LED Indicators: PSU (+) -> Relay C (com1). Relay NC (nc1) -> Red LED + (in). Relay NO (no1) -> Green LED + (in). LED - (out) terminals -> PSU (-).',
-      'Door Lock Loop: PSU (+) -> Relay NC (nc2). Relay C (com2) -> Maglock + (in). Maglock - (out) -> PSU (-).',
+      'Fail-Secure Door Lock: PSU (+) -> Relay NO (no2). Relay C (com2) -> Door Lock + (in). Door Lock - (out) -> PSU (-).',
       'Maintained Rocker Switch & Siren: PSU (+) -> Maintained Switch COM (com). Maintained Switch NO (no) -> Relay C (com2). Relay NO (no2) -> Siren + (in). Siren - (out) -> PSU (-).'
     ],
     successCriteria: (components, _wires, _nodeVoltages, isEnergized) => {
@@ -2059,24 +2059,24 @@ export const levels: Level[] = [
 
       // Verify defaults when not pressing anything
       if (!isMomPressed) {
-        if (!redOn || greenOn || !lockOn || sirenOn) {
+        if (!redOn || greenOn || lockOn || sirenOn) {
           return {
             success: false,
-            feedback: 'Verify idle wiring: when the Momentary switch is NOT pressed, Red LED must be ON, Green LED must be OFF, Door Lock must be LOCKED (energized), and Siren must be OFF.'
+            feedback: 'Verify idle wiring: when the Momentary switch is NOT pressed, Red LED must be ON, Green LED must be OFF, Fail-Secure Door Lock must be LOCKED with no power, and Siren must be OFF.'
           };
         }
       }
 
       // Test State 1: Normal Scenario
       if (!isMaintActive && isMomPressed) {
-        if (!redOn && greenOn && !lockOn && !sirenOn) {
+        if (!redOn && greenOn && lockOn && !sirenOn) {
           maintained!.state.testPassedNormal = true;
         }
       }
 
       // Test State 2: Maintained Switch Clicked Scenario
       if (isMaintActive && isMomPressed) {
-        if (!redOn && greenOn && lockOn && sirenOn) {
+        if (!redOn && greenOn && !lockOn && sirenOn) {
           maintained!.state.testPassedMaintained = true;
         }
       }
@@ -2088,13 +2088,13 @@ export const levels: Level[] = [
       if (!maintained?.state.testPassedNormal) {
         return {
           success: false,
-          feedback: 'Test Normal Scenario: with Maintained switch at NC, hold Momentary. Green LED must light, Red LED turn OFF, and Door Lock UNLOCK (de-energize).'
+          feedback: 'Test Normal Scenario: with Maintained switch at NC, hold Momentary. Green LED must light, Red LED turn OFF, and Fail-Secure Door Lock must UNLOCK by energizing.'
         };
       }
 
       return {
         success: false,
-        feedback: 'Test Maintained Scenario: toggle Maintained switch to NO, hold Momentary. Green LED must light, Door Lock must stay LOCKED, and Siren must sound!'
+        feedback: 'Test Maintained Scenario: toggle Maintained switch to NO, hold Momentary. Green LED must light, Fail-Secure Door Lock must stay LOCKED with no power, and Siren must sound!'
       };
     }
   }

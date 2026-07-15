@@ -58,6 +58,7 @@ interface GameState {
     waypoints?: { x: number; y: number }[]
   ) => void;
   removeWire: (id: string) => void;
+  updateWireWaypoints: (id: string, waypoints: { x: number; y: number }[]) => void;
   spliceWire: (
     wireId: string,
     x: number,
@@ -574,6 +575,14 @@ export const useGameStore = create<GameState>((set, get) => {
       runSimulation(get().components, newWires, get().isRunning);
     },
 
+    updateWireWaypoints: (id, waypoints) => {
+      const newWires = get().wires.map(w =>
+        w.id === id ? { ...w, waypoints } : w
+      );
+      set({ wires: newWires });
+      runSimulation(get().components, newWires, get().isRunning);
+    },
+
     spliceWire: (wireId, x, y, waypoints1 = [], waypoints2 = []) => {
       const wire = get().wires.find(w => w.id === wireId);
       if (!wire) return null;
@@ -595,7 +604,7 @@ export const useGameStore = create<GameState>((set, get) => {
           { id: 'port_3', name: 'Port 4', type: 'in', x: 8, y: 12 },
           { id: 'port_4', name: 'Port 5', type: 'in', x: 16, y: 12 }
         ],
-        state: { color: wire.color }
+        state: { color: wire.color, scale: 1.67 }
       };
 
       const newComponents = [...get().components, junctionComponent];
@@ -653,7 +662,7 @@ export const useGameStore = create<GameState>((set, get) => {
           { id: 'port_3', name: 'Port 4', type: 'in', x: 8, y: 12 },
           { id: 'port_4', name: 'Port 5', type: 'in', x: 16, y: 12 }
         ],
-        state: { color: wire.color }
+        state: { color: wire.color, scale: 1.67 }
       };
 
       const newComponents = [...get().components, junctionComponent];
