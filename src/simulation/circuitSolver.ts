@@ -194,16 +194,10 @@ export function solveCircuit(
     const negSources: string[] = [];
     const sourceVoltages: Record<string, number> = {}; // source terminal -> voltage
 
-    // Phase 1: Process and identify active transformers connected to AC outlet
+    // Phase 1: Process and identify active transformers (always active since they plug directly into system power)
     components.forEach(c => {
       if (c.type === 'transformer') {
-        const lKey = getTerminalKey(c.id, 'ac_l');
-        const nKey = getTerminalKey(c.id, 'ac_n');
-        
-        const isACL = connectedToACL.has(lKey) && connectedToACN.has(nKey);
-        const isACN = connectedToACL.has(nKey) && connectedToACN.has(lKey);
-
-        c.state.active = isACL || isACN;
+        c.state.active = true;
       }
     });
 
