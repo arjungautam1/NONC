@@ -194,6 +194,55 @@ export function solveCircuit(
     const negSources: string[] = [];
     const sourceVoltages: Record<string, number> = {}; // source terminal -> voltage
 
+    // Phase 1: Process and propagate secondary AC lines from active transformers first
+    components.forEach(c => {
+      if (c.type === 'transformer') {
+        const lKey = getTerminalKey(c.id, 'ac_l');
+        const nKey = getTerminalKey(c.id, 'ac_n');
+        
+        const isACL = connectedToACL.has(lKey) && connectedToACN.has(nKey);
+        const isACN = connectedToACL.has(nKey) && connectedToACN.has(lKey);
+
+        if (isACL || isACN) {
+          c.state.active = true;
+          const out1Key = getTerminalKey(c.id, 'ac_out1');
+          const out2Key = getTerminalKey(c.id, 'ac_out2');
+          
+          connectedToACL.add(out1Key);
+          connectedToACN.add(out2Key);
+
+          // Propagate secondary AC Live from output 1
+          const aclQueueTrans = [out1Key];
+          while (aclQueueTrans.length > 0) {
+            const curr = aclQueueTrans.shift()!;
+            const neighbors = adjList[curr] || new Set();
+            neighbors.forEach(n => {
+              if (!connectedToACL.has(n)) {
+                connectedToACL.add(n);
+                aclQueueTrans.push(n);
+              }
+            });
+          }
+
+          // Propagate secondary AC Neutral from output 2
+          const acnQueueTrans = [out2Key];
+          while (acnQueueTrans.length > 0) {
+            const curr = acnQueueTrans.shift()!;
+            const neighbors = adjList[curr] || new Set();
+            neighbors.forEach(n => {
+              if (!connectedToACN.has(n)) {
+                connectedToACN.add(n);
+                acnQueueTrans.push(n);
+              }
+            });
+          }
+        } else {
+          c.state.active = false;
+        }
+      }
+    });
+
+    // Phase 2: Identify and configure DC power sources (Battery & Power Supply)
     components.forEach(c => {
       if (c.type === 'battery') {
         const pKey = getTerminalKey(c.id, 'pos');
@@ -203,29 +252,36 @@ export function solveCircuit(
         sourceVoltages[pKey] = 12; // 12V Battery
         sourceVoltages[nKey] = 0;
       } else if (c.type === 'power_supply') {
-        const pKey = getTerminalKey(c.id, 'pos');
-        const nKey = getTerminalKey(c.id, 'neg');
-        posSources.push(pKey);
-        negSources.push(nKey);
-        sourceVoltages[pKey] = 24; // 24V Industrial PSU
-        sourceVoltages[nKey] = 0;
-      } else if (c.type === 'transformer') {
-        const lKey = getTerminalKey(c.id, 'ac_l');
-        const nKey = getTerminalKey(c.id, 'ac_n');
-        
-        const isACLConnected = connectedToACL.has(lKey);
-        const isACNConnected = connectedToACN.has(nKey);
-
-        if (isACLConnected && isACNConnected) {
-          const pKey = getTerminalKey(c.id, 'dc_pos');
-          const dKey = getTerminalKey(c.id, 'dc_neg');
+        const hasACTerminals = c.terminals.some(t => t.id === 'ac1') && c.terminals.some(t => t.id === 'ac2');
+        if (!hasACTerminals) {
+          // Legacy always-on DC power supply
+          const pKey = getTerminalKey(c.id, 'pos');
+          const nKey = getTerminalKey(c.id, 'neg');
           posSources.push(pKey);
-          negSources.push(dKey);
-          sourceVoltages[pKey] = 24; // Converts AC to 24VDC
-          sourceVoltages[dKey] = 0;
+          negSources.push(nKey);
+          sourceVoltages[pKey] = 24; // 24V Industrial PSU
+          sourceVoltages[nKey] = 0;
           c.state.active = true;
         } else {
-          c.state.active = false;
+          // Access control power supply board requiring AC power from transformer
+          const ac1Key = getTerminalKey(c.id, 'ac1');
+          const ac2Key = getTerminalKey(c.id, 'ac2');
+          const isAC1_L = connectedToACL.has(ac1Key);
+          const isAC1_N = connectedToACN.has(ac1Key);
+          const isAC2_L = connectedToACL.has(ac2Key);
+          const isAC2_N = connectedToACN.has(ac2Key);
+
+          if ((isAC1_L && isAC2_N) || (isAC1_N && isAC2_L)) {
+            const pKey = getTerminalKey(c.id, 'pos');
+            const nKey = getTerminalKey(c.id, 'neg');
+            posSources.push(pKey);
+            negSources.push(nKey);
+            sourceVoltages[pKey] = 24; // 24VDC output from board
+            sourceVoltages[nKey] = 0;
+            c.state.active = true;
+          } else {
+            c.state.active = false;
+          }
         }
       }
     });

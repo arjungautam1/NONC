@@ -31,6 +31,7 @@ export const Workspace: React.FC = () => {
     setProbeMode,
     currentLevelIndex,
     sidebarOpen,
+    bottomPanelOpen,
     shortCircuitSmoke
   } = useGameStore();
 
@@ -71,6 +72,25 @@ export const Workspace: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
+
+    const observer = new ResizeObserver(() => {
+      setResizeToggle(prev => prev + 1);
+    });
+    observer.observe(svgEl);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const timers = [80, 180, 320].map(delay =>
+      window.setTimeout(() => setResizeToggle(prev => prev + 1), delay)
+    );
+    return () => timers.forEach(window.clearTimeout);
+  }, [sidebarOpen, bottomPanelOpen]);
+
   const [offsets, setOffsets] = useState({ shiftX: 0, shiftY: 0 });
 
   // Center components dynamically
@@ -96,8 +116,10 @@ export const Workspace: React.FC = () => {
 
     const compWidth = maxX - minX;
     const compHeight = maxY - minY;
+    const bottomOverlayHeight = bottomPanelOpen ? (window.innerWidth >= 768 ? 160 : 176) : 0;
+    const usableHeight = Math.max(240, svgHeight - bottomOverlayHeight);
     const targetCenterX = svgWidth / 2;
-    const targetCenterY = svgHeight / 2;
+    const targetCenterY = usableHeight / 2;
     const compCenterX = minX + compWidth / 2;
     const compCenterY = minY + compHeight / 2;
 
@@ -105,7 +127,7 @@ export const Workspace: React.FC = () => {
       shiftX: targetCenterX - compCenterX * zoomScale,
       shiftY: targetCenterY - compCenterY * zoomScale
     });
-  }, [components, zoomScale, sidebarOpen, resizeToggle]);
+  }, [components, zoomScale, sidebarOpen, bottomPanelOpen, resizeToggle]);
 
   // Convert screen coordinates of DMM ports to SVG coordinates relative to the SVG container
   const getPortCoords = (portId: string) => {
@@ -520,8 +542,8 @@ export const Workspace: React.FC = () => {
       // Power supply and timer relay terminals are on bottom, exit downwards
       return { x: 0, y: 22 };
     }
-    if (comp.type === 'relay_dpdt') {
-      // DPDT relay top terminals exit upwards, bottom terminals exit downwards
+    if (comp.type === 'relay_dpdt' || comp.type === 'transformer') {
+      // Top terminals exit upwards, bottom terminals exit downwards
       return { x: 0, y: local.y < 0 ? -22 : 22 };
     }
     if (comp.type === 'junction') {
