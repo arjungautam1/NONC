@@ -17,7 +17,8 @@ export function getTerminalKey(componentId: string, terminalId: string): string 
 
 export function solveCircuit(
   components: CircuitComponent[],
-  wires: Wire[]
+  wires: Wire[],
+  isRunning: boolean = false
 ): SolverResult {
   const diagnosticLog: string[] = [];
   let energizedComponents = new Set<string>();
@@ -196,19 +197,23 @@ export function solveCircuit(
 
     // Phase 1: Process and identify active transformers
     components.forEach(c => {
-      if (c.type === 'transformer') {
-        const hasInputs = c.terminals.some(t => t.id === 'ac_l') && c.terminals.some(t => t.id === 'ac_n');
-        if (hasInputs) {
-          const lKey = getTerminalKey(c.id, 'ac_l');
-          const nKey = getTerminalKey(c.id, 'ac_n');
-          const isACL = connectedToACL.has(lKey) && connectedToACN.has(nKey);
-          const isACN = connectedToACL.has(nKey) && connectedToACN.has(lKey);
-          c.state.active = isACL || isACN;
-        } else {
-          c.state.active = true;
-        }
-      }
-    });
+       if (c.type === 'transformer') {
+         if (!isRunning) {
+           c.state.active = false;
+           return;
+         }
+         const hasInputs = c.terminals.some(t => t.id === 'ac_l') && c.terminals.some(t => t.id === 'ac_n');
+         if (hasInputs) {
+           const lKey = getTerminalKey(c.id, 'ac_l');
+           const nKey = getTerminalKey(c.id, 'ac_n');
+           const isACL = connectedToACL.has(lKey) && connectedToACN.has(nKey);
+           const isACN = connectedToACL.has(nKey) && connectedToACN.has(lKey);
+           c.state.active = isACL || isACN;
+         } else {
+           c.state.active = true;
+         }
+       }
+     });
 
     // Phase 2: Configure initial DC sources (Battery, legacy PSU, and active Transformers outputting +/-)
     components.forEach(c => {

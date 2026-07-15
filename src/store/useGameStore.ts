@@ -131,7 +131,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
   const runSimulation = (currentComponents: CircuitComponent[], currentWires: Wire[], currentIsRunning: boolean) => {
     // Solve circuit
-    const solverResult = solveCircuit(currentComponents, currentWires);
+    const solverResult = solveCircuit(currentComponents, currentWires, currentIsRunning);
 
 
 

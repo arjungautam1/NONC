@@ -105,7 +105,10 @@ export const Workspace: React.FC = () => {
     let minY = Infinity;
     let maxY = -Infinity;
 
-    components.forEach(c => {
+    const interactiveComps = components.filter(c => c.type !== 'transformer' && c.type !== 'power_supply');
+    const compsToMeasure = interactiveComps.length > 0 ? interactiveComps : components;
+
+    compsToMeasure.forEach(c => {
       const w = 110;
       const h = 110;
       minX = Math.min(minX, c.x);
@@ -193,6 +196,7 @@ export const Workspace: React.FC = () => {
   // Component Dragging — blocked in probe mode
   const handleCompPointerDown = (e: React.PointerEvent, comp: CircuitComponent) => {
     if (probeMode) return;
+    if (comp.type === 'transformer' || comp.type === 'power_supply') return; // Block dragging for power components
     const target = e.target as SVGElement;
     if (target.closest('.connector-control')) return;
     if (target.classList.contains('terminal-hitbox')) return;
@@ -1368,7 +1372,11 @@ export const Workspace: React.FC = () => {
               onClick={(e) => {
                 e.stopPropagation();
               }}
-              className="cursor-grab active:cursor-grabbing group"
+              className={
+                comp.type === 'transformer' || comp.type === 'power_supply'
+                  ? 'cursor-default group'
+                  : 'cursor-grab active:cursor-grabbing group'
+              }
             >
               {/* Highlight bounding box if diagnostic fault is here */}
               {isFaulty && (
