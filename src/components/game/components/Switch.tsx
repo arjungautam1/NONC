@@ -62,7 +62,7 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
         cx="40"
         cy="40"
         r={isPressed ? 15 : 18}
-        fill="url(#btnNOGrad)"
+        fill={hasCom ? 'url(#btnCharcoalGrad)' : 'url(#btnNOGrad)'}
         stroke={isPressed ? '#166534' : '#22c55e'}
         strokeWidth="2.5"
         filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
@@ -134,6 +134,11 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
           <stop offset="0%" stopColor="#4ade80" />
           <stop offset="60%" stopColor="#22c55e" />
           <stop offset="100%" stopColor="#15803d" />
+        </radialGradient>
+        <radialGradient id="btnCharcoalGrad" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#4b5563" />
+          <stop offset="60%" stopColor="#1f2937" />
+          <stop offset="100%" stopColor="#111827" />
         </radialGradient>
       </defs>
     </g>
