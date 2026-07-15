@@ -1305,7 +1305,48 @@ export const Workspace: React.FC = () => {
         </defs>
 
         <g transform={`translate(${offsets.shiftX}, ${offsets.shiftY}) scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
-          
+          {/* Static Wall AC Receptacle Outlet on the far-left background underneath the transformer */}
+          {components.some(c => c.type === 'transformer' && c.x === 80 && c.y === 120) && (
+            <g transform="translate(80, 120)" opacity="0.85">
+              {/* Off-white electrical faceplate */}
+              <rect
+                x="-25"
+                y="-35"
+                width="50"
+                height="70"
+                rx="6"
+                fill="#f1f5f9"
+                stroke="#cbd5e1"
+                strokeWidth="1.5"
+                filter="drop-shadow(0 4px 8px rgba(0,0,0,0.2))"
+              />
+              {/* Center divider line */}
+              <line x1="-25" y1="0" x2="25" y2="0" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="2,2" />
+              
+              {/* Top receptacle outlet */}
+              <g transform="translate(0, -17)">
+                <circle cx="0" cy="0" r="11" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.8" />
+                {/* Plug holes */}
+                <rect x="-4" y="-3" width="2" height="6" fill="#334155" rx="0.3" />
+                <rect x="2" y="-3" width="2" height="6" fill="#334155" rx="0.3" />
+                <circle cx="0" cy="4" r="1.5" fill="#334155" />
+              </g>
+              
+              {/* Bottom receptacle outlet (where the transformer sits) */}
+              <g transform="translate(0, 17)">
+                <circle cx="0" cy="0" r="11" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.8" />
+                {/* Plug holes */}
+                <rect x="-4" y="-3" width="2" height="6" fill="#334155" rx="0.3" />
+                <rect x="2" y="-3" width="2" height="6" fill="#334155" rx="0.3" />
+                <circle cx="0" cy="4" r="1.5" fill="#334155" />
+              </g>
+
+              {/* Label text directly on the panel background */}
+              <text x="0" y="-42" fill="#94a3b8" fontSize="6.5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                120VAC OUTLET
+              </text>
+            </g>
+          )}
 
 
           {/* 1. Placed components casing layer */}
