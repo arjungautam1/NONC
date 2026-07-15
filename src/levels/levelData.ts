@@ -755,16 +755,16 @@ export const levels: Level[] = [
     instructions: [
       'Use the 3-position momentary rocker switch to control two lights.',
       'Wire the PSU (+) to the Rocker Switch COM1 terminal.',
-      'Wire the Rocker Switch L1 output to the Relay Coil A1 terminal, and Relay Coil A2 back to the PSU (-).',
-      'Wire a set of relay contacts: PSU (+) to Relay COM1, and Relay NO1 to the GREEN Lamp IN.',
+      'Wire the Rocker Switch L1 output to the Relay Coil (+) terminal, and Relay Coil (-) back to the PSU (-).',
+      'Wire a set of relay contacts: PSU (+) to Relay C (com1), and Relay NO (no1) to the GREEN Lamp IN.',
       'Wire the Rocker Switch R1 output directly to the RED Lamp IN.',
       'Wire both Lamp OUT terminals back to the PSU (-) to complete their return loops.',
       'Hold the switch Left (momentary) to activate the relay and light GREEN. Hold the switch Right (momentary) to light RED directly.'
     ],
     goals: [
       'Connect Rocker Switch COM1 to PSU (+)',
-      'Connect Rocker Switch L1 to Relay Coil A1, and R1 to RED Lamp IN',
-      'Connect Relay contacts COM1 to PSU (+), and NO1 to GREEN Lamp IN',
+      'Connect Rocker Switch L1 to Relay Coil (+), and R1 to RED Lamp IN',
+      'Connect Relay contacts C to PSU (+), and NO to GREEN Lamp IN',
       'Hold switch Left to light GREEN, and Right to light RED'
     ],
     inventory: [],
@@ -804,14 +804,14 @@ export const levels: Level[] = [
         y: 380,
         label: 'DPDT Relay',
         terminals: [
-          { id: 'coil_b', name: 'NEG-', type: 'coil_b', x: 35, y: -55 },
-          { id: 'com1', name: 'COM1', type: 'com1', x: 12, y: -55 },
-          { id: 'nc1', name: 'NC1', type: 'nc1', x: -12, y: -55 },
-          { id: 'no1', name: 'NO1', type: 'no1', x: -35, y: -55 },
-          { id: 'coil_a', name: 'POS+', type: 'coil_a', x: 35, y: 55 },
-          { id: 'com2', name: 'COM2', type: 'com2', x: 12, y: 55 },
-          { id: 'nc2', name: 'NC2', type: 'nc2', x: -12, y: 55 },
-          { id: 'no2', name: 'NO2', type: 'no2', x: -35, y: 55 }
+          { id: 'coil_b', name: '-', type: 'coil_b', x: 35, y: -55 },
+          { id: 'com1', name: 'C', type: 'com1', x: 12, y: -55 },
+          { id: 'nc1', name: 'NC', type: 'nc1', x: -12, y: -55 },
+          { id: 'no1', name: 'NO', type: 'no1', x: -35, y: -55 },
+          { id: 'coil_a', name: '+', type: 'coil_a', x: 35, y: 55 },
+          { id: 'com2', name: 'C', type: 'com2', x: 12, y: 55 },
+          { id: 'nc2', name: 'NC', type: 'nc2', x: -12, y: 55 },
+          { id: 'no2', name: 'NO', type: 'no2', x: -35, y: 55 }
         ],
         state: {}
       },
@@ -1920,10 +1920,10 @@ export const levels: Level[] = [
     description: 'Wire a commercial access control scenario with an Altronix DPDT relay, request-to-exit momentary button (using C, NC, NO contacts), maintained rocker switch, led strips, door lock, and siren.',
     instructions: [
       'Welcome to the Altronix Security Control project! Let\'s construct the request-to-exit scenario using industrial switch contacts.',
-      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil +Ve (coil_a). Wire Altronix Relay Coil -Ve (coil_b) to PSU (-) output (neg).',
-      'Indicator LEDs: Wire PSU (+) to Altronix Relay COM1 (com1). Wire Relay NC1 (nc1) to Red LED Strip + (in). Wire Relay NO1 (no1) to Green LED Strip + (in). Wire both Red & Green LED Strip - (out) terminals to PSU (-).',
-      'Door Lock Loop: Wire PSU (+) to Altronix Relay NC2 (nc2). Wire Relay COM2 (com2) to Door Lock + (in). Wire Door Lock - (out) to PSU (-).',
-      'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch COM (com). Wire Maintained Rocker Switch NO (no) to Altronix Relay COM2 (com2). Wire Relay NO2 (no2) to Siren + (in). Wire Siren - (out) to PSU (-).',
+      'Control Loop (Coil): Wire the 12VDC Power Supply (+) output (pos) to RCI 909S Momentary Button COM (com). Wire RCI 909S Momentary Button NO (no) to Altronix Relay Coil (+) (coil_a). Wire Altronix Relay Coil (-) (coil_b) to PSU (-) output (neg).',
+      'Indicator LEDs: Wire PSU (+) to Altronix Relay C (com1). Wire Relay NC (nc1) to Red LED Strip + (in). Wire Relay NO (no1) to Green LED Strip + (in). Wire both Red & Green LED Strip - (out) terminals to PSU (-).',
+      'Door Lock Loop: Wire PSU (+) to Altronix Relay NC (nc2). Wire Relay C (com2) to Door Lock + (in). Wire Door Lock - (out) to PSU (-).',
+      'Maintained Rocker Switch & Siren Loop: Wire PSU (+) to Maintained Rocker Switch COM (com). Wire Maintained Rocker Switch NO (no) to Altronix Relay C (com2). Wire Relay NO (no2) to Siren + (in). Wire Siren - (out) to PSU (-).',
       'Power the simulator and test both states: hold the momentary button to unlock the door in position NC (untoggled), then toggle the mechanical rocker switch to position NO (toggled) and hold momentary to trigger the siren and lock override!'
     ],
     goals: [
@@ -1979,14 +1979,14 @@ export const levels: Level[] = [
         y: 280,
         label: '',
         terminals: [
-          { id: 'coil_b', name: 'NEG-', type: 'coil_b', x: 35, y: -55 },
-          { id: 'com1', name: 'COM1', type: 'com1', x: 12, y: -55 },
-          { id: 'nc1', name: 'NC1', type: 'nc1', x: -12, y: -55 },
-          { id: 'no1', name: 'NO1', type: 'no1', x: -35, y: -55 },
-          { id: 'coil_a', name: 'POS+', type: 'coil_a', x: 35, y: 55 },
-          { id: 'com2', name: 'COM2', type: 'com2', x: 12, y: 55 },
-          { id: 'nc2', name: 'NC2', type: 'nc2', x: -12, y: 55 },
-          { id: 'no2', name: 'NO2', type: 'no2', x: -35, y: 55 }
+          { id: 'coil_b', name: '-', type: 'coil_b', x: 35, y: -55 },
+          { id: 'com1', name: 'C', type: 'com1', x: 12, y: -55 },
+          { id: 'nc1', name: 'NC', type: 'nc1', x: -12, y: -55 },
+          { id: 'no1', name: 'NO', type: 'no1', x: -35, y: -55 },
+          { id: 'coil_a', name: '+', type: 'coil_a', x: 35, y: 55 },
+          { id: 'com2', name: 'C', type: 'com2', x: 12, y: 55 },
+          { id: 'nc2', name: 'NC', type: 'nc2', x: -12, y: 55 },
+          { id: 'no2', name: 'NO', type: 'no2', x: -35, y: 55 }
         ],
         state: {}
       },
