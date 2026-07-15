@@ -327,6 +327,57 @@ export const Workspace: React.FC = () => {
     return `M ${x1} ${y1} C ${x1} ${y1 + sag}, ${x2} ${y2 + sag}, ${x2} ${y2}`;
   };
 
+  const getSplitWaypoints = (wire: Wire, x: number, y: number) => {
+    const pStart = getTerminalPos(wire.fromComponentId, wire.fromTerminalId);
+    const pEnd = getTerminalPos(wire.toComponentId, wire.toTerminalId);
+    const points = [pStart, ...(wire.waypoints || []), pEnd];
+    
+    let closestSegmentIndex = 0;
+    let minDistance = Infinity;
+    
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      
+      const A = x - p1.x;
+      const B = y - p1.y;
+      const C = p2.x - p1.x;
+      const D = p2.y - p1.y;
+      
+      const dot = A * C + B * D;
+      const lenSq = C * C + D * D;
+      let param = -1;
+      if (lenSq !== 0) param = dot / lenSq;
+      
+      let xx, yy;
+      if (param < 0) {
+        xx = p1.x;
+        yy = p1.y;
+      } else if (param > 1) {
+        xx = p2.x;
+        yy = p2.y;
+      } else {
+        xx = p1.x + param * C;
+        yy = p1.y + param * D;
+      }
+      
+      const dx = x - xx;
+      const dy = y - yy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestSegmentIndex = i;
+      }
+    }
+    
+    const waypoints = wire.waypoints || [];
+    const waypoints1 = waypoints.slice(0, closestSegmentIndex);
+    const waypoints2 = waypoints.slice(closestSegmentIndex);
+    
+    return { waypoints1, waypoints2 };
+  };
+
   const getTerminalExtOffset = (compId: string, termId: string) => {
     const comp = components.find(c => c.id === compId);
     if (!comp) return { x: 0, y: 0 };
@@ -714,7 +765,8 @@ export const Workspace: React.FC = () => {
   };
 
   const spliceWireAtCoords = (wire: Wire, x: number, y: number) => {
-    return spliceWire(wire.id, x, y);
+    const { waypoints1, waypoints2 } = getSplitWaypoints(wire, x, y);
+    return spliceWire(wire.id, x, y, waypoints1, waypoints2);
   };
 
   // Check if a wire has current flowing through it
@@ -954,9 +1006,11 @@ export const Workspace: React.FC = () => {
                 className="cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
+                  const coords = getSVGCoords(e as any);
+                  const { waypoints1, waypoints2 } = getSplitWaypoints(wire, coords.x, coords.y);
+
                   if (drawingWireStart) {
                     // SPLICING: Create a junction at the click point, and connect the currently drawn wire to it atomically!
-                    const coords = getSVGCoords(e as any);
                     spliceAndConnectWire(
                       wire.id,
                       coords.x,
@@ -964,10 +1018,24 @@ export const Workspace: React.FC = () => {
                       drawingWireStart.componentId,
                       drawingWireStart.terminalId,
                       activeColor,
-                      tempWaypoints
+                      tempWaypoints,
+                      waypoints1,
+                      waypoints2
                     );
                     setDrawingWireStart(null);
                     setTempWaypoints([]);
+                  } else if (e.shiftKey) {
+                    // EXTENDING: Shift-click on any wire to immediately splice and start drawing a connection from it!
+                    const newJunctionId = spliceWire(wire.id, coords.x, coords.y, waypoints1, waypoints2);
+                    if (newJunctionId) {
+                      setDrawingWireStart({
+                        componentId: newJunctionId,
+                        terminalId: 'port'
+                      });
+                      setMousePos(coords);
+                      setPointerDownCoords(coords);
+                      setSelectedWireId(null);
+                    }
                   } else {
                     // Regular selection
                     setSelectedWireId(isSelected ? null : wire.id);

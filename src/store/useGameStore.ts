@@ -58,7 +58,13 @@ interface GameState {
     waypoints?: { x: number; y: number }[]
   ) => void;
   removeWire: (id: string) => void;
-  spliceWire: (wireId: string, x: number, y: number) => string | null;
+  spliceWire: (
+    wireId: string,
+    x: number,
+    y: number,
+    waypoints1?: { x: number; y: number }[],
+    waypoints2?: { x: number; y: number }[]
+  ) => string | null;
   spliceAndConnectWire: (
     wireId: string,
     x: number,
@@ -66,7 +72,9 @@ interface GameState {
     fromCId: string,
     fromTId: string,
     color: 'red' | 'black' | 'green' | 'orange',
-    waypoints?: { x: number; y: number }[]
+    waypoints?: { x: number; y: number }[],
+    waypoints1?: { x: number; y: number }[],
+    waypoints2?: { x: number; y: number }[]
   ) => void;
   
   undo: () => void;
@@ -566,7 +574,7 @@ export const useGameStore = create<GameState>((set, get) => {
       runSimulation(get().components, newWires, get().isRunning);
     },
 
-    spliceWire: (wireId, x, y) => {
+    spliceWire: (wireId, x, y, waypoints1 = [], waypoints2 = []) => {
       const wire = get().wires.find(w => w.id === wireId);
       if (!wire) return null;
 
@@ -594,7 +602,7 @@ export const useGameStore = create<GameState>((set, get) => {
         toComponentId: junctionId,
         toTerminalId: 'port',
         color: wire.color,
-        waypoints: []
+        waypoints: waypoints1
       };
 
       const splitWire2: Wire = {
@@ -604,7 +612,7 @@ export const useGameStore = create<GameState>((set, get) => {
         toComponentId: wire.toComponentId,
         toTerminalId: wire.toTerminalId,
         color: wire.color,
-        waypoints: []
+        waypoints: waypoints2
       };
 
       const updatedWires = [...filteredWires, splitWire1, splitWire2];
@@ -618,7 +626,7 @@ export const useGameStore = create<GameState>((set, get) => {
       return junctionId;
     },
 
-    spliceAndConnectWire: (wireId, x, y, fromCId, fromTId, color, waypoints = []) => {
+    spliceAndConnectWire: (wireId, x, y, fromCId, fromTId, color, waypoints = [], waypoints1 = [], waypoints2 = []) => {
       const wire = get().wires.find(w => w.id === wireId);
       if (!wire) return;
 
@@ -646,7 +654,7 @@ export const useGameStore = create<GameState>((set, get) => {
         toComponentId: junctionId,
         toTerminalId: 'port',
         color: wire.color,
-        waypoints: []
+        waypoints: waypoints1
       };
 
       const splitWire2: Wire = {
@@ -656,7 +664,7 @@ export const useGameStore = create<GameState>((set, get) => {
         toComponentId: wire.toComponentId,
         toTerminalId: wire.toTerminalId,
         color: wire.color,
-        waypoints: []
+        waypoints: waypoints2
       };
 
       const connectionWire: Wire = {
