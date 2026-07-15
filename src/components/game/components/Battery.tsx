@@ -169,10 +169,10 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
               <line x1="-1" y1="-3" x2="1" y2="3" stroke="#334155" strokeWidth="0.8" />
             </g>
             
-            {/* Label text placed just above the pocket */}
+            {/* Label text placed outside the cabinet (below the screw pocket) */}
             <text
               x={xPos}
-              y={yPos - 13}
+              y={yPos + 18}
               fill={labelColor}
               fontSize="7"
               fontWeight="900"
