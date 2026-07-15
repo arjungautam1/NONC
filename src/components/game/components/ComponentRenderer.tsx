@@ -85,17 +85,7 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
         );
       };
 
-      const getLeverColor = (colorName: string) => {
-        switch (colorName) {
-          case 'red': return '#ea580c';   // standard orange for Wago levers
-          case 'black': return '#475569';  // dark levers
-          case 'green': return '#16a34a';  // green levers
-          case 'orange': return '#ea580c';
-          default: return '#ea580c';
-        }
-      };
-
-      const wagoColor = getLeverColor(component.state.color || 'orange');
+      const wagoColor = '#ea580c'; // Wago levers are always classic bright orange!
 
       return (
         <g style={{ filter: isEnergized ? 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.9))' : 'none' }}>

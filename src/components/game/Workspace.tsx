@@ -14,6 +14,8 @@ export const Workspace: React.FC = () => {
     toggleSimulation,
     simulation,
     updateComponentPosition,
+    addComponent,
+    removeComponent,
     addWire,
     removeWire,
     spliceWire,
@@ -804,6 +806,36 @@ export const Workspace: React.FC = () => {
     return spliceWire(wire.id, x, y, waypoints1, waypoints2);
   };
 
+  const handleAddSpliceConnector = () => {
+    let avgX = 450;
+    let avgY = 220;
+    if (components.length > 0) {
+      const sumX = components.reduce((sum, c) => sum + c.x, 0);
+      const sumY = components.reduce((sum, c) => sum + c.y, 0);
+      avgX = sumX / components.length;
+      avgY = sumY / components.length + 50;
+    }
+
+    const junctionId = `junction_${Date.now()}`;
+    const newJunction: CircuitComponent = {
+      id: junctionId,
+      type: 'junction',
+      x: avgX,
+      y: avgY,
+      label: '',
+      terminals: [
+        { id: 'port_0', name: 'Port 1', type: 'in', x: -16, y: 12 },
+        { id: 'port_1', name: 'Port 2', type: 'in', x: -8, y: 12 },
+        { id: 'port_2', name: 'Port 3', type: 'in', x: 0, y: 12 },
+        { id: 'port_3', name: 'Port 4', type: 'in', x: 8, y: 12 },
+        { id: 'port_4', name: 'Port 5', type: 'in', x: 16, y: 12 }
+      ],
+      state: { color: activeColor }
+    };
+    addComponent(newJunction);
+    soundManager.playClick();
+  };
+
   // Check if a wire has current flowing through it
   const isWireAnimating = (wire: Wire) => {
     if (!isRunning || simulation.shortCircuit) return false;
@@ -845,6 +877,17 @@ export const Workspace: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Add Splice Connector button */}
+          <button
+            onClick={handleAddSpliceConnector}
+            className="px-2.5 py-1 text-[10px] font-bold bg-[#1e293b] hover:bg-slate-800 text-orange-500 rounded-md cursor-pointer transition-colors border border-white/10 flex items-center gap-1.5 mr-1 hover:border-orange-500/50"
+            title="Place Wago Splice Connector on Canvas"
+          >
+            {/* Tiny Wago logo icon */}
+            <span className="w-2 h-2.5 bg-orange-500 rounded-sm inline-block mr-0.5" />
+            <span>+ Wago Connector</span>
+          </button>
+
           {/* Zoom controls */}
           <div className="flex items-center gap-0.5 bg-white/[0.04] p-0.5 rounded-md border border-white/10">
             <button
@@ -1004,8 +1047,24 @@ export const Workspace: React.FC = () => {
                 className="opacity-0 group-hover:opacity-100 transition-opacity"
               />
 
-              {/* Specific component graphic */}
+               {/* Specific component graphic */}
               <ComponentRenderer component={comp} isEnergized={isEnergized} />
+
+              {/* Delete button overlay for custom junctions placed by user */}
+              {comp.type === 'junction' && (
+                <g 
+                  className="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                  transform="translate(24, -12)"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeComponent(comp.id);
+                  }}
+                >
+                  <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#7f1d1d" strokeWidth="0.8" />
+                  <line x1="-3" y1="-3" x2="3" y2="3" stroke="#ffffff" strokeWidth="1.2" />
+                  <line x1="3" y1="-3" x2="-3" y2="3" stroke="#ffffff" strokeWidth="1.2" />
+                </g>
+              )}
             </g>
           );
         })}
@@ -1359,8 +1418,12 @@ export const Workspace: React.FC = () => {
                         data-terminal-id={term.id}
                       />
 
-                      {/* Metal ring & Connection stud (Only for non-junction terminals) */}
-                      {comp.type !== 'junction' && (
+                      {/* Metal ring & Connection stud */}
+                      {comp.type === 'junction' ? (
+                        (isHovered || isTargeting) && (
+                          <circle cx="0" cy="0" r="5" fill="#f59e0b" opacity="0.8" stroke="#ffffff" strokeWidth="1" className="animate-pulse" />
+                        )
+                      ) : (
                         <>
                           <circle cx="0" cy="0" r="6" fill="#cbd5e1" stroke="#334155" strokeWidth="1.5" />
                           <circle cx="0" cy="0" r="3.5" fill={termColor} />
