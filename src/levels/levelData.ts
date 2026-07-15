@@ -1939,7 +1939,7 @@ export const levels: Level[] = [
         type: 'power_supply',
         x: 100,
         y: 130,
-        label: '12VDC Power Supply',
+        label: '',
         terminals: [
           { id: 'pos', name: '(+)', type: 'pos', x: -25, y: 15 },
           { id: 'neg', name: '(-)', type: 'neg', x: 25, y: 15 }
@@ -1951,7 +1951,7 @@ export const levels: Level[] = [
         type: 'button_no',
         x: 100,
         y: 280,
-        label: 'RCI 909S Momentary',
+        label: 'Momentary Switch',
         terminals: [
           { id: 'com', name: 'C', type: 'com', x: -30, y: 15 },
           { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -25 },
@@ -1964,7 +1964,7 @@ export const levels: Level[] = [
         type: 'rocker_switch_2pos',
         x: 100,
         y: 430,
-        label: 'Maintained Rocker Switch',
+        label: 'Maintained Switch',
         terminals: [
           { id: 'com', name: 'C', type: 'in', x: -30, y: 0 },
           { id: 'nc', name: 'NC', type: 'out_a', x: 30, y: -20 },
@@ -1977,7 +1977,7 @@ export const levels: Level[] = [
         type: 'relay_dpdt',
         x: 380,
         y: 280,
-        label: 'Altronix RB1224 Relay',
+        label: '',
         terminals: [
           { id: 'coil_a', name: '+Ve', type: 'coil_a', x: -35, y: 45 },
           { id: 'coil_b', name: '-Ve', type: 'coil_b', x: 35, y: 45 },
@@ -1995,7 +1995,7 @@ export const levels: Level[] = [
         type: 'led_strip',
         x: 650,
         y: 120,
-        label: 'Red LED Strip',
+        label: '',
         terminals: [
           { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
           { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
@@ -2007,7 +2007,7 @@ export const levels: Level[] = [
         type: 'led_strip',
         x: 650,
         y: 220,
-        label: 'Green LED Strip',
+        label: '',
         terminals: [
           { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
           { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
@@ -2019,7 +2019,7 @@ export const levels: Level[] = [
         type: 'maglock',
         x: 650,
         y: 340,
-        label: 'Door Strike / Maglock',
+        label: '',
         terminals: [
           { id: 'in', name: '+', type: 'in', x: -70, y: 10 },
           { id: 'out', name: '-', type: 'out', x: 70, y: 10 }
@@ -2031,7 +2031,7 @@ export const levels: Level[] = [
         type: 'buzzer',
         x: 650,
         y: 450,
-        label: 'Siren',
+        label: '',
         terminals: [
           { id: 'in', name: '+', type: 'in', x: -50, y: 15 },
           { id: 'out', name: '-', type: 'out', x: 50, y: 15 }
