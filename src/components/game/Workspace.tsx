@@ -1094,13 +1094,34 @@ export const Workspace: React.FC = () => {
 
         {/* 3. Live wire drawing overlay */}
         {drawingWireStart && (() => {
+          let finalColor = activeColor;
+          if (activeColor === 'red') {
+            const isNeg = (compId: string, termId: string) => {
+              const comp = components.find(c => c.id === compId);
+              if (!comp) return false;
+              const term = comp.terminals.find(t => t.id === termId);
+              if (!term) return false;
+              const name = term.name.toLowerCase();
+              const id = term.id.toLowerCase();
+              const type = term.type.toLowerCase();
+              return name === '-' || name === '-ve' || type === 'neg' || id === 'neg' || id === 'coil_b' || id === 'out';
+            };
+
+            const isStartNeg = isNeg(drawingWireStart.componentId, drawingWireStart.terminalId);
+            const isEndNeg = hoveredTerminal ? isNeg(hoveredTerminal.componentId, hoveredTerminal.terminalId) : false;
+
+            if (isStartNeg || isEndNeg) {
+              finalColor = 'black';
+            }
+          }
+
           const mockWire: Wire = {
             id: 'temp-live-wire',
             fromComponentId: drawingWireStart.componentId,
             fromTerminalId: drawingWireStart.terminalId,
             toComponentId: hoveredTerminal ? hoveredTerminal.componentId : '',
             toTerminalId: hoveredTerminal ? hoveredTerminal.terminalId : '',
-            color: activeColor,
+            color: finalColor,
             waypoints: tempWaypoints
           };
           

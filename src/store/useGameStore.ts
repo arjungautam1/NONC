@@ -522,6 +522,24 @@ export const useGameStore = create<GameState>((set, get) => {
       );
       if (duplicate) return;
 
+      let finalColor = color;
+      if (color === 'red') {
+        const isNeg = (compId: string, termId: string) => {
+          const comp = get().components.find(c => c.id === compId);
+          if (!comp) return false;
+          const term = comp.terminals.find(t => t.id === termId);
+          if (!term) return false;
+          const name = term.name.toLowerCase();
+          const id = term.id.toLowerCase();
+          const type = term.type.toLowerCase();
+          return name === '-' || name === '-ve' || type === 'neg' || id === 'neg' || id === 'coil_b' || id === 'out';
+        };
+
+        if (isNeg(fromCId, fromTId) || isNeg(toCId, toTId)) {
+          finalColor = 'black';
+        }
+      }
+
       saveToHistory(get().components, get().wires);
       soundManager.playWire();
 
@@ -531,7 +549,7 @@ export const useGameStore = create<GameState>((set, get) => {
         fromTerminalId: fromTId,
         toComponentId: toCId,
         toTerminalId: toTId,
-        color,
+        color: finalColor,
         waypoints
       };
 
