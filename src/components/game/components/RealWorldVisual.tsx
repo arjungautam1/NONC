@@ -427,6 +427,119 @@ export const RealWorldVisual: React.FC<VisualProps> = ({ levelId, isActive }) =>
         </svg>
       );
 
+    case 21: // Request-to-exit door control
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          {/* Door and frame */}
+          <rect x="8" y="7" width="38" height="56" rx="1.5" fill="none" stroke="#64748b" strokeWidth="2" />
+          <rect
+            x="11"
+            y="10"
+            width="32"
+            height="50"
+            rx="1"
+            fill="#273244"
+            stroke="#475569"
+            style={{
+              transform: isActive ? 'skewY(-9deg) scaleX(0.86)' : 'none',
+              transformOrigin: '11px 35px',
+              transition: 'transform 0.45s ease-in-out'
+            }}
+          />
+          <circle cx="37" cy="35" r="1.8" fill="#e2e8f0" />
+
+          {/* Fail-safe maglock at the head of the door */}
+          <rect x="27" y="8" width="16" height="4" rx="1" fill={isActive ? '#22c55e' : '#ef4444'} />
+          <path d="M29 12 L41 12" stroke={isActive ? '#86efac' : '#fca5a5'} strokeWidth="1.2" />
+
+          {/* REX station with secure/released pilot lamps */}
+          <rect x="51" y="18" width="13" height="34" rx="2" fill="#202938" stroke="#475569" />
+          <circle cx="57.5" cy="26" r="3" fill={isActive ? '#14532d' : '#ef4444'} />
+          <circle cx="57.5" cy="35" r="3" fill={isActive ? '#22c55e' : '#14532d'} className={isActive ? 'animate-pulse' : ''} />
+          <rect x="54" y="42" width="7" height="5" rx="1" fill="#e2e8f0" />
+          <path d="M55.5 44.5 L59.5 44.5" stroke="#475569" strokeWidth="1" />
+        </svg>
+      );
+
+    case 22: // Automatic sliding gate operator
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          <line x1="4" y1="57" x2="66" y2="57" stroke="#475569" strokeWidth="2" />
+          <line x1="8" y1="60" x2="62" y2="60" stroke="#64748b" strokeWidth="1" strokeDasharray="3 2" />
+          <rect x="5" y="18" width="7" height="40" rx="1" fill="#64748b" stroke="#94a3b8" />
+          <rect x="58" y="18" width="7" height="40" rx="1" fill="#64748b" stroke="#94a3b8" />
+          <g
+            style={{
+              transform: isActive ? 'translateX(-31px)' : 'translateX(0)',
+              transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            <rect x="28" y="23" width="31" height="31" rx="1" fill="#172554" stroke="#60a5fa" strokeWidth="1.5" />
+            {[34, 41, 48, 55].map(x => (
+              <line key={x} x1={x} y1="26" x2={x} y2="51" stroke="#93c5fd" strokeWidth="1" opacity="0.65" />
+            ))}
+          </g>
+          <rect x="8" y="39" width="12" height="18" rx="2" fill="#0b1329" stroke="#1b75d0" />
+          <circle cx="14" cy="44" r="2" fill={isActive ? '#22c55e' : '#ef4444'} className={isActive ? 'animate-pulse' : ''} />
+          <path d="M11 52 L17 52" stroke="#60a5fa" strokeWidth="1.5" />
+        </svg>
+      );
+
+    case 23: // Emergency pull-station release
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          <rect x="6" y="14" width="22" height="42" rx="3" fill="#991b1b" stroke="#ef4444" strokeWidth="1.5" />
+          <rect x="9" y="18" width="16" height="10" rx="1" fill="#f8fafc" />
+          <text x="17" y="24.5" fill="#991b1b" fontSize="4" fontWeight="900" textAnchor="middle">PULL</text>
+          <path
+            d={isActive ? 'M10 33 L24 33 L21 49 L13 49 Z' : 'M10 31 L24 31 L22 43 L12 43 Z'}
+            fill="#e2e8f0"
+            stroke="#94a3b8"
+            style={{ transition: 'd 0.25s ease-in-out' }}
+          />
+          <circle cx="39" cy="22" r="5" fill={isActive ? '#3f3f46' : '#22c55e'} />
+          <circle cx="39" cy="38" r="5" fill={isActive ? '#ef4444' : '#3f3f46'} className={isActive ? 'animate-pulse' : ''} />
+          <rect x="49" y="18" width="14" height="31" rx="2" fill="#263244" stroke="#64748b" />
+          <rect x="51" y="20" width="10" height="5" rx="1" fill={isActive ? '#22c55e' : '#ef4444'} />
+          <path d="M52 32 L60 32 M52 36 L60 36 M52 40 L60 40" stroke="#94a3b8" strokeWidth="1.5" />
+          <text x="56" y="56" fill={isActive ? '#86efac' : '#fca5a5'} fontSize="4.5" fontWeight="800" textAnchor="middle">
+            {isActive ? 'RELEASED' : 'LOCKED'}
+          </text>
+        </svg>
+      );
+
+    case 24: // Key-switch DPDT actuator control
+      return (
+        <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">
+          <rect x="5" y="20" width="19" height="29" rx="3" fill="#e5e7eb" stroke="#94a3b8" />
+          <circle cx="14.5" cy="34.5" r="6" fill="#1e293b" stroke={isActive ? '#22c55e' : '#94a3b8'} />
+          <g
+            style={{
+              transform: isActive ? 'rotate(38deg)' : 'rotate(-38deg)',
+              transformOrigin: '14.5px 34.5px',
+              transition: 'transform 0.3s ease-in-out'
+            }}
+          >
+            <rect x="13" y="32.5" width="12" height="4" rx="2" fill="#cbd5e1" />
+          </g>
+          <rect x="31" y="27" width="20" height="15" rx="3" fill="#334155" stroke="#64748b" />
+          <rect x="48" y="30" width="15" height="9" rx="2" fill="#cbd5e1" stroke="#94a3b8" />
+          <rect
+            x="61"
+            y="32"
+            width={isActive ? 7 : 2}
+            height="5"
+            rx="1"
+            fill="#f8fafc"
+            style={{ transition: 'width 0.7s ease-in-out' }}
+          />
+          <path d="M27 34.5 L31 34.5 M51 34.5 L48 34.5" stroke="#60a5fa" strokeWidth="1.5" />
+          <text x="38" y="52" fill={isActive ? '#86efac' : '#93c5fd'} fontSize="4.5" fontWeight="800" textAnchor="middle">
+            {isActive ? 'EXTEND' : 'RETRACT'}
+          </text>
+        </svg>
+      );
+
     default:
       return (
         <svg width="100%" height="100%" viewBox="0 0 70 70" className="bg-[#18181b] rounded border border-[#2a2e39]/60 shadow-inner">

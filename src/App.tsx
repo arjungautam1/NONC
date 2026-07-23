@@ -5,11 +5,13 @@ import { Sidebar } from './components/game/Sidebar';
 import { Workspace } from './components/game/Workspace';
 import { HelpOverlay } from './components/game/HelpOverlay';
 import { LevelDashboard } from './components/game/LevelDashboard';
+import { CustomLabSidebar } from './components/game/CustomLabSidebar';
 
 function App() {
   const initLevel = useGameStore(state => state.initLevel);
-  const useHint = useGameStore(state => state.useHint);
+  const revealHint = useGameStore(state => state.useHint);
   const viewMode = useGameStore(state => state.viewMode);
+  const isCustomLab = useGameStore(state => state.isCustomLab);
 
   // Initialize first level on mount, skipping the view mode change so it starts at the levels screen
   useEffect(() => {
@@ -29,14 +31,14 @@ function App() {
       }
       if (e.key === 'h' || e.key === 'H') {
         e.preventDefault();
-        useHint();
+        revealHint();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [useHint]);
+  }, [revealHint]);
 
   if (viewMode === 'levels') {
     return <LevelDashboard />;
@@ -50,12 +52,12 @@ function App() {
       {/* Main Workspace split */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-0">
         {/* Left Objectives & DMM Sidebar */}
-        <Sidebar />
+        {isCustomLab ? <CustomLabSidebar /> : <Sidebar />}
 
         {/* Center Schematic Canvas & Diagnostics */}
         <div className="flex-1 flex flex-col overflow-hidden relative min-w-0 min-h-0">
           <Workspace />
-          <HelpOverlay />
+          {!isCustomLab && <HelpOverlay />}
         </div>
       </div>
     </div>

@@ -21,7 +21,12 @@ export const ControlPanel: React.FC = () => {
     redo,
     currentLevelIndex,
     achievements,
-    setViewMode
+    setViewMode,
+    isCustomLab,
+    customLabSelection,
+    isRunning,
+    toggleSimulation,
+    stopTimer
   } = useGameStore();
 
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
@@ -47,7 +52,7 @@ export const ControlPanel: React.FC = () => {
               Electronics Lab
             </h2>
             <span className="text-[8.5px] font-medium text-slate-500 tracking-wide uppercase">
-              Virtual Training Simulator
+              {isCustomLab ? 'Custom Component Workspace' : 'Virtual Training Simulator'}
             </span>
           </div>
         </div>
@@ -55,6 +60,8 @@ export const ControlPanel: React.FC = () => {
         <button
           onClick={() => {
             soundManager.playButton();
+            if (isRunning) toggleSimulation();
+            stopTimer();
             setViewMode('levels');
           }}
           className="px-3 py-1.5 rounded-md bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-slate-300 hover:text-white font-semibold text-[11px] cursor-pointer transition-all flex items-center gap-1.5"
@@ -110,8 +117,12 @@ export const ControlPanel: React.FC = () => {
 
         {/* Score stars */}
         <div className="flex items-center gap-1 bg-white/[0.04] px-3 py-1.5 rounded-md border border-white/10">
-          <span className="hidden sm:inline text-[10px] text-slate-400 uppercase tracking-wide mr-1">Solved</span>
-          <span className="text-white text-sm font-black">{currentLevelIndex} / {levels.length}</span>
+          <span className="hidden sm:inline text-[10px] text-slate-400 uppercase tracking-wide mr-1">
+            {isCustomLab ? 'Custom kit' : 'Solved'}
+          </span>
+          <span className="text-white text-sm font-black">
+            {isCustomLab ? `${customLabSelection.length} devices` : `${currentLevelIndex} / ${levels.length}`}
+          </span>
         </div>
       </div>
 

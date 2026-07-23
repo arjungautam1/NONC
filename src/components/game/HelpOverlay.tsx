@@ -5,9 +5,7 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  ArrowRight,
   Award,
-  Star,
   Activity,
   Briefcase,
   ChevronRight,
@@ -21,83 +19,123 @@ const getRealWorldApplication = (levelId: number) => {
   switch (levelId) {
     case 1:
       return {
-        title: "Basic Flashlight",
-        desc: "A battery supplying continuous current to a bulb through wires, simulating a simple handheld torch."
+        title: "Low-Voltage Task Light",
+        desc: "A DC power supply sends current through a lamp and back on the return conductor. Both paths must be complete for the lamp to turn on."
       };
     case 2:
       return {
-        title: "Home Light Switch",
-        desc: "A manual switch closing and opening a single hot path to turn a ceiling light bulb on or off."
+        title: "Lighting-Circuit Troubleshooting",
+        desc: "A technician locates an open return conductor, repairs the break, and verifies that current can flow through the lamp again."
       };
     case 3:
       return {
         title: "Doorbell System",
-        desc: "A Normally Open push button. Pressing it closes the circuit momentarily, sending current to ring the doorbell chime."
+        desc: "A momentary normally open button completes the circuit only while pressed, so the doorbell rings only while someone holds the button."
       };
     case 4:
       return {
         title: "Refrigerator Door Light",
-        desc: "A Normally Closed push button switch. When the door is closed, it pushes the button open, turning off the light to save energy."
+        desc: "A momentary normally closed switch carries current at rest. Closing the door presses the switch and opens the circuit, turning the light off."
       };
     case 5:
       return {
-        title: "Low-Voltage Lighting Relay",
-        desc: "Using a safe, low-voltage control circuit switch to magnetically close a relay contact, switching high-voltage lights."
+        title: "Control-Panel Relay",
+        desc: "A low-current switch energizes a relay coil. The relay then transfers its common contact from NC to NO to control a separate circuit."
       };
     case 6:
       return {
         title: "Car Horn Relay Control",
-        desc: "Using a low-current horn button on the steering wheel to energize a relay, closing contacts to power the loud, high-current horn."
+        desc: "A low-current horn button energizes a relay coil, and the relay's normally open contact switches power to the higher-current horn load."
       };
     case 7:
       return {
-        title: "Security Wire Cut-off Alarm",
-        desc: "A Normally Closed circuit. If an intruder cuts the window sensor wire, the relay coil drops, opening the circuit to sound the alarm siren."
+        title: "Normally-On Warning Circuit",
+        desc: "A relay's normally closed contact powers an indicator while the coil is off. Energizing the relay opens that path and turns the indicator off."
       };
     case 8:
       return {
         title: "Industrial E-Stop Safety Loop",
-        desc: "A safety emergency-stop button connected in series with a fuse to instantly kill power to the machine if pulled/pressed."
+        desc: "A normally closed emergency-stop contact sits in series with the motor-control path. Pressing it opens the loop and stops the motor immediately."
       };
     case 9:
       return {
         title: "Secure Office Badge Entry",
-        desc: "An RFID reader. Scanning a valid badge triggers a relay to break power to the magnetic lock (Maglock), letting you open the door."
+        desc: "A valid card energizes an isolation relay. Its NC contact opens, removing power from the fail-safe maglock so the door can be opened."
       };
     case 10:
       return {
-        title: "Traffic Light Switcher",
-        desc: "A selector switch alternating control signals between red and green road lamps to safely direct traffic lanes."
+        title: "Red/Green Status Control",
+        desc: "A three-position momentary switch commands a relay to transfer indication between red and green, with a neutral center position."
       };
     case 11:
       return {
-        title: "Bathroom GFCI Ground Protection",
-        desc: "A grounded electrical outlet. If current leaks to the ground loop, it immediately trips the circuit protection to prevent shock."
+        title: "Grounded Lighting Branch",
+        desc: "The switch interrupts the hot conductor, neutral provides the normal return path, and protective earth bonds exposed metal for safety."
       };
     case 12:
       return {
         title: "Machinery Start/Stop Station",
-        desc: "A latching control circuit. The START button triggers a relay coil which seals itself ON. The STOP button breaks the latch."
+        desc: "START energizes the motor relay, and an auxiliary contact seals the circuit in. STOP opens the control path and drops the relay out."
       };
     case 13:
       return {
-        title: "HVAC Fan Time-Delay",
-        desc: "A time-delay relay. When the heating system switches on, it waits 2 seconds for the furnace to warm up before starting the fan."
+        title: "Delayed Ventilation Start",
+        desc: "A timer begins when the control switch closes, then energizes the fan after a short delay to sequence equipment safely."
       };
     case 14:
       return {
         title: "Elevator Safety Limit Switch",
-        desc: "An NC roller limit switch. If the elevator cabin travels too high, it physically pushes the limit switch open, cutting the hoist motor."
+        desc: "An NC upper-limit switch opens when the car reaches its safe travel limit, breaking the hoist control circuit and stopping the motor."
       };
     case 15:
       return {
-        title: "Automatic Driveway Gate / Car Window",
-        desc: "An H-bridge motor reverser. Powering Relay 1 drives the gate open, and powering Relay 2 reverses voltage polarity to drive it closed."
+        title: "Reversing Linear Actuator",
+        desc: "Two interlocked relay paths reverse DC polarity at the actuator, producing controlled extend and retract movement."
       };
     case 16:
       return {
-        title: "Integrated Access Control System",
-        desc: "A complete security cabinet stepping down high AC voltage to 12V DC power to safely run card readers and maglocks."
+        title: "Access-Control Power Cabinet",
+        desc: "A low-voltage AC transformer feeds an Altronix board, which provides DC power for the card reader, relay, and fail-safe maglock."
+      };
+    case 17:
+      return {
+        title: "Relay-Controlled Cabinet Fan",
+        desc: "A momentary control switch energizes an isolation relay, whose NO contact powers a separate cooling-fan circuit only while the switch is held."
+      };
+    case 18:
+      return {
+        title: "Automatic Parking Gate",
+        desc: "A card reader starts the timed OPEN branch. After the vehicle passes, a loop detector starts the timed CLOSE branch to lower the barrier."
+      };
+    case 19:
+      return {
+        title: "Smart Parking Barrier",
+        desc: "An integrated gate cabinet combines credential entry, vehicle detection, timed relay latches, and separate opening and closing commands."
+      };
+    case 20:
+      return {
+        title: "Door Release and Alarm Controller",
+        desc: "A DPDT relay coordinates red/green status, a fail-secure lock, and an alarm path selected by momentary release and maintained override switches."
+      };
+    case 21:
+      return {
+        title: "Request-to-Exit Door Control",
+        desc: "A momentary exit switch releases the fail-safe maglock while held. A maintained service switch keeps the door released for supervised access or maintenance."
+      };
+    case 22:
+      return {
+        title: "Motorized Sliding Entrance Gate",
+        desc: "Two contactor relays reverse a 24 VDC gate motor, while normally closed OPEN and CLOSE limit switches stop travel at each end."
+      };
+    case 23:
+      return {
+        title: "Emergency Pull-Station Release",
+        desc: "A normally closed pull station holds the relay energized in normal operation. Pulling it drops the relay, releases the fail-safe lock, and changes status from green to red."
+      };
+    case 24:
+      return {
+        title: "Maintained Actuator Control",
+        desc: "A maintained key switch controls a cross-wired DPDT relay. The relay reverses polarity to extend or retract a 24 VDC linear actuator."
       };
     default:
       return {
@@ -110,13 +148,11 @@ const getRealWorldApplication = (levelId: number) => {
 export const HelpOverlay: React.FC = () => {
   const {
     currentLevelIndex,
-    levelCompleted,
     successFeedback,
     simulation,
+    components,
     isRunning,
-    timeElapsed,
     score,
-    nextLevel,
     recentAchievement,
     dismissAchievement,
     multimeter,
@@ -138,14 +174,6 @@ export const HelpOverlay: React.FC = () => {
         multimeter.mode === 'RESISTANCE' ? 'OHM' :
           'OFF';
 
-  const [isDismissed, setIsDismissed] = React.useState(false);
-
-  useEffect(() => {
-    setIsDismissed(false);
-  }, [currentLevelIndex]);
-
-
-
   // Auto-dismiss achievement notifications after 4 seconds
   useEffect(() => {
     if (recentAchievement) {
@@ -155,26 +183,6 @@ export const HelpOverlay: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [recentAchievement, dismissAchievement]);
-
-  // Calculate stars earned based on performance
-  const calculateStars = () => {
-    // 3 stars: no hints used, completed in under 90 seconds
-    // 2 stars: under 3 hints, completed under 3 minutes
-    // 1 star: default
-    const hints = score.hintsUsed;
-    if (hints === 0 && timeElapsed < 90) return 3;
-    if (hints <= 2 && timeElapsed < 180) return 2;
-    return 1;
-  };
-
-  const stars = calculateStars();
-
-  // Helper to format timer
-  const formatTime = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remaining = secs % 60;
-    return `${mins.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`;
-  };
 
   // Determine current diagnostic message based on electrical solver
   const getDiagnosticMessage = () => {
@@ -468,6 +476,15 @@ export const HelpOverlay: React.FC = () => {
           {/* Lower Section: Real-World Application with SVG visual */}
           {(() => {
             const app = getRealWorldApplication(level.id);
+            const visualActive = level.id === 21
+              ? simulation.energizedComponents.has('lab21_relay')
+              : level.id === 22
+                ? (components.find(component => component.id === 'sliding_gate_1')?.state.travel || 0) >= 50
+                : level.id === 23
+                  ? Boolean(components.find(component => component.id === 'pull_station_1')?.state.toggled)
+                  : level.id === 24
+                    ? (components.find(component => component.id === 'reference_actuator')?.state.travel || 0) >= 50
+                    : isRunning;
             return (
               <div className="h-full shrink-0 flex gap-3 text-left items-center justify-between">
                 <div className="flex-grow min-w-0 flex flex-col gap-1 justify-center">
@@ -485,7 +502,7 @@ export const HelpOverlay: React.FC = () => {
                 </div>
                 {/* SVG Visual illustration of equivalent application - scaled to 56px */}
                 <div className="shrink-0 w-16 h-16 real-world-visual-container bg-black/25 rounded-md border border-white/5 p-1 flex items-center justify-center">
-                  <RealWorldVisual levelId={level.id} isActive={isRunning} />
+                  <RealWorldVisual levelId={level.id} isActive={visualActive} />
                 </div>
               </div>
             );
@@ -503,73 +520,7 @@ export const HelpOverlay: React.FC = () => {
         </button>
       )}
 
-      {/* 3. Level Complete Floating Notification Card */}
-      {levelCompleted && !isDismissed && (
-        <div className="fixed bottom-6 right-6 z-50 pointer-events-auto">
-          <div className="relative w-[360px] max-w-[calc(100vw-2rem)] bg-[#0b1018]/96 border border-white/10 rounded-lg shadow-2xl p-5 flex flex-col items-center text-center animate-fade-in backdrop-blur-xl">
-            
-            {/* Close / Dismiss button */}
-            <button
-              onClick={() => setIsDismissed(true)}
-              className="absolute top-3 right-3 p-1 rounded-md flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-              title="Dismiss Notification"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Success icon */}
-            <div className="w-12 h-12 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 flex items-center justify-center mb-3">
-              <CheckCircle2 className="w-7 h-7" />
-            </div>
-
-            <span className="text-[9px] font-semibold tracking-wide text-emerald-300 uppercase">
-              Module complete
-            </span>
-            <h2 className="text-lg font-semibold text-white mt-0.5">{level.title}</h2>
-            <p className="text-[10px] text-slate-400 mt-1 px-2 leading-normal font-medium">
-              Circuit verified. Your wiring meets the module criteria.
-            </p>
-
-            {/* Stars evaluation rating */}
-            <div className="flex gap-2 my-3">
-              {[1, 2, 3].map(num => (
-                <Star
-                  key={num}
-                  className={`w-6 h-6 ${num <= stars
-                      ? 'text-slate-100 fill-slate-100'
-                      : 'text-zinc-700'
-                    }`}
-                />
-              ))}
-            </div>
-
-            {/* Statistics */}
-            <div className="grid grid-cols-2 gap-2 w-full border-t border-b border-white/10 py-2.5 my-1 text-[11px]">
-              <div className="text-left pl-3 border-r border-white/10">
-                <span className="text-[8px] text-slate-500 block uppercase font-semibold tracking-wide">Time</span>
-                <span className="text-white font-semibold text-sm">{formatTime(timeElapsed)}</span>
-              </div>
-              <div className="text-left pl-3">
-                <span className="text-[8px] text-slate-500 block uppercase font-semibold tracking-wide">Hints</span>
-                <span className="text-white font-semibold text-sm">{score.hintsUsed}</span>
-              </div>
-            </div>
-
-            {/* Next Level CTA button */}
-            <button
-              onClick={() => {
-                soundManager.playButton();
-                nextLevel();
-              }}
-              className="mt-4 w-full py-2.5 bg-white text-slate-950 hover:bg-slate-200 rounded-md font-semibold text-xs tracking-wide flex items-center justify-center gap-2 cursor-pointer transition-all uppercase"
-            >
-              <span>Next Training Module</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-      {/* 4. Funny Short Circuit Modal Pop-up */}
+      {/* 3. Funny Short Circuit Modal Pop-up */}
       {shortCircuitPopup?.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm pointer-events-auto animate-fade-in">
           <div className="relative w-[340px] max-w-[calc(100vw-2rem)] bg-[#0f0a0a]/98 border border-red-500/20 rounded-lg shadow-2xl shadow-red-950/30 p-5 flex flex-col items-center text-center animate-scale-in">

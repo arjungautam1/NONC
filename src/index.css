@@ -47,6 +47,49 @@ body {
   background-color: #090e15;
 }
 
+/* Training dashboard surfaces */
+.dashboard-grid {
+  background-image:
+    linear-gradient(rgba(96, 165, 250, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96, 165, 250, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.7) 62%, transparent 100%);
+}
+
+.dashboard-card-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+  background-size: 20px 20px;
+  mask-image: radial-gradient(circle at center, black, transparent 78%);
+}
+
+@keyframes dashboard-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-rise {
+  animation: dashboard-rise 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dashboard-rise-delay {
+  animation-delay: 100ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-rise,
+  .dashboard-rise-delay {
+    animation: none;
+  }
+}
+
 /* Glassmorphism panel styles */
 .glass-panel {
   background: rgba(15, 23, 42, 0.7);

@@ -145,15 +145,19 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
       />
       <text x="104" y="61" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">AC ON</text>
 
-      {/* Cabinet identification */}
-      <text x="135" y="72" fill="#facc15" fontSize="6.5" fontWeight="bold" textAnchor="end" fontFamily="sans-serif">
+      {/* Cabinet identification, kept clear of the terminal legends. */}
+      <text x="75" y="70" fill="#facc15" fontSize="6.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif" letterSpacing="0.4">
         ALTRONIX AL600
       </text>
 
-      {/* Screw terminal blocks and labels dynamically mapped to terminal definitions */}
+      {/*
+        One aligned terminal strip. The interactive terminal rings rendered by
+        Workspace sit directly over these screws, so there is no doubled contact
+        or repeated label at normal lab zoom.
+      */}
       {component.terminals.map((term) => {
         const xPos = 75 + term.x;
-        const yPos = 50 + term.y;
+        const terminalCenterY = 93;
         
         let labelColor = '#cbd5e1';
         if (term.id === 'pos' || term.id === 'dc_pos') labelColor = '#f87171';
@@ -161,30 +165,36 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         else if (term.id === 'gnd') labelColor = '#4ade80';
         else if (term.id.startsWith('ac')) labelColor = '#facc15';
 
+        const terminalLegend =
+          term.id === 'ac1' ? 'AC1' :
+          term.id === 'ac2' ? 'AC2' :
+          term.id === 'pos' || term.id === 'dc_pos' ? '+' :
+          term.id === 'neg' || term.id === 'dc_neg' ? '−' :
+          term.name;
+
         return (
           <g key={term.id}>
-            {/* Pocket behind the terminal screw */}
-            <rect x={xPos - 11} y={yPos - 10} width="22" height="18" fill="#1e293b" rx="2" stroke="#475569" strokeWidth="0.8" />
-            
-            {/* Terminal screw */}
-            <g transform={`translate(${xPos}, ${yPos - 1})`}>
-              <circle cx="0" cy="0" r="4.5" fill="url(#silverGrad)" stroke="#64748b" strokeWidth="0.5" />
-              <line x1="-3" y1="-1" x2="3" y2="1" stroke="#334155" strokeWidth="0.8" />
-              <line x1="-1" y1="-3" x2="1" y2="3" stroke="#334155" strokeWidth="0.8" />
-            </g>
-            
-            {/* Label text placed outside the cabinet (below the screw pocket) */}
             <text
               x={xPos}
-              y={yPos + 18}
+              y="80"
               fill={labelColor}
-              fontSize="7"
+              fontSize="7.5"
               fontWeight="900"
               fontFamily="monospace"
               textAnchor="middle"
             >
-              {term.name}
+              {terminalLegend}
             </text>
+
+            {/* Pocket behind the terminal screw */}
+            <rect x={xPos - 10} y="83" width="20" height="17" fill="#111827" rx="2" stroke="#64748b" strokeWidth="0.8" />
+
+            {/* Terminal screw */}
+            <g transform={`translate(${xPos}, ${terminalCenterY})`}>
+              <circle cx="0" cy="0" r="4.5" fill="url(#silverGrad)" stroke="#64748b" strokeWidth="0.5" />
+              <line x1="-3" y1="-1" x2="3" y2="1" stroke="#334155" strokeWidth="0.8" />
+              <line x1="-1" y1="-3" x2="1" y2="3" stroke="#334155" strokeWidth="0.8" />
+            </g>
           </g>
         );
       })}

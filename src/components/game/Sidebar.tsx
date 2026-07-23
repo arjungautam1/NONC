@@ -41,6 +41,14 @@ export const Sidebar: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`;
   };
 
+  const splitInstruction = (instruction: string) => {
+    const match = instruction.match(/^([^:]{2,28}):\s+(.+)$/);
+    const content = match?.[2] ?? '';
+    return match
+      ? { label: match[1], content: `${content.charAt(0).toUpperCase()}${content.slice(1)}` }
+      : { label: null, content: instruction };
+  };
+
   const handlePrevLevel = () => {
     if (currentLevelIndex > 0) initLevel(currentLevelIndex - 1);
   };
@@ -104,6 +112,16 @@ export const Sidebar: React.FC = () => {
       if (goalIndex === 1) return simulation.energizedComponents.has('led_red') || simulation.energizedComponents.has('led_green');
       if (goalIndex === 2) return simulation.energizedComponents.has('lock1');
       if (goalIndex === 3) return simulation.energizedComponents.has('siren1');
+    }
+    if (currentLevelIndex === 20) { // Level 21
+      const components = useGameStore.getState().components;
+      const powerSupply = components.find(c => c.id === 'lab21_psu');
+      const service = components.find(c => c.id === 'lab21_service');
+      if (goalIndex === 0) return Boolean(powerSupply?.state.active);
+      if (goalIndex === 1) return Boolean(service?.state.idleVerified);
+      if (goalIndex === 2) return Boolean(service?.state.momentaryVerified);
+      if (goalIndex === 3) return Boolean(service?.state.returnVerified);
+      if (goalIndex === 4) return Boolean(service?.state.maintainedVerified);
     }
     
     return false;
@@ -180,11 +198,12 @@ export const Sidebar: React.FC = () => {
               <select
                 value={currentLevelIndex}
                 onChange={(e) => initLevel(parseInt(e.target.value))}
-                className="w-full bg-white/[0.02] hover:bg-white/[0.05] text-slate-200 text-xs font-semibold pl-3 pr-8 py-2 rounded-lg border border-white/10 cursor-pointer hover:border-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 appearance-none transition-all text-center"
+                title={level.title}
+                className="w-full bg-white/[0.02] hover:bg-white/[0.05] text-slate-200 text-[11px] font-semibold pl-3 pr-8 py-2 rounded-lg border border-white/10 cursor-pointer hover:border-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 appearance-none transition-all text-center"
                 style={{ textAlignLast: 'center' }}
               >
                 {levels.map((lvl, index) => (
-                  <option key={lvl.id} value={index} className="bg-[#070b13] text-slate-200 font-sans font-semibold text-xs py-2 text-left">
+                  <option key={lvl.id} value={index} className="bg-[#070b13] text-slate-200 font-sans font-semibold text-[11px] py-2 text-left">
                     LVL {lvl.id}: {lvl.title}
                   </option>
                 ))}
@@ -283,17 +302,35 @@ export const Sidebar: React.FC = () => {
           </div>
           
           <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 min-h-0 custom-scrollbar">
-            {level.instructions.map((inst, index) => (
-              <div 
-                key={index} 
-                className="flex gap-2.5 items-start bg-white/[0.015] hover:bg-white/[0.035] p-2.5 rounded-lg border border-white/[0.04] hover:border-white/[0.08] text-[11px] text-slate-300 leading-relaxed font-medium transition-all duration-200"
-              >
-                <span className="bg-indigo-500/15 text-indigo-300 w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5 border border-indigo-500/20 font-mono">
-                  {(index + 1).toString().padStart(2, '0')}
-                </span>
-                <span className="flex-1">{inst}</span>
-              </div>
-            ))}
+            {level.instructions.map((inst, index) => {
+              const { label, content } = splitInstruction(inst);
+              const containsWiringPath = content.includes('→');
+
+              return (
+                <div
+                  key={index}
+                  className="flex items-start gap-2.5 rounded-lg border border-white/[0.04] bg-white/[0.015] p-2.5 text-[11px] font-medium leading-relaxed text-slate-300 transition-all duration-200 hover:border-white/[0.08] hover:bg-white/[0.035]"
+                >
+                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border border-indigo-500/20 bg-indigo-500/15 font-mono text-[9px] font-bold text-indigo-300">
+                    {(index + 1).toString().padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    {label && (
+                      <span className="mb-1 inline-flex rounded border border-blue-400/15 bg-blue-400/[0.07] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-blue-300">
+                        {label}
+                      </span>
+                    )}
+                    <p className={`break-words ${
+                      containsWiringPath
+                        ? 'font-mono text-[9.5px] leading-[1.55] text-slate-200'
+                        : 'text-[10.5px] leading-[1.55] text-slate-300'
+                    }`}>
+                      {content}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
         ) : (

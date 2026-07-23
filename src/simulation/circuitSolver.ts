@@ -1,4 +1,5 @@
 import type { CircuitComponent, Wire } from '../types/game';
+import { getTimer6062TerminalIds, isTimer6062RelayActive } from './timer6062';
 
 export interface SolverResult {
   nodeVoltages: Record<string, number>; // terminalKey -> voltage (0, 12, or 24)
@@ -98,6 +99,9 @@ export function solveCircuit(
       } else if (c.type === 'rocker_switch_2pos') {
         const targetOut = c.state.toggled ? 'no' : 'nc';
         addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
+      } else if (c.type === 'pull_station' || c.type === 'key_switch') {
+        const targetOut = c.state.toggled ? 'no' : 'nc';
+        addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
       } else if (c.type === 'relay') {
         const isEnergized = coilStates[c.id];
         if (isEnergized) {
@@ -124,11 +128,11 @@ export function solveCircuit(
           addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'r2'));
         }
       } else if (c.type === 'timer_relay') {
-        const isDelayedActive = c.state.delayedActive || false;
-        if (isDelayedActive) {
-          addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+        const terminals = getTimer6062TerminalIds(c);
+        if (isTimer6062RelayActive(c)) {
+          addConnection(getTerminalKey(c.id, terminals.common), getTerminalKey(c.id, terminals.normallyOpen));
         } else {
-          addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+          addConnection(getTerminalKey(c.id, terminals.common), getTerminalKey(c.id, terminals.normallyClosed));
         }
       } else if (c.type === 'limit_switch') {
         const isPressed = c.state.pressed || false;
@@ -230,17 +234,18 @@ export function solveCircuit(
         const nKey = getTerminalKey(c.id, 'neg');
         posSources.push(pKey);
         negSources.push(nKey);
-        sourceVoltages[pKey] = 24; // 24VDC from transformer output
+        sourceVoltages[pKey] = Number(c.state.outputVoltage ?? 24);
         sourceVoltages[nKey] = 0;
       } else if (c.type === 'power_supply') {
         const hasACTerminals = c.terminals.some(t => t.id === 'ac1') && c.terminals.some(t => t.id === 'ac2');
-        if (!hasACTerminals) {
+        const requireAcInput = c.state.requireAcInput ?? hasACTerminals;
+        if (!hasACTerminals || !requireAcInput) {
           // Legacy always-on DC power supply
           const pKey = getTerminalKey(c.id, 'pos');
           const nKey = getTerminalKey(c.id, 'neg');
           posSources.push(pKey);
           negSources.push(nKey);
-          sourceVoltages[pKey] = 24; // 24V Industrial PSU
+          sourceVoltages[pKey] = Number(c.state.outputVoltage ?? (/12\s*V/i.test(c.label) ? 12 : 24));
           sourceVoltages[nKey] = 0;
           c.state.active = true;
         }
@@ -281,7 +286,8 @@ export function solveCircuit(
     components.forEach(c => {
       if (c.type === 'power_supply') {
         const hasACTerminals = c.terminals.some(t => t.id === 'ac1') && c.terminals.some(t => t.id === 'ac2');
-        if (hasACTerminals) {
+        const requireAcInput = c.state.requireAcInput ?? hasACTerminals;
+        if (hasACTerminals && requireAcInput) {
           const ac1Key = getTerminalKey(c.id, 'ac1');
           const ac2Key = getTerminalKey(c.id, 'ac2');
           
@@ -295,7 +301,7 @@ export function solveCircuit(
             const nKey = getTerminalKey(c.id, 'neg');
             posSources.push(pKey);
             negSources.push(nKey);
-            sourceVoltages[pKey] = 24; // 24VDC output from board
+            sourceVoltages[pKey] = Number(c.state.outputVoltage ?? (/12\s*V/i.test(c.label) ? 12 : 24));
             sourceVoltages[nKey] = 0;
             c.state.active = true;
           } else {
@@ -307,10 +313,12 @@ export function solveCircuit(
 
     // 3. Traverse from Positive sources to find all connected terminals
     const connectedToPos = new Set<string>();
+    const propagatedPositiveVoltage: Record<string, number> = {};
     const posQueue: { key: string; volt: number }[] = [];
     posSources.forEach(s => {
       posQueue.push({ key: s, volt: sourceVoltages[s] });
       connectedToPos.add(s);
+      propagatedPositiveVoltage[s] = sourceVoltages[s];
     });
 
     while (posQueue.length > 0) {
@@ -319,6 +327,7 @@ export function solveCircuit(
       neighbors.forEach(n => {
         if (!connectedToPos.has(n)) {
           connectedToPos.add(n);
+          propagatedPositiveVoltage[n] = volt;
           posQueue.push({ key: n, volt });
         }
       });
@@ -411,9 +420,12 @@ export function solveCircuit(
         inKey = getTerminalKey(c.id, 'coil_a');
         outKey = getTerminalKey(c.id, 'coil_b');
       } else if (c.type === 'timer_relay') {
-        inKey = getTerminalKey(c.id, 'coil_a');
-        outKey = getTerminalKey(c.id, 'coil_b');
-      } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
+        const terminals = getTimer6062TerminalIds(c);
+        // The 6062 itself is powered continuously at (+) and (-). TRG is a
+        // separate positive-voltage input and must not stand in for board power.
+        inKey = getTerminalKey(c.id, terminals.positive);
+        outKey = getTerminalKey(c.id, terminals.negative);
+      } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'maglock') {
@@ -458,13 +470,7 @@ export function solveCircuit(
         if (isPos && isNeg) {
           nodeVoltages[key] = 0; // Shorted out
         } else if (isPos) {
-          // Find source voltage (24V or 12V)
-          const is24V = posSources.some(s => {
-            const sourceCompId = s.split(':')[0];
-            const sourceComp = compMap.get(sourceCompId);
-            return sourceComp && (sourceComp.type === 'power_supply' || sourceComp.type === 'transformer');
-          });
-          nodeVoltages[key] = is24V ? 24 : 12;
+          nodeVoltages[key] = propagatedPositiveVoltage[key] ?? 0;
         } else if (isNeg) {
           nodeVoltages[key] = 0;
         } else if (isACL && isACN) {
@@ -560,7 +566,7 @@ export function queryMultimeter(
     pathComponents.forEach(c => {
       if (c.type === 'bulb') resistance += 15.0;
       else if (c.type === 'led' || c.type === 'led_strip') resistance += 220.0;
-      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'roland_fan') resistance += 45.0;
+      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'roland_fan') resistance += 45.0;
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
       else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'timer_relay') resistance += 80.0;
@@ -616,6 +622,9 @@ function checkPathBetween(
     } else if (c.type === 'rocker_switch_2pos') {
       const targetOut = c.state.toggled ? 'no' : 'nc';
       addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
+    } else if (c.type === 'pull_station' || c.type === 'key_switch') {
+      const targetOut = c.state.toggled ? 'no' : 'nc';
+      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
     } else if (c.type === 'relay') {
       // Connect coil
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
@@ -646,11 +655,12 @@ function checkPathBetween(
         addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'r2'));
       }
     } else if (c.type === 'timer_relay') {
-      addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
-      if (c.state.delayedActive) {
-        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      const terminals = getTimer6062TerminalIds(c);
+      addConn(getTerminalKey(c.id, terminals.positive), getTerminalKey(c.id, terminals.negative));
+      if (isTimer6062RelayActive(c)) {
+        addConn(getTerminalKey(c.id, terminals.common), getTerminalKey(c.id, terminals.normallyOpen));
       } else {
-        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        addConn(getTerminalKey(c.id, terminals.common), getTerminalKey(c.id, terminals.normallyClosed));
       }
     } else if (c.type === 'limit_switch' && !c.state.pressed) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
@@ -661,7 +671,7 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'led_strip', 'motor', 'buzzer', 'maglock', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
@@ -740,6 +750,9 @@ function getComponentsInPath(
     } else if (c.type === 'rocker_switch_2pos') {
       const targetOut = c.state.toggled ? 'no' : 'nc';
       addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
+    } else if (c.type === 'pull_station' || c.type === 'key_switch') {
+      const targetOut = c.state.toggled ? 'no' : 'nc';
+      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
     } else if (c.type === 'relay') {
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
       const isEnergized = c.state.energized;
@@ -759,11 +772,12 @@ function getComponentsInPath(
         addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
       }
     } else if (c.type === 'timer_relay') {
-      addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
-      if (c.state.delayedActive) {
-        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      const terminals = getTimer6062TerminalIds(c);
+      addConn(getTerminalKey(c.id, terminals.positive), getTerminalKey(c.id, terminals.negative));
+      if (isTimer6062RelayActive(c)) {
+        addConn(getTerminalKey(c.id, terminals.common), getTerminalKey(c.id, terminals.normallyOpen));
       } else {
-        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        addConn(getTerminalKey(c.id, terminals.common), getTerminalKey(c.id, terminals.normallyClosed));
       }
     } else if (c.type === 'fuse' && !c.state.blown) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
@@ -772,7 +786,7 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'led_strip', 'motor', 'buzzer', 'maglock', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));

@@ -196,24 +196,20 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         opacity="0.15"
       />
 
-      {/* Terminal block headers */}
-      <rect x="-45" y="-58" width="90" height="12" rx="2" fill="#1e293b" stroke="#334155" strokeWidth="1" />
-      <rect x="-45" y="46" width="90" height="12" rx="2" fill="#1e293b" stroke="#334155" strokeWidth="1" />
+      {/* Side-mounted terminal rails keep field wiring away from the device top. */}
+      <rect x="-58" y="-47" width="14" height="94" rx="3" fill="#1e293b" stroke="#334155" strokeWidth="1" />
+      <rect x="44" y="-47" width="14" height="94" rx="3" fill="#1e293b" stroke="#334155" strokeWidth="1" />
 
       {/* Connection traces */}
-      {/* Pole 1 (Top Left Switch) Traces */}
-      <path d="M 12 -46 L 12 -34 L -25 -34 L -25 -25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
-      <path d="M -12 -46 L -12 -30 L -25 -30" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
-      <path d="M -35 -46 L -35 25 L -25 25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
-
-      {/* Pole 2 (Bottom Left Switch) Traces */}
-      <path d="M 12 46 L 12 34 L -5 34 L -5 25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
-      <path d="M -12 46 L -12 30 L -5 30" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
-      <path d="M -35 46 L -35 -25 L -5 -25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
-
-      {/* Coil Traces */}
-      <path d="M 35 -46 L 35 -25 L 22 -25 L 22 -18" fill="none" stroke="#ca8a04" strokeWidth="1.2" />
-      <path d="M 35 46 L 35 25 L 22 25 L 22 18" fill="none" stroke="#ca8a04" strokeWidth="1.2" />
+      {/* Pole and coil traces from the side terminal banks. */}
+      <path d="M -46 -39 L -35 -39 L -35 -25 L -25 -25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -46 -13 L -31 -13 L -31 0 L -25 0" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -46 13 L -35 13 L -35 25 L -25 25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M 46 -39 L 5 -39 L 5 -25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M 46 -13 L 9 -13 L 9 0 L -5 0" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M 46 13 L 5 13 L 5 25 L -5 25" fill="none" stroke="#3b82f6" strokeWidth="1.2" />
+      <path d="M -46 39 L 22 39 L 22 18" fill="none" stroke="#ca8a04" strokeWidth="1.2" />
+      <path d="M 46 39 L 32 39 L 32 18 L 22 18" fill="none" stroke="#ca8a04" strokeWidth="1.2" />
 
       {/* 3. Electromagnetic Coil (Right Side) */}
       <g transform="translate(22, 0)">
@@ -290,17 +286,6 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         style={{ transition: 'cy 0.08s cubic-bezier(0.25, 1, 0.5, 1)' }}
       />
 
-      {/* Silkscreen text markings inside */}
-      <text x="-35" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NO</text>
-      <text x="-12" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NC</text>
-      <text x="12" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">C</text>
-      <text x="35" y="-38" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NEG-</text>
-
-      <text x="-35" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NO</text>
-      <text x="-12" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NC</text>
-      <text x="12" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">C</text>
-      <text x="35" y="42" fill="#64748b" fontSize="5" fontWeight="bold" fontFamily="monospace" textAnchor="middle">POS+</text>
-
       {/* Decorative silkscreen labels */}
       <text x="22" y="27" fill="#93c5fd" fontSize="4.5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
       <text x="-20" y="30" fill="#94a3b8" fontSize="12" fontWeight="900" fontFamily="sans-serif" textAnchor="middle" opacity="0.15">RB1224</text>
@@ -328,15 +313,35 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         {isEnergized ? 'ON' : 'OFF'}
       </text>
 
-      {/* Screw graphics */}
-      {[-35, -12, 12, 35].map(x => renderScrew(x, -52))}
-      {[-35, -12, 12, 35].map(x => renderScrew(x, 52))}
+      {/* Side terminal screw graphics */}
+      {[-39, -13, 13, 39].map(y => renderScrew(-52, y))}
+      {[-39, -13, 13, 39].map(y => renderScrew(52, y))}
 
-      {/* Outer Label text */}
-      <text x="0" y="74" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-        {component.label}
-      </text>
+      {/* Dedicated nameplate stays clear of terminals and connected wires. */}
+      <g transform="translate(0, 78)" pointerEvents="none">
+        <rect
+          x="-49"
+          y="-10"
+          width="98"
+          height="18"
+          rx="5"
+          fill="#070b13"
+          fillOpacity="0.96"
+          stroke="#334155"
+          strokeWidth="1"
+        />
+        <text
+          x="0"
+          y="2.5"
+          fill="#f1f5f9"
+          fontSize={component.label.length > 18 ? 7.2 : 8.5}
+          fontWeight="800"
+          textAnchor="middle"
+          fontFamily="monospace"
+        >
+          {component.label}
+        </text>
+      </g>
     </g>
   );
 };
-

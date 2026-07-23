@@ -10,8 +10,28 @@ import type {
 } from '../types/game';
 import { levels } from '../levels/levelData';
 import { solveCircuit, queryMultimeter, type SolverResult } from '../simulation/circuitSolver';
+import {
+  formatTimer6062Remaining,
+  getTimer6062Config,
+  getTimer6062DurationMs,
+  getTimer6062TerminalIds,
+  isTimer6062RelayActive,
+  timer6062HasResetConflict,
+  type Timer6062Config,
+  type Timer6062Phase
+} from '../simulation/timer6062';
 import { soundManager } from '../audio/soundManager';
+import {
+  buildCustomLabComponents,
+  createCustomLabComponent,
+  getCustomLabOption,
+  MAX_CUSTOM_COMPONENTS
+} from '../customLab/componentCatalog';
 import confetti from 'canvas-confetti';
+
+let circuitEntitySequence = 0;
+const createCircuitEntityId = (prefix: 'wire' | 'junction') =>
+  `${prefix}_${Date.now()}_${circuitEntitySequence++}`;
 
 interface GameState {
   currentLevelIndex: number;
@@ -45,6 +65,7 @@ interface GameState {
   removeComponent: (id: string) => void;
   updateComponentPosition: (id: string, x: number, y: number) => void;
   setComponentState: (id: string, key: string, value: any) => void;
+  configureTimerRelay: (id: string, patch: Partial<Timer6062Config>) => void;
   pressButton: (id: string, pressed: boolean) => void;
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
@@ -59,6 +80,12 @@ interface GameState {
   ) => void;
   removeWire: (id: string) => void;
   updateWireWaypoints: (id: string, waypoints: { x: number; y: number }[]) => void;
+  reconnectWire: (
+    id: string,
+    endpoint: 'from' | 'to',
+    componentId: string,
+    terminalId: string
+  ) => void;
   spliceWire: (
     wireId: string,
     x: number,
@@ -97,10 +124,18 @@ interface GameState {
   unlockAchievement: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
+  setSidebarOpen: (open: boolean) => void;
   bottomPanelOpen: boolean;
   toggleBottomPanel: () => void;
+  setBottomPanelOpen: (open: boolean) => void;
   viewMode: 'levels' | 'lab';
   setViewMode: (mode: 'levels' | 'lab') => void;
+  isCustomLab: boolean;
+  customLabSelection: string[];
+  setCustomLabSelection: (selection: string[]) => void;
+  startCustomLab: (selection?: string[]) => void;
+  addCustomLabComponent: (optionId: string) => void;
+  removeCustomLabComponent: (optionId: string) => void;
 }
 
 const initialAchievements: Achievement[] = [
@@ -112,9 +147,158 @@ const initialAchievements: Achievement[] = [
   { id: 'multimeter_pro', title: 'Multimeter Pro', description: 'Probe a live circuit terminal to diagnose voltage.', icon: 'Gauge', unlocked: false }
 ];
 
-const timerRelayIntervals = new Map<string, any>();
-const timerRelayTimeouts = new Map<string, any>();
+interface Timer6062Runtime {
+  lastPowered: boolean;
+  lastTrigger: boolean;
+  mode: 'idle' | 'cycle' | 'repeat' | 'pulse';
+  generation: number;
+  deadline: number;
+  eventTimeout: ReturnType<typeof setTimeout> | null;
+  ticker: ReturnType<typeof setInterval> | null;
+}
+
+const timer6062Runtimes = new Map<string, Timer6062Runtime>();
+
+const createTimer6062Runtime = (): Timer6062Runtime => ({
+  lastPowered: false,
+  lastTrigger: false,
+  mode: 'idle',
+  generation: 0,
+  deadline: 0,
+  eventTimeout: null,
+  ticker: null
+});
+
+const clearTimer6062Schedule = (runtime: Timer6062Runtime) => {
+  if (runtime.eventTimeout) clearTimeout(runtime.eventTimeout);
+  if (runtime.ticker) clearInterval(runtime.ticker);
+  runtime.eventTimeout = null;
+  runtime.ticker = null;
+  runtime.deadline = 0;
+  runtime.mode = 'idle';
+  runtime.generation += 1;
+};
+
+const clearTimer6062Runtime = (componentId: string) => {
+  const runtime = timer6062Runtimes.get(componentId);
+  if (runtime) clearTimer6062Schedule(runtime);
+  timer6062Runtimes.delete(componentId);
+};
+
+const clearAllTimer6062Runtimes = () => {
+  timer6062Runtimes.forEach(clearTimer6062Schedule);
+  timer6062Runtimes.clear();
+};
 let motionIntervalId: any = null;
+
+const getAltronixTerminals = (component: CircuitComponent) => {
+  const posName = component.terminals.find(t => t.id === 'pos')?.name || '(+)';
+  const negName = component.terminals.find(t => t.id === 'neg')?.name || '(-)';
+  const groundTerminal = component.terminals.find(t => t.id === 'gnd');
+
+  return [
+    { id: 'ac1', name: 'AC', type: 'in' as const, x: -45, y: 35 },
+    { id: 'ac2', name: 'AC', type: 'in' as const, x: -15, y: 35 },
+    { id: 'pos', name: posName, type: 'pos' as const, x: 15, y: 35 },
+    { id: 'neg', name: negName, type: 'neg' as const, x: 45, y: 35 },
+    ...(groundTerminal ? [{ id: 'gnd', name: groundTerminal.name, type: 'gnd' as const, x: 0, y: -35 }] : [])
+  ];
+};
+
+const getTransformerForPowerSupply = (component: CircuitComponent, id: string): CircuitComponent => {
+  const placeAbove = component.y >= 270;
+  const preferredPosition = component.state.transformerPosition as { x: number; y: number } | undefined;
+  return {
+    id,
+    type: 'transformer',
+    x: preferredPosition?.x ?? (placeAbove ? component.x : component.x + 170),
+    y: preferredPosition?.y ?? (placeAbove ? Math.max(170, component.y - 150) : component.y),
+    label: 'AC/AC Transformer',
+    terminals: [
+      { id: 'pos', name: '(+)', type: 'pos', x: -20, y: 35 },
+      { id: 'neg', name: '(-)', type: 'neg', x: 20, y: 35 }
+    ],
+    state: { lockedPosition: true }
+  };
+};
+
+const normalizePowerStack = (components: CircuitComponent[]) => {
+  const hasTransformer = components.some(c => c.type === 'transformer');
+  let addedTransformer = false;
+
+  const normalizedComponents = components.flatMap(component => {
+    const isSource = component.type === 'power_supply' || component.type === 'battery';
+    if (!isSource) return [component];
+
+    const alreadyHasAcInputs = component.terminals.some(t => t.id === 'ac1') && component.terminals.some(t => t.id === 'ac2');
+    const labeledVoltage = /(^|\s)12\s*V/i.test(component.label) ? 12 : 24;
+    const normalizedPowerSupply: CircuitComponent = {
+      ...component,
+      type: 'power_supply',
+      label: 'Altronix Board',
+      terminals: getAltronixTerminals(component),
+      state: {
+        ...component.state,
+        lockedPosition: true,
+        requireAcInput: component.state.requireAcInput ?? (component.type === 'power_supply' && alreadyHasAcInputs),
+        outputVoltage: Number(component.state.outputVoltage ?? (component.type === 'battery' ? 12 : labeledVoltage))
+      }
+    };
+
+    if (hasTransformer || addedTransformer) {
+      return [normalizedPowerSupply];
+    }
+
+    addedTransformer = true;
+    return [
+      getTransformerForPowerSupply(component, 'smps'),
+      normalizedPowerSupply
+    ];
+  });
+
+  return normalizedComponents.map(component => {
+    if (component.type === 'transformer') {
+      return {
+        ...component,
+        state: { ...component.state, lockedPosition: true }
+      };
+    }
+    if (component.type !== 'timer_relay') return component;
+    const config = getTimer6062Config(component);
+    const duration = getTimer6062DurationMs(config);
+    const terminalIds = getTimer6062TerminalIds(component);
+    const cadTerminalLayout = new Map([
+      [terminalIds.trigger, { name: 'TRG', x: -36 }],
+      [terminalIds.negative, { name: '−', x: -22 }],
+      [terminalIds.positive, { name: '+', x: -7 }],
+      [terminalIds.normallyOpen, { name: 'NO', x: 7 }],
+      [terminalIds.common, { name: 'C', x: 22 }],
+      [terminalIds.normallyClosed, { name: 'NC', x: 36 }]
+    ]);
+    return {
+      ...component,
+      label: component.label || 'Altronix 6062 Timer',
+      terminals: component.terminals.map(terminal => {
+        const cadPosition = cadTerminalLayout.get(terminal.id);
+        return cadPosition
+          ? { ...terminal, name: cadPosition.name, x: cadPosition.x, y: 40 }
+          : terminal;
+      }),
+      state: {
+        ...component.state,
+        timer6062Config: config,
+        relayActive: false,
+        delayedActive: false,
+        timerPhase: 'unpowered' as Timer6062Phase,
+        timeLeftMs: duration,
+        timeLeft: formatTimer6062Remaining(duration),
+        boardPowered: false,
+        triggerActive: false,
+        voltageValid: false
+      }
+    };
+  });
+};
 
 export const useGameStore = create<GameState>((set, get) => {
   
@@ -127,6 +311,179 @@ export const useGameStore = create<GameState>((set, get) => {
     }].slice(-30);
     
     set({ history: newHistory, redoHistory: [] });
+  };
+
+  const hasTimer6062ConfigurationConflict = (config: Timer6062Config) =>
+    timer6062HasResetConflict(config) || (config.j2Cut && !config.dip1RelayAtEnd);
+
+  const commitTimer6062State = (componentId: string, statePatch: Record<string, unknown>) => {
+    const current = get();
+    const components = current.components.map(component => component.id === componentId
+      ? { ...component, state: { ...component.state, ...statePatch } }
+      : component
+    );
+    runSimulation(components, current.wires, current.isRunning);
+  };
+
+  const startTimer6062Ticker = (componentId: string, runtime: Timer6062Runtime, generation: number) => {
+    runtime.ticker = setInterval(() => {
+      const liveRuntime = timer6062Runtimes.get(componentId);
+      if (!liveRuntime || liveRuntime.generation !== generation || liveRuntime.deadline <= 0) return;
+      const remaining = Math.max(0, liveRuntime.deadline - Date.now());
+      set(state => ({
+        components: state.components.map(component => component.id === componentId
+          ? {
+              ...component,
+              state: {
+                ...component.state,
+                timeLeftMs: remaining,
+                timeLeft: formatTimer6062Remaining(remaining)
+              }
+            }
+          : component
+        )
+      }));
+    }, 100);
+  };
+
+  const finishTimer6062Cycle = (componentId: string, config: Timer6062Config, generation: number) => {
+    const runtime = timer6062Runtimes.get(componentId);
+    if (!runtime || runtime.generation !== generation || runtime.mode !== 'cycle') return;
+    clearTimer6062Schedule(runtime);
+
+    if (!config.dip1RelayAtEnd) {
+      soundManager.playClick();
+      commitTimer6062State(componentId, {
+        relayActive: false,
+        delayedActive: false,
+        timerPhase: 'ready' as Timer6062Phase,
+        timeLeftMs: 0,
+        timeLeft: '0.0s'
+      });
+      return;
+    }
+
+    soundManager.playClick();
+    if (config.j2Cut) {
+      runtime.mode = 'pulse';
+      const pulseGeneration = runtime.generation;
+      runtime.deadline = Date.now() + 1_000;
+      startTimer6062Ticker(componentId, runtime, pulseGeneration);
+      runtime.eventTimeout = setTimeout(() => {
+        const pulseRuntime = timer6062Runtimes.get(componentId);
+        if (!pulseRuntime || pulseRuntime.generation !== pulseGeneration || pulseRuntime.mode !== 'pulse') return;
+        clearTimer6062Schedule(pulseRuntime);
+        soundManager.playClick();
+        commitTimer6062State(componentId, {
+          relayActive: false,
+          delayedActive: false,
+          timerPhase: 'ready' as Timer6062Phase,
+          timeLeftMs: 0,
+          timeLeft: '0.0s'
+        });
+      }, 1_000);
+      commitTimer6062State(componentId, {
+        relayActive: true,
+        delayedActive: true,
+        timerPhase: 'pulse' as Timer6062Phase,
+        timeLeftMs: 1_000,
+        timeLeft: '1.0s'
+      });
+      return;
+    }
+
+    commitTimer6062State(componentId, {
+      relayActive: true,
+      delayedActive: true,
+      timerPhase: 'output' as Timer6062Phase,
+      timeLeftMs: 0,
+      timeLeft: '0.0s'
+    });
+  };
+
+  const beginTimer6062Cycle = (
+    componentId: string,
+    sourceState: CircuitComponent['state'],
+    config: Timer6062Config
+  ) => {
+    const runtime = timer6062Runtimes.get(componentId) ?? createTimer6062Runtime();
+    timer6062Runtimes.set(componentId, runtime);
+    clearTimer6062Schedule(runtime);
+
+    const duration = getTimer6062DurationMs(config);
+    const relayActive = !config.dip1RelayAtEnd;
+    runtime.mode = 'cycle';
+    runtime.deadline = Date.now() + duration;
+    const generation = runtime.generation;
+    startTimer6062Ticker(componentId, runtime, generation);
+    runtime.eventTimeout = setTimeout(
+      () => finishTimer6062Cycle(componentId, config, generation),
+      duration
+    );
+
+    if (relayActive !== Boolean(sourceState.relayActive ?? sourceState.delayedActive)) {
+      soundManager.playClick();
+    }
+
+    return {
+      ...sourceState,
+      relayActive,
+      delayedActive: relayActive,
+      timerPhase: 'timing' as Timer6062Phase,
+      timeLeftMs: duration,
+      timeLeft: formatTimer6062Remaining(duration)
+    };
+  };
+
+  const scheduleTimer6062RepeatEdge = (
+    componentId: string,
+    config: Timer6062Config,
+    runtime: Timer6062Runtime,
+    generation: number
+  ) => {
+    const duration = getTimer6062DurationMs(config);
+    runtime.eventTimeout = setTimeout(() => {
+      const liveRuntime = timer6062Runtimes.get(componentId);
+      const component = get().components.find(candidate => candidate.id === componentId);
+      if (!liveRuntime || !component || liveRuntime.generation !== generation || liveRuntime.mode !== 'repeat') return;
+
+      const relayActive = !isTimer6062RelayActive(component);
+      liveRuntime.deadline = Date.now() + duration;
+      soundManager.playClick();
+      scheduleTimer6062RepeatEdge(componentId, config, liveRuntime, generation);
+      commitTimer6062State(componentId, {
+        relayActive,
+        delayedActive: relayActive,
+        timerPhase: 'repeat' as Timer6062Phase,
+        timeLeftMs: duration,
+        timeLeft: formatTimer6062Remaining(duration)
+      });
+    }, duration);
+  };
+
+  const beginTimer6062Repeat = (
+    componentId: string,
+    sourceState: CircuitComponent['state'],
+    config: Timer6062Config
+  ) => {
+    const runtime = timer6062Runtimes.get(componentId) ?? createTimer6062Runtime();
+    timer6062Runtimes.set(componentId, runtime);
+    clearTimer6062Schedule(runtime);
+    const duration = getTimer6062DurationMs(config);
+    runtime.mode = 'repeat';
+    runtime.deadline = Date.now() + duration;
+    const generation = runtime.generation;
+    startTimer6062Ticker(componentId, runtime, generation);
+    scheduleTimer6062RepeatEdge(componentId, config, runtime, generation);
+
+    return {
+      ...sourceState,
+      relayActive: false,
+      delayedActive: false,
+      timerPhase: 'repeat' as Timer6062Phase,
+      timeLeftMs: duration,
+      timeLeft: formatTimer6062Remaining(duration)
+    };
   };
 
   const runSimulation = (currentComponents: CircuitComponent[], currentWires: Wire[], currentIsRunning: boolean) => {
@@ -161,7 +518,9 @@ export const useGameStore = create<GameState>((set, get) => {
       }
     }
 
-    // Update relay mechanical energized status and timer relay countdowns in component state so visuals update
+    // Update relay mechanics and advance each 6062 from real terminal voltages,
+    // trigger edges, DIP selections, jumper cuts, and trimpot setting.
+    let timerContactChanged = false;
     const updatedComponents = currentComponents.map(c => {
       if (c.type === 'relay' || c.type === 'relay_dpdt') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
@@ -171,49 +530,114 @@ export const useGameStore = create<GameState>((set, get) => {
         }
       }
       if (c.type === 'timer_relay') {
-        const isEnergized = solverResult.energizedComponents.has(c.id);
-        if (isEnergized && currentIsRunning) {
-          if (!timerRelayTimeouts.has(c.id)) {
-            // Start the delay timer
-            c.state.timeLeft = '2.0s';
-            const startTime = Date.now();
+        const config = getTimer6062Config(c);
+        const terminals = getTimer6062TerminalIds(c);
+        const duration = getTimer6062DurationMs(config);
+        const supplyVoltage = solverResult.nodeVoltages[`${c.id}:${terminals.positive}`] || 0;
+        const hasPowerPath = solverResult.energizedComponents.has(c.id);
+        const expectedVoltage = config.dip3TwelveVolt ? 12 : 24;
+        const voltageValid = hasPowerPath && Math.abs(supplyVoltage - expectedVoltage) <= 2;
+        const boardPowered = currentIsRunning && !solverResult.shortCircuit && voltageValid;
+        const triggerVoltage = solverResult.nodeVoltages[`${c.id}:${terminals.trigger}`] || 0;
+        const triggerThreshold = config.dip3TwelveVolt ? 7 : 15;
+        const triggerActive = boardPowered && triggerVoltage >= triggerThreshold;
+        const runtime = timer6062Runtimes.get(c.id) ?? createTimer6062Runtime();
+        timer6062Runtimes.set(c.id, runtime);
 
-            const timeoutId = setTimeout(() => {
-              const comps = get().components.map(comp => 
-                comp.id === c.id ? { ...comp, state: { ...comp.state, delayedActive: true, timeLeft: '0.0s' } } : comp
-              );
-              set({ components: comps });
-              soundManager.playClick();
-              runSimulation(comps, get().wires, get().isRunning);
-            }, 2000);
+        let nextState: CircuitComponent['state'] = {
+          ...c.state,
+          timer6062Config: config,
+          boardPowered,
+          inputVoltage: supplyVoltage,
+          voltageValid,
+          triggerActive
+        };
+        const relayWasActive = isTimer6062RelayActive(c);
 
-            const intervalId = setInterval(() => {
-              const elapsed = Date.now() - startTime;
-              const remaining = Math.max(0, (2000 - elapsed) / 1000).toFixed(1);
-              
-              if (timerRelayTimeouts.has(c.id)) {
-                set(state => ({
-                  components: state.components.map(comp => 
-                    comp.id === c.id ? { ...comp, state: { ...comp.state, timeLeft: `${remaining}s` } } : comp
-                  )
-                }));
-              }
-            }, 100);
-
-            timerRelayTimeouts.set(c.id, timeoutId);
-            timerRelayIntervals.set(c.id, intervalId);
-          }
+        if (!boardPowered) {
+          if (runtime.mode !== 'idle') clearTimer6062Schedule(runtime);
+          runtime.lastPowered = false;
+          runtime.lastTrigger = false;
+          nextState = {
+            ...nextState,
+            relayActive: false,
+            delayedActive: false,
+            timerPhase: currentIsRunning && hasPowerPath && supplyVoltage > 0
+              ? 'voltage-mismatch' as Timer6062Phase
+              : 'unpowered' as Timer6062Phase,
+            timeLeftMs: duration,
+            timeLeft: formatTimer6062Remaining(duration)
+          };
         } else {
-          // De-energized or simulation stopped: reset timer instantly
-          if (timerRelayTimeouts.has(c.id)) {
-            clearTimeout(timerRelayTimeouts.get(c.id));
-            clearInterval(timerRelayIntervals.get(c.id));
-            timerRelayTimeouts.delete(c.id);
-            timerRelayIntervals.delete(c.id);
-            
-            return { ...c, state: { ...c.state, delayedActive: false, timeLeft: '2.0s' } };
+          const risingTrigger = !runtime.lastTrigger && triggerActive;
+          const fallingTrigger = runtime.lastTrigger && !triggerActive;
+          const newlyPowered = !runtime.lastPowered;
+          runtime.lastPowered = true;
+
+          if (config.j1Cut) {
+            if (runtime.mode !== 'repeat') {
+              nextState = beginTimer6062Repeat(c.id, nextState, config);
+            }
+          } else if (hasTimer6062ConfigurationConflict(config)) {
+            if (runtime.mode !== 'idle') clearTimer6062Schedule(runtime);
+            nextState = {
+              ...nextState,
+              relayActive: false,
+              delayedActive: false,
+              timerPhase: 'configuration-conflict' as Timer6062Phase,
+              timeLeftMs: duration,
+              timeLeft: formatTimer6062Remaining(duration)
+            };
+          } else if (newlyPowered) {
+            if (!config.j3Cut || (!config.dip4TriggerRemoval && triggerActive)) {
+              nextState = beginTimer6062Cycle(c.id, nextState, config);
+            } else {
+              nextState = {
+                ...nextState,
+                relayActive: false,
+                delayedActive: false,
+                timerPhase: config.dip4TriggerRemoval && triggerActive
+                  ? 'armed' as Timer6062Phase
+                  : 'ready' as Timer6062Phase,
+                timeLeftMs: duration,
+                timeLeft: formatTimer6062Remaining(duration)
+              };
+            }
+          } else if (config.dip4TriggerRemoval) {
+            if (risingTrigger) {
+              if (runtime.mode !== 'idle') clearTimer6062Schedule(runtime);
+              nextState = {
+                ...nextState,
+                relayActive: false,
+                delayedActive: false,
+                timerPhase: 'armed' as Timer6062Phase,
+                timeLeftMs: duration,
+                timeLeft: formatTimer6062Remaining(duration)
+              };
+            } else if (fallingTrigger) {
+              nextState = beginTimer6062Cycle(c.id, nextState, config);
+            }
+          } else if (risingTrigger) {
+            nextState = beginTimer6062Cycle(c.id, nextState, config);
+          } else if (fallingTrigger && isTimer6062RelayActive(c) && c.state.timerPhase === 'output') {
+            soundManager.playClick();
+            nextState = {
+              ...nextState,
+              relayActive: false,
+              delayedActive: false,
+              timerPhase: 'ready' as Timer6062Phase,
+              timeLeftMs: duration,
+              timeLeft: formatTimer6062Remaining(duration)
+            };
           }
+
+          runtime.lastTrigger = triggerActive;
         }
+
+        if (relayWasActive !== Boolean(nextState.relayActive ?? nextState.delayedActive)) {
+          timerContactChanged = true;
+        }
+        return { ...c, state: nextState };
       }
       if (c.type === 'maglock') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
@@ -221,6 +645,16 @@ export const useGameStore = create<GameState>((set, get) => {
       }
       return c;
     });
+
+    const effectiveSolverResult = timerContactChanged
+      ? solveCircuit(updatedComponents, currentWires, currentIsRunning)
+      : solverResult;
+    effectiveSolverResult.energizedComponents = new Set(
+      [...effectiveSolverResult.energizedComponents].filter(componentId => {
+        const component = updatedComponents.find(candidate => candidate.id === componentId);
+        return component?.type !== 'timer_relay' || component.state.boardPowered;
+      })
+    );
 
     // Update multimeter reading if active
     let multimeterReading = '---';
@@ -231,7 +665,7 @@ export const useGameStore = create<GameState>((set, get) => {
         get().multimeter.blackProbe,
         updatedComponents,
         currentWires,
-        solverResult
+        effectiveSolverResult
       );
     }
 
@@ -239,13 +673,13 @@ export const useGameStore = create<GameState>((set, get) => {
     let completed = false;
     let feedback = '';
 
-    if (currentIsRunning && !solverResult.shortCircuit) {
+    if (currentIsRunning && !effectiveSolverResult.shortCircuit && !get().isCustomLab) {
       const level = levels[get().currentLevelIndex];
-      const isEnergizedFn = (cid: string) => solverResult.energizedComponents.has(cid);
+      const isEnergizedFn = (cid: string) => effectiveSolverResult.energizedComponents.has(cid);
       const testResult = level.successCriteria(
         updatedComponents,
         currentWires,
-        solverResult.nodeVoltages,
+        effectiveSolverResult.nodeVoltages,
         isEnergizedFn
       );
       
@@ -266,7 +700,7 @@ export const useGameStore = create<GameState>((set, get) => {
       } else {
         feedback = testResult.feedback || '';
       }
-    } else if (solverResult.shortCircuit) {
+    } else if (effectiveSolverResult.shortCircuit) {
       feedback = '🚨 Short Circuit Detected! Current is flowing directly from Positive to Negative without passing through a load. Check your wiring loops.';
       
       if (currentIsRunning) {
@@ -322,7 +756,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
     set({
       components: updatedComponents,
-      simulation: solverResult,
+      simulation: effectiveSolverResult,
       multimeter: {
         ...get().multimeter,
         reading: multimeterReading
@@ -372,11 +806,105 @@ export const useGameStore = create<GameState>((set, get) => {
     timerIntervalId: null,
     sidebarOpen: true,
     toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
+    setSidebarOpen: (open) => set({ sidebarOpen: open }),
     bottomPanelOpen: true,
     toggleBottomPanel: () => set(state => ({ bottomPanelOpen: !state.bottomPanelOpen })),
+    setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
     hintRevealedAt: 0,
     viewMode: 'levels',
     setViewMode: (mode) => set({ viewMode: mode }),
+    isCustomLab: false,
+    customLabSelection: [],
+    setCustomLabSelection: (selection) => set({ customLabSelection: [...selection] }),
+    startCustomLab: (selection) => {
+      const selectedIds = [...new Set(selection ?? get().customLabSelection)]
+        .filter(optionId => Boolean(getCustomLabOption(optionId)))
+        .slice(0, MAX_CUSTOM_COMPONENTS);
+      const customComponents = normalizePowerStack(buildCustomLabComponents(selectedIds));
+
+      get().stopTimer();
+      soundManager.stopAllHums();
+      clearAllTimer6062Runtimes();
+
+      set({
+        components: customComponents,
+        wires: [],
+        history: [],
+        redoHistory: [],
+        isRunning: false,
+        levelCompleted: false,
+        successFeedback: '',
+        shortCircuitPopup: null,
+        shortCircuitSmoke: null,
+        timeElapsed: 0,
+        multimeter: {
+          mode: 'OFF',
+          redProbe: null,
+          blackProbe: null,
+          reading: '---'
+        },
+        score: {
+          stars: 0,
+          score: 0,
+          timeElapsed: 0,
+          hintsUsed: 0,
+          errorsMade: 0
+        },
+        sidebarOpen: true,
+        bottomPanelOpen: false,
+        isCustomLab: true,
+        customLabSelection: [...selectedIds],
+        viewMode: 'lab'
+      });
+
+      runSimulation(customComponents, [], false);
+      get().startTimer();
+    },
+    addCustomLabComponent: (optionId) => {
+      const state = get();
+      if (
+        !state.isCustomLab ||
+        !getCustomLabOption(optionId) ||
+        state.customLabSelection.includes(optionId) ||
+        state.customLabSelection.length >= MAX_CUSTOM_COMPONENTS
+      ) return;
+
+      const component = createCustomLabComponent(optionId, state.components);
+      if (!component) return;
+
+      const newComponents = [...state.components, component];
+      saveToHistory(state.components, state.wires);
+      set({
+        components: newComponents,
+        customLabSelection: [...state.customLabSelection, optionId]
+      });
+      runSimulation(newComponents, state.wires, state.isRunning);
+      soundManager.playClick();
+    },
+    removeCustomLabComponent: (optionId) => {
+      const state = get();
+      if (!state.isCustomLab || !state.customLabSelection.includes(optionId)) return;
+
+      const componentId = `custom_${optionId}`;
+      const newComponents = state.components.filter(component => component.id !== componentId);
+      const newWires = state.wires.filter(wire =>
+        wire.fromComponentId !== componentId && wire.toComponentId !== componentId
+      );
+      const redProbe = state.multimeter.redProbe?.componentId === componentId ? null : state.multimeter.redProbe;
+      const blackProbe = state.multimeter.blackProbe?.componentId === componentId ? null : state.multimeter.blackProbe;
+
+      clearTimer6062Runtime(componentId);
+
+      saveToHistory(state.components, state.wires);
+      set({
+        components: newComponents,
+        wires: newWires,
+        customLabSelection: state.customLabSelection.filter(id => id !== optionId),
+        multimeter: { ...state.multimeter, redProbe, blackProbe }
+      });
+      runSimulation(newComponents, newWires, state.isRunning);
+      soundManager.playClick();
+    },
     shortCircuitPopup: null,
     dismissShortCircuitPopup: () => set({ shortCircuitPopup: null }),
     shortCircuitSmoke: null,
@@ -388,9 +916,10 @@ export const useGameStore = create<GameState>((set, get) => {
       // Stop previous timer and hums
       get().stopTimer();
       soundManager.stopAllHums();
+      clearAllTimer6062Runtimes();
 
       // Deep copy level components
-      const newComps = JSON.parse(JSON.stringify(level.preplacedComponents));
+      const newComps = normalizePowerStack(JSON.parse(JSON.stringify(level.preplacedComponents)));
       const newWires = [...level.preplacedWires];
 
       set({
@@ -418,6 +947,9 @@ export const useGameStore = create<GameState>((set, get) => {
           hintsUsed: 0,
           errorsMade: 0
         },
+        sidebarOpen: true,
+        bottomPanelOpen: true,
+        isCustomLab: false,
         ...(skipViewTransition ? {} : { viewMode: 'lab' })
       });
 
@@ -427,7 +959,12 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     resetLevel: () => {
-      const { initLevel, currentLevelIndex } = get();
+      const { initLevel, currentLevelIndex, isCustomLab, startCustomLab, customLabSelection } = get();
+      if (isCustomLab) {
+        startCustomLab(customLabSelection);
+        soundManager.playButton();
+        return;
+      }
       initLevel(currentLevelIndex);
       soundManager.playButton();
     },
@@ -448,6 +985,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
     removeComponent: (id) => {
       saveToHistory(get().components, get().wires);
+      clearTimer6062Runtime(id);
       // Remove component and any wires snapped to it
       const newComponents = get().components.filter(c => c.id !== id);
       const newWires = get().wires.filter(w => w.fromComponentId !== id && w.toComponentId !== id);
@@ -476,6 +1014,43 @@ export const useGameStore = create<GameState>((set, get) => {
         c.id === id ? { ...c, state: { ...c.state, [key]: value } } : c
       );
       runSimulation(newComponents, get().wires, get().isRunning);
+    },
+
+    configureTimerRelay: (id, patch) => {
+      const current = get();
+      if (current.isRunning) return;
+      const timer = current.components.find(component => component.id === id && component.type === 'timer_relay');
+      if (!timer) return;
+
+      const config: Timer6062Config = {
+        ...getTimer6062Config(timer),
+        ...patch,
+        adjustment: Math.min(60, Math.max(1, Number(patch.adjustment ?? getTimer6062Config(timer).adjustment)))
+      };
+      const duration = getTimer6062DurationMs(config);
+      const components = current.components.map(component => component.id === id
+        ? {
+            ...component,
+            state: {
+              ...component.state,
+              timer6062Config: config,
+              relayActive: false,
+              delayedActive: false,
+              timerPhase: 'unpowered' as Timer6062Phase,
+              timeLeftMs: duration,
+              timeLeft: formatTimer6062Remaining(duration),
+              boardPowered: false,
+              triggerActive: false,
+              voltageValid: false
+            }
+          }
+        : component
+      );
+
+      clearTimer6062Runtime(id);
+      saveToHistory(current.components, current.wires);
+      soundManager.playClick();
+      runSimulation(components, current.wires, false);
     },
 
     pressButton: (id, pressed) => {
@@ -553,7 +1128,7 @@ export const useGameStore = create<GameState>((set, get) => {
       soundManager.playWire();
 
       const newWire: Wire = {
-        id: `wire_${Date.now()}`,
+        id: createCircuitEntityId('wire'),
         fromComponentId: fromCId,
         fromTerminalId: fromTId,
         toComponentId: toCId,
@@ -583,6 +1158,53 @@ export const useGameStore = create<GameState>((set, get) => {
       runSimulation(get().components, newWires, get().isRunning);
     },
 
+    reconnectWire: (id, endpoint, componentId, terminalId) => {
+      const state = get();
+      const wire = state.wires.find(candidate => candidate.id === id);
+      if (!wire) return;
+
+      const fixedComponentId = endpoint === 'from' ? wire.toComponentId : wire.fromComponentId;
+      const fixedTerminalId = endpoint === 'from' ? wire.toTerminalId : wire.fromTerminalId;
+      if (fixedComponentId === componentId && fixedTerminalId === terminalId) return;
+
+      const nextFromComponentId = endpoint === 'from' ? componentId : wire.fromComponentId;
+      const nextFromTerminalId = endpoint === 'from' ? terminalId : wire.fromTerminalId;
+      const nextToComponentId = endpoint === 'to' ? componentId : wire.toComponentId;
+      const nextToTerminalId = endpoint === 'to' ? terminalId : wire.toTerminalId;
+      const duplicate = state.wires.some(candidate =>
+        candidate.id !== id && (
+          (
+            candidate.fromComponentId === nextFromComponentId &&
+            candidate.fromTerminalId === nextFromTerminalId &&
+            candidate.toComponentId === nextToComponentId &&
+            candidate.toTerminalId === nextToTerminalId
+          ) || (
+            candidate.fromComponentId === nextToComponentId &&
+            candidate.fromTerminalId === nextToTerminalId &&
+            candidate.toComponentId === nextFromComponentId &&
+            candidate.toTerminalId === nextFromTerminalId
+          )
+        )
+      );
+      if (duplicate) return;
+
+      saveToHistory(state.components, state.wires);
+      soundManager.playWire();
+      const newWires = state.wires.map(candidate => candidate.id === id
+        ? {
+            ...candidate,
+            fromComponentId: nextFromComponentId,
+            fromTerminalId: nextFromTerminalId,
+            toComponentId: nextToComponentId,
+            toTerminalId: nextToTerminalId,
+            waypoints: []
+          }
+        : candidate
+      );
+      set({ wires: newWires });
+      runSimulation(state.components, newWires, state.isRunning);
+    },
+
     spliceWire: (wireId, x, y, waypoints1 = [], waypoints2 = []) => {
       const wire = get().wires.find(w => w.id === wireId);
       if (!wire) return null;
@@ -590,7 +1212,7 @@ export const useGameStore = create<GameState>((set, get) => {
       saveToHistory(get().components, get().wires);
       soundManager.playClick();
 
-      const junctionId = `junction_${Date.now()}`;
+      const junctionId = createCircuitEntityId('junction');
       const junctionComponent: CircuitComponent = {
         id: junctionId,
         type: 'junction',
@@ -611,7 +1233,7 @@ export const useGameStore = create<GameState>((set, get) => {
       const filteredWires = get().wires.filter(w => w.id !== wireId);
 
       const splitWire1: Wire = {
-        id: `wire_${Date.now()}_1`,
+        id: createCircuitEntityId('wire'),
         fromComponentId: wire.fromComponentId,
         fromTerminalId: wire.fromTerminalId,
         toComponentId: junctionId,
@@ -621,7 +1243,7 @@ export const useGameStore = create<GameState>((set, get) => {
       };
 
       const splitWire2: Wire = {
-        id: `wire_${Date.now()}_2`,
+        id: createCircuitEntityId('wire'),
         fromComponentId: junctionId,
         fromTerminalId: 'port_1',
         toComponentId: wire.toComponentId,
@@ -648,7 +1270,7 @@ export const useGameStore = create<GameState>((set, get) => {
       saveToHistory(get().components, get().wires);
       soundManager.playWire();
 
-      const junctionId = `junction_${Date.now()}`;
+      const junctionId = createCircuitEntityId('junction');
       const junctionComponent: CircuitComponent = {
         id: junctionId,
         type: 'junction',
@@ -669,7 +1291,7 @@ export const useGameStore = create<GameState>((set, get) => {
       const filteredWires = get().wires.filter(w => w.id !== wireId);
 
       const splitWire1: Wire = {
-        id: `wire_${Date.now()}_1`,
+        id: createCircuitEntityId('wire'),
         fromComponentId: wire.fromComponentId,
         fromTerminalId: wire.fromTerminalId,
         toComponentId: junctionId,
@@ -679,7 +1301,7 @@ export const useGameStore = create<GameState>((set, get) => {
       };
 
       const splitWire2: Wire = {
-        id: `wire_${Date.now()}_2`,
+        id: createCircuitEntityId('wire'),
         fromComponentId: junctionId,
         fromTerminalId: 'port_1',
         toComponentId: wire.toComponentId,
@@ -689,7 +1311,7 @@ export const useGameStore = create<GameState>((set, get) => {
       };
 
       const connectionWire: Wire = {
-        id: `wire_${Date.now()}_3`,
+        id: createCircuitEntityId('wire'),
         fromComponentId: fromCId,
         fromTerminalId: fromTId,
         toComponentId: junctionId,
@@ -831,7 +1453,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
       let hasChanges = false;
       const updatedComponents = components.map(c => {
-        if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate') {
+        if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
           const vPos = simulation.nodeVoltages[`${c.id}:pos`] || 0;
           const vNeg = simulation.nodeVoltages[`${c.id}:neg`] || 0;
           const currentTravel = c.state.travel || 0;
@@ -862,7 +1484,7 @@ export const useGameStore = create<GameState>((set, get) => {
       });
 
       if (hasChanges) {
-        const elevator = updatedComponents.find(c => c.type === 'elevator_motor' || c.type === 'actuator' || c.type === 'parking_gate');
+        const elevator = updatedComponents.find(c => c.type === 'elevator_motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'sliding_gate');
         const elevatorTravel = elevator?.state.travel ?? 0;
 
         const finalComponents = updatedComponents.map(c => {

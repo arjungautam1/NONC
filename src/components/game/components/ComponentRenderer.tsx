@@ -18,7 +18,9 @@ import { ACSource } from './ACSource';
 import { Transformer } from './Transformer';
 import { RolandFan } from './RolandFan';
 import { ParkingGate } from './ParkingGate';
+import { SlidingGate } from './SlidingGate';
 import { DoorSensor } from './DoorSensor';
+import { KeySwitch, PullStation } from './FieldControls';
 
 const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
 
@@ -43,6 +45,10 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <SwitchNO component={component} />;
     case 'button_nc':
       return <SwitchNC component={component} />;
+    case 'pull_station':
+      return <PullStation component={component} />;
+    case 'key_switch':
+      return <KeySwitch component={component} />;
     case 'switch_selector':
       return <SelectorSwitch component={component} />;
     case 'relay':
@@ -77,6 +83,8 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <RolandFan component={component} isEnergized={isEnergized} />;
     case 'parking_gate':
       return <ParkingGate component={component} />;
+    case 'sliding_gate':
+      return <SlidingGate component={component} />;
     case 'junction': {
       // Fetch wires to see which ports have active connections
       const wires = useGameStore.getState().wires;
