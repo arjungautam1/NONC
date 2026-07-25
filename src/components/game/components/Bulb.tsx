@@ -206,10 +206,53 @@ export const LEDStrip: React.FC<ComponentProps> = ({ component, isEnergized }) =
   const color = component.state.color || 'red';
   
   // Choose colors
-  const glowColor = color === 'green' ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
-  const bodyColorOn = color === 'green' ? '#4ade80' : '#f87171';
-  const bodyColorOff = color === 'green' ? '#14532d' : '#7f1d1d';
-  const lensStroke = color === 'green' ? '#15803d' : '#b91c1c';
+  const colorConfigs: Record<string, {
+    glowColor: string;
+    bodyColorOn: string;
+    bodyColorOff: string;
+    lensStroke: string;
+    glowRing: string;
+    stopColor: string;
+  }> = {
+    green: {
+      glowColor: 'rgba(34, 197, 94, 0.8)',
+      bodyColorOn: '#4ade80',
+      bodyColorOff: '#14532d',
+      lensStroke: '#15803d',
+      glowRing: '#86efac',
+      stopColor: '#22c55e'
+    },
+    red: {
+      glowColor: 'rgba(239, 68, 68, 0.8)',
+      bodyColorOn: '#f87171',
+      bodyColorOff: '#7f1d1d',
+      lensStroke: '#b91c1c',
+      glowRing: '#fca5a5',
+      stopColor: '#ef4444'
+    },
+    yellow: {
+      glowColor: 'rgba(234, 179, 8, 0.8)',
+      bodyColorOn: '#facc15',
+      bodyColorOff: '#713f12',
+      lensStroke: '#a16207',
+      glowRing: '#fef08a',
+      stopColor: '#eab308'
+    },
+    white: {
+      glowColor: 'rgba(255, 255, 255, 0.8)',
+      bodyColorOn: '#ffffff',
+      bodyColorOff: '#475569',
+      lensStroke: '#64748b',
+      glowRing: '#ffffff',
+      stopColor: '#cbd5e1'
+    }
+  };
+
+  const config = colorConfigs[color] || colorConfigs.red;
+  const glowColor = config.glowColor;
+  const bodyColorOn = config.bodyColorOn;
+  const bodyColorOff = config.bodyColorOff;
+  const lensStroke = config.lensStroke;
   const gradId = `ledStripGrad_${component.id}`;
 
   return (
@@ -280,7 +323,7 @@ export const LEDStrip: React.FC<ComponentProps> = ({ component, isEnergized }) =
               cy="15"
               r="4.5"
               fill="none"
-              stroke={color === 'green' ? '#86efac' : '#fca5a5'}
+              stroke={config.glowRing}
               strokeWidth="0.8"
               opacity="0.8"
             />
@@ -295,7 +338,7 @@ export const LEDStrip: React.FC<ComponentProps> = ({ component, isEnergized }) =
 
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={color === 'green' ? '#22c55e' : '#ef4444'} stopOpacity="0.2" />
+          <stop offset="0%" stopColor={config.stopColor} stopOpacity="0.2" />
           <stop offset="100%" stopColor={bodyColorOff} stopOpacity="0.5" />
         </linearGradient>
       </defs>

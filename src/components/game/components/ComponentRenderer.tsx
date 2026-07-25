@@ -5,10 +5,12 @@ import { Battery, PowerSupply } from './Battery';
 import { Bulb, LED, IndicatorLamp, LEDStrip } from './Bulb';
 import { SwitchNO, SwitchNC, SelectorSwitch, RockerSwitch3Pos, RockerSwitch2Pos } from './Switch';
 import { Relay, RelayDPDT } from './Relay';
+import { RB1224 } from './RB1224';
+import { RBSNTTL } from './RBSNTTL';
 import { Fuse } from './Fuse';
 import { Motor } from './Motor';
 import { Buzzer } from './Buzzer';
-import { Maglock, CardReader } from './AccessControl';
+import { Maglock, CardReader, DoorStrike, WaveSensor } from './AccessControl';
 import { TerminalBlock } from './TerminalBlock';
 import { TimerRelay } from './TimerRelay';
 import { Actuator } from './Actuator';
@@ -61,8 +63,12 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <Buzzer component={component} isEnergized={isEnergized} />;
     case 'maglock':
       return <Maglock component={component} />;
+    case 'door_strike':
+      return <DoorStrike component={component} />;
     case 'card_reader':
       return <CardReader component={component} />;
+    case 'wave_sensor':
+      return <WaveSensor component={component} />;
     case 'door_sensor':
       return <DoorSensor component={component} />;
     case 'terminal_block':
@@ -144,6 +150,10 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <RockerSwitch3Pos component={component} />;
     case 'rocker_switch_2pos':
       return <RockerSwitch2Pos component={component} />;
+    case 'relay_rbsnttl':
+      return <RBSNTTL component={component} />;
+    case 'relay_rb1224':
+      return <RB1224 component={component} />;
     case 'relay_dpdt':
       return <RelayDPDT component={component} />;
     case 'led_strip':

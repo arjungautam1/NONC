@@ -1,5 +1,8 @@
 import type { CircuitComponent, ComponentType, Terminal } from '../types/game';
 import { DEFAULT_6062_CONFIG } from '../simulation/timer6062';
+import { pullStationTerminals } from '../components/game/components/pullStationPinout';
+import { rb1224Terminals } from '../components/game/components/rb1224Pinout';
+import { rbsnttlTerminals } from '../components/game/components/rbsnttlPinout';
 
 export type CustomLabCategory = 'input' | 'control' | 'output';
 
@@ -47,46 +50,25 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'emergency_pull_station',
     category: 'input',
-    name: 'Emergency pull station',
-    description: 'Maintained emergency input that transfers COM from NC to NO when pulled.',
-    terminalSummary: 'COM · NC · NO',
+    name: 'Camden CM-700 pull station',
+    description: 'Latching door-release pull station, 12-24VDC. Two isolated circuits: 1-2 opens when pulled, 3-4 closes. Reset through the plate hole.',
+    terminalSummary: '1-2 N/C · 3-4 N/O (isolated)',
     template: {
       type: 'pull_station',
-      label: 'Emergency Pull',
-      terminals: [
-        { id: 'com', name: 'C', type: 'com', x: -55, y: 30 },
-        { id: 'no', name: 'NO', type: 'no', x: 55, y: -25 },
-        { id: 'nc', name: 'NC', type: 'nc', x: 55, y: 20 }
-      ],
-      state: { toggled: false }
-    }
-  },
-  {
-    id: 'maintained_key_switch',
-    category: 'input',
-    name: 'Maintained key switch',
-    description: 'Key-operated SPDT contact that remains in its selected position.',
-    terminalSummary: 'COM · NC · NO',
-    template: {
-      type: 'key_switch',
-      label: 'Actuator Key',
-      terminals: [
-        { id: 'com', name: 'C', type: 'com', x: -52, y: 0 },
-        { id: 'nc', name: 'NC', type: 'nc', x: 52, y: -25 },
-        { id: 'no', name: 'NO', type: 'no', x: 52, y: 25 }
-      ],
+      label: 'Camden CM-702',
+      terminals: pullStationTerminals(),
       state: { toggled: false }
     }
   },
   {
     id: 'momentary_spdt',
     category: 'input',
-    name: 'Momentary REX switch',
+    name: 'Momentary switch',
     description: 'Spring-return SPDT input with COM, NC, and NO contacts.',
     terminalSummary: 'COM · NC · NO',
     template: {
       type: 'button_no',
-      label: 'Momentary REX',
+      label: 'Momentary Switch',
       terminals: [
         { id: 'com', name: 'C', type: 'com', x: -30, y: 15 },
         { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -25 },
@@ -163,6 +145,23 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'wave_sensor',
+    category: 'input',
+    name: 'Camden CM-333 wave sensor',
+    description: 'Battery-powered touchless switch (2 AA batteries) with a Form C (SPDT) relay output. Requires no external power wiring.',
+    terminalSummary: 'C · NC · NO',
+    template: {
+      type: 'wave_sensor',
+      label: 'Camden CM-333',
+      terminals: [
+        { id: 'com', name: 'C', type: 'com', x: -20, y: -72 },
+        { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -72 },
+        { id: 'no', name: 'NO', type: 'no', x: 20, y: -72 }
+      ],
+      state: { active: false }
+    }
+  },
+  {
     id: 'door_sensor',
     category: 'input',
     name: 'Door-position sensor',
@@ -216,23 +215,50 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'relay_dpdt',
     category: 'control',
-    name: 'DPDT control relay',
-    description: 'Two linked changeover contacts controlled by one coil.',
-    terminalSummary: 'A1 · A2 · 2× COM/NC/NO',
+    name: 'Altronix RDC12 DPDT relay',
+    description: '12VDC plug-in relay and base. Two changeover poles rated 10A/220VAC or 28VDC; coil energises across pins 7 and 8.',
+    terminalSummary: '7/8 coil · 5-1-3 pole 1 · 6-2-4 pole 2',
     template: {
       type: 'relay_dpdt',
-      label: 'DPDT Relay',
+      label: 'Altronix RDC12',
+      // Pin numbers follow the RDC12 datasheet base drawing.
       terminals: [
-        { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: -55 },
-        { id: 'com1', name: 'C1', type: 'com1', x: 12, y: -55 },
-        { id: 'nc1', name: 'NC1', type: 'nc1', x: -12, y: -55 },
-        { id: 'no1', name: 'NO1', type: 'no1', x: -35, y: -55 },
-        { id: 'coil_a', name: 'A1', type: 'coil_a', x: 35, y: 55 },
-        { id: 'com2', name: 'C2', type: 'com2', x: 12, y: 55 },
-        { id: 'nc2', name: 'NC2', type: 'nc2', x: -12, y: 55 },
-        { id: 'no2', name: 'NO2', type: 'no2', x: -35, y: 55 }
+        { id: 'no1', name: 'NO1 (3)', type: 'no1', x: -40, y: -48 },
+        { id: 'nc1', name: 'NC1 (1)', type: 'nc1', x: -21, y: -48 },
+        { id: 'coil_a', name: 'Coil (7)', type: 'coil_a', x: 21, y: -48 },
+        { id: 'com1', name: 'C1 (5)', type: 'com1', x: 40, y: -48 },
+        { id: 'no2', name: 'NO2 (4)', type: 'no2', x: -40, y: 48 },
+        { id: 'nc2', name: 'NC2 (2)', type: 'nc2', x: -21, y: 48 },
+        { id: 'coil_b', name: 'Coil (8)', type: 'coil_b', x: 21, y: 48 },
+        { id: 'com2', name: 'C2 (6)', type: 'com2', x: 40, y: 48 }
       ],
+      state: { coilVoltage: 12 }
+    }
+  },
+  {
+    id: 'relay_rbsnttl',
+    category: 'control',
+    name: 'Altronix RBSNTTL trigger relay',
+    description: 'Ultra sensitive relay module. 12-24VDC board power on POS+/NEG-, plus a separate opto-isolated 3-24VDC trigger on TRG+/TRG-. Needs both to pull in. DPDT 2A/120VAC/28VDC.',
+    terminalSummary: 'POS+/NEG- power · TRG+/TRG- trigger · 2x NO/NC/C',
+    template: {
+      type: 'relay_rbsnttl',
+      label: 'Altronix RBSNTTL',
+      terminals: rbsnttlTerminals(),
       state: {}
+    }
+  },
+  {
+    id: 'relay_rb1224',
+    category: 'control',
+    name: 'Altronix RB1224 relay module',
+    description: 'Blue PCB relay sub-assembly. 5A/220VAC or 28VDC DPDT contacts, 75mA draw. SW1 selects the coil rail: OFF = 24VDC, ON = 12VDC.',
+    terminalSummary: 'POS+ / NEG- coil · 2× NO/NC/C',
+    template: {
+      type: 'relay_rb1224',
+      label: 'Altronix RB1224',
+      terminals: rb1224Terminals(),
+      state: { dip12v: false }
     }
   },
   {
@@ -368,19 +394,99 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'door_strike_fail_secure',
+    category: 'output',
+    name: 'Fail-secure door strike',
+    description: 'Requires power to unlock. Remains locked during power failure.',
+    terminalSummary: '+ · −',
+    template: {
+      type: 'door_strike',
+      label: 'Fail-Secure Strike',
+      terminals: [
+        { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+        { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
+      ],
+      state: { failSecure: true }
+    }
+  },
+  {
+    id: 'door_strike_fail_safe',
+    category: 'output',
+    name: 'Fail-safe door strike',
+    description: 'Requires power to lock. Unlocks during power failure.',
+    terminalSummary: '+ · −',
+    template: {
+      type: 'door_strike',
+      label: 'Fail-Safe Strike',
+      terminals: [
+        { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+        { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
+      ],
+      state: { failSecure: false }
+    }
+  },
+  {
     id: 'led_strip',
     category: 'output',
-    name: 'LED status strip',
+    name: 'Green LED',
     description: 'Bright green strip for extended visual status indication.',
     terminalSummary: '+ IN · − OUT',
     template: {
       type: 'led_strip',
-      label: 'Status LED Strip',
+      label: 'Green LED',
       terminals: [
         { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
         { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
       ],
       state: { color: 'green' }
+    }
+  },
+  {
+    id: 'led_strip_red',
+    category: 'output',
+    name: 'Red LED',
+    description: 'Bright red strip for extended visual status indication.',
+    terminalSummary: '+ IN · − OUT',
+    template: {
+      type: 'led_strip',
+      label: 'Red LED',
+      terminals: [
+        { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+        { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
+      ],
+      state: { color: 'red' }
+    }
+  },
+  {
+    id: 'led_strip_yellow',
+    category: 'output',
+    name: 'Yellow LED',
+    description: 'Bright yellow strip for extended visual status indication.',
+    terminalSummary: '+ IN · − OUT',
+    template: {
+      type: 'led_strip',
+      label: 'Yellow LED',
+      terminals: [
+        { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+        { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
+      ],
+      state: { color: 'yellow' }
+    }
+  },
+  {
+    id: 'led_strip_white',
+    category: 'output',
+    name: 'White LED',
+    description: 'Bright white strip for extended visual status indication.',
+    terminalSummary: '+ IN · − OUT',
+    template: {
+      type: 'led_strip',
+      label: 'White LED',
+      terminals: [
+        { id: 'in', name: '+', type: 'in', x: -50, y: 0 },
+        { id: 'out', name: '-', type: 'out', x: 50, y: 0 }
+      ],
+      state: { color: 'white' }
     }
   },
   {

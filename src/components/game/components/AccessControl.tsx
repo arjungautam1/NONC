@@ -311,3 +311,370 @@ export const CardReader: React.FC<ComponentProps> = ({ component }) => {
     </g>
   );
 };
+
+export const DoorStrike: React.FC<ComponentProps> = ({ component }) => {
+  const isPowered = component.state.active || false;
+  const isFailSecure = component.state.failSecure || false;
+  const isLocked = isFailSecure ? !isPowered : isPowered;
+
+  return (
+    <g>
+      {/* 1. Left-side prominent matte black contoured housing */}
+      <rect
+        x="-24"
+        y="-46"
+        width="14"
+        height="92"
+        rx="4"
+        fill="#18181b"
+        stroke="#09090b"
+        strokeWidth="1.5"
+        filter="drop-shadow(-2px 3px 4px rgba(0,0,0,0.45))"
+      />
+      {/* Curved inner recess shading to match photo */}
+      <rect
+        x="-22"
+        y="-41"
+        width="9"
+        height="82"
+        rx="3"
+        fill="#09090b"
+        opacity="0.55"
+      />
+      <line x1="-24" y1="-25" x2="-10" y2="-25" stroke="#27272a" strokeWidth="0.8" opacity="0.4" />
+      <line x1="-24" y1="25" x2="-10" y2="25" stroke="#27272a" strokeWidth="0.8" opacity="0.4" />
+
+      {/* 2. Stainless Steel Faceplate */}
+      <rect
+        x="-10"
+        y="-66"
+        width="22"
+        height="132"
+        rx="1"
+        fill="url(#strikePlateGrad)"
+        stroke="#475569"
+        strokeWidth="1"
+        filter="drop-shadow(2px 3px 5px rgba(0,0,0,0.3))"
+      />
+
+      {/* Mounting Screw Holes (Top & Bottom) */}
+      <circle cx="1" cy="-56" r="3.5" fill="#0f172a" stroke="#475569" strokeWidth="0.5" />
+      <circle cx="1" cy="-56" r="2.2" fill="#1e293b" />
+      <circle cx="1" cy="56" r="3.5" fill="#0f172a" stroke="#475569" strokeWidth="0.5" />
+      <circle cx="1" cy="56" r="2.2" fill="#1e293b" />
+
+      {/* Four Assembly Screws (Stacked on the right of the faceplate) */}
+      {/* Upper Screws */}
+      <circle cx="1" cy="-34" r="2.4" fill="url(#screwGrad)" stroke="#334155" strokeWidth="0.4" />
+      <line x1="-0.5" y1="-34" x2="2.5" y2="-34" stroke="#1e293b" strokeWidth="0.6" />
+      <line x1="1" y1="-35.5" x2="1" y2="-32.5" stroke="#1e293b" strokeWidth="0.6" />
+
+      <circle cx="1" cy="-24" r="2.4" fill="url(#screwGrad)" stroke="#334155" strokeWidth="0.4" />
+      <line x1="-0.5" y1="-24" x2="2.5" y2="-24" stroke="#1e293b" strokeWidth="0.6" />
+      <line x1="1" y1="-25.5" x2="1" y2="-22.5" stroke="#1e293b" strokeWidth="0.6" />
+
+      {/* Lower Screws */}
+      <circle cx="1" cy="24" r="2.4" fill="url(#screwGrad)" stroke="#334155" strokeWidth="0.4" />
+      <line x1="-0.5" y1="24" x2="2.5" y2="24" stroke="#1e293b" strokeWidth="0.6" />
+      <line x1="1" y1="22.5" x2="1" y2="25.5" stroke="#1e293b" strokeWidth="0.6" />
+
+      <circle cx="1" cy="34" r="2.4" fill="url(#screwGrad)" stroke="#334155" strokeWidth="0.4" />
+      <line x1="-0.5" y1="34" x2="2.5" y2="34" stroke="#1e293b" strokeWidth="0.6" />
+      <line x1="1" y1="32.5" x2="1" y2="35.5" stroke="#1e293b" strokeWidth="0.6" />
+
+      {/* Engraved AR / Adams Rite Logos */}
+      <g opacity="0.4" transform="translate(1, 0)">
+        {/* Upper AR Logo & text */}
+        <polygon points="0,-46 -3.5,-42.5 3.5,-42.5" fill="none" stroke="#64748b" strokeWidth="0.5" />
+        <text x="0" y="-41.5" fill="#475569" fontSize="2" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">AR</text>
+        <text x="0" y="-44.5" fill="#475569" fontSize="1.8" textAnchor="middle" fontFamily="monospace">ADAMS RITE</text>
+
+        {/* Lower AR Logo & text */}
+        <polygon points="0,46 -3.5,42.5 3.5,42.5" fill="none" stroke="#64748b" strokeWidth="0.5" />
+        <text x="0" y="47" fill="#475569" fontSize="2" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">AR</text>
+        <text x="0" y="41.5" fill="#475569" fontSize="1.8" textAnchor="middle" fontFamily="monospace">ADAMS RITE</text>
+      </g>
+
+      {/* Tiny Status Indicator LED on the faceplate */}
+      <circle cx="1" cy="-48" r="1.8" fill={isLocked ? "#ef4444" : "#22c55e"} />
+      <circle cx="1" cy="-48" r="0.6" fill="#ffffff" opacity="0.8" />
+      {isLocked && <circle cx="1" cy="-48" r="3.5" fill="none" stroke="#ef4444" strokeWidth="0.4" opacity="0.5" className="animate-pulse" />}
+
+      {/* 3. Recessed Cavity (Cutout for the latch) */}
+      <rect
+        x="-10"
+        y="-17"
+        width="20"
+        height="34"
+        fill="#09090b"
+        stroke="#1c1917"
+        strokeWidth="1.2"
+      />
+
+      {/* 4. Keeper Latch (Pivoting gate inside cavity) */}
+      <g
+        transform={isLocked ? "translate(0, 0)" : "translate(-4, 0) scale(0.4, 1)"}
+        style={{ transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)' }}
+      >
+        <rect
+          x="-9"
+          y="-16"
+          width="11"
+          height="32"
+          rx="1"
+          fill="url(#keeperGrad)"
+          stroke="#44403c"
+          strokeWidth="0.8"
+        />
+        {/* Curved roller lip highlight */}
+        <line x1="-7.5" y1="-16" x2="-7.5" y2="16" stroke="#cbd5e1" strokeWidth="0.8" opacity="0.65" />
+        <line x1="-1.5" y1="-16" x2="-1.5" y2="16" stroke="#44403c" strokeWidth="0.6" />
+      </g>
+
+      {/* Status banner underneath */}
+      {isLocked ? (
+        <g transform="translate(0, 75)">
+          <rect x="-26" y="-6" width="52" height="12" rx="2" fill="#7f1d1d" stroke="#b91c1c" strokeWidth="0.5" />
+          <text x="0" y="2.5" fill="#fca5a5" fontSize="7" fontWeight="bold" textAnchor="middle" letterSpacing="0.5" fontFamily="monospace">
+            LOCKED
+          </text>
+        </g>
+      ) : (
+        <g transform="translate(0, 75)">
+          <rect x="-26" y="-6" width="52" height="12" rx="2" fill="#14532d" stroke="#22c55e" strokeWidth="0.5" />
+          <text x="0" y="2.5" fill="#4ade80" fontSize="7" fontWeight="bold" textAnchor="middle" letterSpacing="0.5" fontFamily="monospace">
+            UNLOCKED
+          </text>
+        </g>
+      )}
+
+      {/* Label */}
+      <text x="0" y="93" fill="#cbd5e1" fontSize="9.5" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
+      <defs>
+        <linearGradient id="strikePlateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#94a3b8" />
+          <stop offset="25%" stopColor="#cbd5e1" />
+          <stop offset="50%" stopColor="#f1f5f9" />
+          <stop offset="75%" stopColor="#cbd5e1" />
+          <stop offset="100%" stopColor="#475569" />
+        </linearGradient>
+        <linearGradient id="keeperGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#78716c" />
+          <stop offset="50%" stopColor="#d6d3d1" />
+          <stop offset="100%" stopColor="#44403c" />
+        </linearGradient>
+        <linearGradient id="screwGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#cbd5e1" />
+          <stop offset="100%" stopColor="#475569" />
+        </linearGradient>
+      </defs>
+    </g>
+  );
+};
+
+export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
+  const triggerWaveSensor = useGameStore(state => state.triggerWaveSensor);
+  const isActive = component.state.active || false;
+
+  const handleWave = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    triggerWaveSensor(component.id);
+  };
+
+  const handleWavePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+  };
+
+  // Determine light ring color and glow filter (CM-333 battery powered has no standby glow)
+  let ringColor = '#27272a'; // dark bezel/unlit
+  let ringGlow = undefined;
+  if (isActive) {
+    ringColor = '#22c55e'; // active green flash
+    ringGlow = 'url(#waveGlowGreen)';
+  }
+
+  return (
+    <g transform="translate(-30, -82)" className="select-none">
+      <defs>
+        {/* Brushed Stainless Steel Plate */}
+        <linearGradient id="wavePlateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#94a3b8" />
+          <stop offset="25%" stopColor="#cbd5e1" />
+          <stop offset="50%" stopColor="#e2e8f0" />
+          <stop offset="75%" stopColor="#cbd5e1" />
+          <stop offset="100%" stopColor="#475569" />
+        </linearGradient>
+        {/* LED Light Ring Glow */}
+        <filter id="waveGlowBlue" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="waveGlowGreen" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* ── Stainless Steel plate (60 × 164px) ── */}
+      <rect
+        x="0" y="0" width="60" height="164" rx="4"
+        fill="url(#wavePlateGrad)"
+        stroke="#475569"
+        strokeWidth="1.2"
+        filter="drop-shadow(2px 4px 8px rgba(0,0,0,0.5))"
+      />
+
+      {/* Plate bevel outline */}
+      <rect x="2" y="2" width="56" height="160" rx="2" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+
+      {/* ── Assembly Screws ── */}
+      {/* Top Screw */}
+      <g transform="translate(30, 16)">
+        <circle cx="0" cy="0" r="3.2" fill="url(#screwGrad)" stroke="#475569" strokeWidth="0.8" />
+        <line x1="-1.8" y1="-1.8" x2="1.8" y2="1.8" stroke="#475569" strokeWidth="0.8" />
+        <line x1="1.8" y1="-1.8" x2="-1.8" y2="1.8" stroke="#475569" strokeWidth="0.8" />
+      </g>
+      {/* Bottom Screw */}
+      <g transform="translate(30, 148)">
+        <circle cx="0" cy="0" r="3.2" fill="url(#screwGrad)" stroke="#475569" strokeWidth="0.8" />
+        <line x1="-1.8" y1="0" x2="1.8" y2="0" stroke="#475569" strokeWidth="0.8" />
+      </g>
+
+      {/* ── Camden Brand Logo (small engraved text) ── */}
+      <text
+        x="30" y="28"
+        textAnchor="middle"
+        fill="#334155"
+        fontSize="5"
+        fontWeight="bold"
+        fontFamily="sans-serif"
+        letterSpacing="0.4"
+      >
+        CAMDEN DOOR CONTROLS
+      </text>
+
+      {/* ── Interactive Waving Zone ── */}
+      <g
+        className="cursor-pointer"
+        onPointerDown={handleWavePointerDown}
+        onPointerUp={handleWave}
+      >
+        {/* Transparent hit area covering the entire middle section */}
+        <rect x="2" y="32" width="56" height="112" fill="rgba(0,0,0,0)" />
+
+        {/* ── Hand Waving Icon Zone ── */}
+        <g transform="translate(30, 48) scale(0.9)">
+          {/* Wave Arcs */}
+          <g stroke={isActive ? '#22c55e' : '#475569'} strokeWidth="1.5" fill="none" strokeLinecap="round">
+            <path
+              d="M -6 -10 C -3 -13, 3 -13, 6 -10"
+              opacity={isActive ? 1 : 0.6}
+              className={isActive ? "animate-pulse" : ""}
+            />
+            <path
+              d="M -10 -14 C -5 -18, 5 -18, 10 -14"
+              opacity={isActive ? 0.8 : 0.4}
+              className={isActive ? "animate-pulse" : ""}
+              style={{ animationDelay: '0.1s' }}
+            />
+            <path
+              d="M -14 -18 C -7 -23, 7 -23, 14 -18"
+              opacity={isActive ? 0.6 : 0.2}
+              className={isActive ? "animate-pulse" : ""}
+              style={{ animationDelay: '0.2s' }}
+            />
+          </g>
+          {/* Hand icon */}
+          <path
+            d="M -5 13 L -5 3.5 C -5 1.5, -3 1.5, -3 3.5 L -3 0 C -3 -2, -1 -2, -1 0 L -1 -1.5 C -1 -3.5, 1 -3.5, 1 -1.5 L 1 0.5 C 1 -3, 3 -3, 3 -1 L 3 4.5 C 3 2.5, 5 2.5, 5 4.5 L 5 13 C 5 17, -5 17, -5 13 Z"
+            fill="none"
+            stroke="#334155"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+
+        {/* ── Central Circular Sensor Area ── */}
+        <g transform="translate(30, 92)">
+          {/* Bezel */}
+          <circle cx="0" cy="0" r="23" fill="#1e293b" stroke="#475569" strokeWidth="1.2" />
+          {/* Dark Sensor Window */}
+          <circle cx="0" cy="0" r="18" fill="#090d16" />
+          {/* Glowing light ring */}
+          <circle
+            cx="0" cy="0" r="15"
+            fill="none"
+            stroke={ringColor}
+            strokeWidth="3.2"
+            filter={ringGlow}
+            style={{ transition: 'stroke 0.25s ease' }}
+            className={isActive ? "animate-pulse" : ""}
+          />
+          {/* Inner IR photodiode bubble */}
+          <circle cx="0" cy="0" r="4.5" fill="#1e293b" opacity="0.7" />
+          <circle cx="0.8" cy="-0.8" r="1" fill="#ffffff" opacity="0.4" />
+        </g>
+
+        {/* ── Text "WAVE TO ACTIVATE" ── */}
+        <text
+          x="30" y="128"
+          textAnchor="middle"
+          fill="#334155"
+          fontSize="7.2"
+          fontWeight="bold"
+          fontFamily="sans-serif"
+          letterSpacing="0.3"
+        >
+          WAVE
+        </text>
+        <text
+          x="30" y="137"
+          textAnchor="middle"
+          fill="#334155"
+          fontSize="7.2"
+          fontWeight="bold"
+          fontFamily="sans-serif"
+          letterSpacing="0.3"
+        >
+          TO OPEN
+        </text>
+      </g>
+
+      {/* ── Virtual Waving Hand Overlay ── */}
+      {isActive && (
+        <g transform="translate(30, 92)" className="animate-wave-hand" pointerEvents="none">
+          {/* Translucent premium glowing hand ring */}
+          <circle cx="0" cy="0" r="14" fill="rgba(253, 224, 71, 0.18)" filter="url(#waveGlowGreen)" />
+          {/* Hand drawing */}
+          <path
+            d="M -5 13 L -5 3.5 C -5 1.5, -3 1.5, -3 3.5 L -3 0 C -3 -2, -1 -2, -1 0 L -1 -1.5 C -1 -3.5, 1 -3.5, 1 -1.5 L 1 0.5 C 1 -3, 3 -3, 3 -1 L 3 4.5 C 3 2.5, 5 2.5, 5 4.5 L 5 13 C 5 17, -5 17, -5 13 Z"
+            fill="#fef08a"
+            stroke="#ca8a04"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            transform="scale(1.2)"
+          />
+          {/* Motion lines behind hand */}
+          <path d="M 8 2 C 11 -1, 14 -1, 17 2" fill="none" stroke="#ca8a04" strokeWidth="1" strokeLinecap="round" opacity="0.8" />
+          <path d="M 10 -2 C 13 -5, 16 -5, 19 -2" fill="none" stroke="#ca8a04" strokeWidth="1" strokeLinecap="round" opacity="0.8" />
+        </g>
+      )}
+
+      {/* Label tag below plate */}
+      <text x="30" y="174" fill="#cbd5e1" fontSize="9.5" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+    </g>
+  );
+};

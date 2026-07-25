@@ -164,9 +164,75 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
         <path d="M 12.8 21.8 H 16.3 M 16.3 21.8 l -1.6 -1.2 M 16.3 21.8 l -1.6 1.2" fill="none" stroke="#f8fafc" strokeWidth="0.6" />
       </g>
 
+      {/* ---- Jumper legends and their cuttable links (J1/J2 top, J3 mid) ---- */}
+      <g fill="#ffffff" fontSize="2.9" fontWeight="700" fontFamily="Arial, sans-serif">
+        <text x="-45" y="-51.5">CUT J1 FOR REPEAT</text>
+        <text x="-45" y="-46.5">CUT J2 FOR DELAYED PULS</text>
+        <text x="4" y="-51.5">J1</text>
+        <text x="4" y="-46.5">J2</text>
+        <text x="-19" y="-6">CUT J3 FOR RESET</text>
+        <text x="-19" y="-1.8">ON POWER-UP</text>
+        <text x="18.5" y="-2.6">J3</text>
+      </g>
+      {/* Axial link resistors — shown severed once the jumper is cut */}
+      {([
+        { x: 10, y: -53, cut: config.j1Cut },
+        { x: 10, y: -48, cut: config.j2Cut },
+        { x: 2, y: -4, cut: config.j3Cut }
+      ] as const).map(({ x, y, cut }) => (
+        <g key={`${x}-${y}`} transform={`translate(${x}, ${y})`}>
+          <line x1="0" y1="0" x2={cut ? 4.5 : 14} y2="0" stroke="#cbd5e1" strokeWidth="0.7" />
+          {!cut && <line x1="0" y1="0" x2="14" y2="0" stroke="#cbd5e1" strokeWidth="0.7" />}
+          {cut && <line x1="9.5" y1="0" x2="14" y2="0" stroke="#cbd5e1" strokeWidth="0.7" />}
+          <rect x="4.2" y="-1.7" width="5.6" height="3.4" rx="1.2" fill="#e7d5a8" stroke="#a1854c" strokeWidth="0.3" opacity={cut ? 0.35 : 1} />
+          <line x1="6" y1="-1.7" x2="6" y2="1.7" stroke="#7f1d1d" strokeWidth="0.5" opacity={cut ? 0.35 : 1} />
+          <line x1="7.8" y1="-1.7" x2="7.8" y2="1.7" stroke="#111827" strokeWidth="0.5" opacity={cut ? 0.35 : 1} />
+        </g>
+      ))}
+
+      {/* ---- Electrolytic capacitors C6 and C4 ---- */}
+      {([{ cx: 0, cy: -41, label: 'C6', lx: 5.5 }, { cx: -20, cy: 9, label: 'C4', lx: 5.5 }] as const).map(({ cx, cy, label, lx }) => (
+        <g key={label} transform={`translate(${cx}, ${cy})`}>
+          <circle r="4.4" fill="#1d4ed8" stroke="#0f2570" strokeWidth="0.5" />
+          <circle r="3.1" fill="#93b4d6" opacity="0.55" />
+          <line x1="-2.4" y1="-1" x2="2.4" y2="1" stroke="#0f2570" strokeWidth="0.8" />
+          <text x={lx} y="1.4" fill="#ffffff" fontSize="3" fontWeight="700" fontFamily="Arial, sans-serif">{label}</text>
+        </g>
+      ))}
+
+      {/* ---- DIP function legend, printed left of the switch ---- */}
+      <g fill="#ffffff" fontSize="3.1" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">
+        <text x="11" y="-29.5">TRIG CONTROL</text>
+        <text x="11" y="-25">12V / 24V</text>
+        <text x="11" y="-20.5">SEC/MIN</text>
+        <text x="11" y="-16">RELAY CONTROL</text>
+      </g>
+
+      {/* ---- Altronix mark and origin silkscreen ---- */}
+      <g opacity="0.9" transform="translate(38, -50)">
+        <rect x="-6.5" y="-6.5" width="13" height="13" rx="1.6" fill="none" stroke="#ffffff" strokeWidth="0.7" />
+        <path d="M -3.2 3.4 L 0 -3.8 L 3.2 3.4" fill="none" stroke="#ffffff" strokeWidth="0.9" strokeLinejoin="round" />
+        <path d="M -1.9 0.9 L 1.9 0.9" stroke="#ffffff" strokeWidth="0.8" />
+      </g>
+      <text x="46" y="-40" fill="#ffffff" fontSize="3.4" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">MADE IN U.S.A.</text>
+      <text x="46" y="-35.6" fill="#ffffff" fontSize="3.4" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">BKLYN,NY 11220</text>
+
+      {/* ---- Stetron relay can ---- */}
+      <g transform="translate(38, 3)">
+        <rect x="-9" y="-11" width="18" height="22" rx="0.8" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.6" />
+        <circle cx="-6" cy="-8.5" r="0.7" fill="#cbd5e1" />
+        <text x="2" y="0" fill="#b91c1c" fontSize="2.9" fontWeight="800" fontFamily="Arial, sans-serif" textAnchor="middle" transform="rotate(90, 2, 0)">
+          SR11CS12DC12
+        </text>
+        <text x="-3.5" y="0" fill="#334155" fontSize="2.6" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="middle" transform="rotate(90, -3.5, 0)">
+          STETRON
+        </text>
+      </g>
+
       {/* CAD branding location. */}
       <text x="-45.3" y="15" fill="#ffffff" fontSize="7" fontWeight="800" fontFamily="Arial, sans-serif">6062</text>
       <text x="-45.3" y="24" fill="#ffffff" fontSize="6" fontWeight="800" fontFamily="Arial, sans-serif">TIMER</text>
+      <text x="-45.3" y="31.5" fill="#ffffff" fontSize="5" fontWeight="800" fontFamily="Arial, sans-serif">ALTRONIX CORP.</text>
 
       {/* Compact live training status in the otherwise blank lower-right CAD area. */}
       <g transform="translate(20, 19)">

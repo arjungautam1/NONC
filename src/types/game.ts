@@ -15,6 +15,7 @@ export type ComponentType =
   | 'buzzer'
   | 'door_sensor'
   | 'maglock'
+  | 'door_strike'
   | 'card_reader'
   | 'lamp_indicator'
   | 'timer_relay'
@@ -29,8 +30,11 @@ export type ComponentType =
   | 'junction'
   | 'rocker_switch_3pos'
   | 'relay_dpdt'
+  | 'relay_rb1224'
+  | 'relay_rbsnttl'
   | 'led_strip'
-  | 'rocker_switch_2pos';
+  | 'rocker_switch_2pos'
+  | 'wave_sensor';
 
 export type TerminalType =
   | 'pos'
@@ -54,7 +58,9 @@ export type TerminalType =
   | 'no1'
   | 'nc1'
   | 'no2'
-  | 'nc2';
+  | 'nc2'
+  | 'trg_pos'
+  | 'trg_neg';
 
 export interface Terminal {
   id: string;

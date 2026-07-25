@@ -69,6 +69,7 @@ interface GameState {
   pressButton: (id: string, pressed: boolean) => void;
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
+  triggerWaveSensor: (id: string) => void;
   
   addWire: (
     fromCId: string, 
@@ -522,12 +523,21 @@ export const useGameStore = create<GameState>((set, get) => {
     // trigger edges, DIP selections, jumper cuts, and trimpot setting.
     let timerContactChanged = false;
     const updatedComponents = currentComponents.map(c => {
-      if (c.type === 'relay' || c.type === 'relay_dpdt') {
+      if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
         if (isEnergized !== c.state.energized) {
           if (isEnergized) soundManager.playClick();
           return { ...c, state: { ...c.state, energized: isEnergized } };
         }
+      }
+      if (c.type === 'relay_rbsnttl') {
+        // Surface board power and trigger separately so the module can show
+        // NO POWER / STANDBY / TRIGGERED rather than just on-or-off.
+        const isEnergized = solverResult.energizedComponents.has(c.id);
+        const boardPowered = (solverResult.nodeVoltages[`${c.id}:coil_a`] || 0) > 0;
+        const triggerPresent = (solverResult.nodeVoltages[`${c.id}:trg_pos`] || 0) > 0;
+        if (isEnergized !== c.state.energized) soundManager.playClick();
+        return { ...c, state: { ...c.state, energized: isEnergized, boardPowered, triggerPresent } };
       }
       if (c.type === 'timer_relay') {
         const config = getTimer6062Config(c);
@@ -639,7 +649,7 @@ export const useGameStore = create<GameState>((set, get) => {
         }
         return { ...c, state: nextState };
       }
-      if (c.type === 'maglock') {
+      if (c.type === 'maglock' || c.type === 'door_strike') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
         return { ...c, state: { ...c.state, active: isEnergized } };
       }
@@ -1089,6 +1099,24 @@ export const useGameStore = create<GameState>((set, get) => {
 
       setTimeout(() => {
         // Reset card reader
+        const resetComps = get().components.map(c => 
+          c.id === id ? { ...c, state: { ...c.state, active: false } } : c
+        );
+        runSimulation(resetComps, get().wires, get().isRunning);
+      }, 3000);
+    },
+
+    triggerWaveSensor: (id) => {
+      soundManager.playCardScan(); // trigger scan chirp
+      
+      // Sensor goes active for 3 seconds, then resets
+      const newComponents = get().components.map(c => 
+        c.id === id ? { ...c, state: { ...c.state, active: true } } : c
+      );
+      runSimulation(newComponents, get().wires, get().isRunning);
+
+      setTimeout(() => {
+        // Reset wave sensor
         const resetComps = get().components.map(c => 
           c.id === id ? { ...c, state: { ...c.state, active: false } } : c
         );

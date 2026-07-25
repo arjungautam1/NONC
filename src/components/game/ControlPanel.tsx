@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { Logo } from './components/Logo';
 import { 
-  Undo2, 
-  Redo2, 
-  Award, 
+  Undo2,
+  Redo2,
+  RotateCcw,
+  Award,
   Zap,
   VolumeX,
   Volume2,
@@ -26,7 +27,8 @@ export const ControlPanel: React.FC = () => {
     customLabSelection,
     isRunning,
     toggleSimulation,
-    stopTimer
+    stopTimer,
+    resetLevel
   } = useGameStore();
 
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
@@ -91,6 +93,14 @@ export const ControlPanel: React.FC = () => {
             title="Redo (Ctrl+Y)"
           >
             <Redo2 className="w-4 h-4" />
+          </button>
+          <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+          <button
+            onClick={resetLevel}
+            className="p-1.5 rounded text-slate-400 hover:text-red-300 hover:bg-red-400/10 cursor-pointer transition-colors"
+            title="Reset — clear all wiring and start this module over"
+          >
+            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
 

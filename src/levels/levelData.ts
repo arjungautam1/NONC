@@ -807,16 +807,16 @@ export const levels: Level[] = [
         y: 380,
         label: 'DPDT Relay',
         terminals: [
-          { id: 'coil_b', name: '-', type: 'coil_b', x: 35, y: -55 },
-          { id: 'com1', name: 'C', type: 'com1', x: 12, y: -55 },
-          { id: 'nc1', name: 'NC', type: 'nc1', x: -12, y: -55 },
-          { id: 'no1', name: 'NO', type: 'no1', x: -35, y: -55 },
-          { id: 'coil_a', name: '+', type: 'coil_a', x: 35, y: 55 },
-          { id: 'com2', name: 'C', type: 'com2', x: 12, y: 55 },
-          { id: 'nc2', name: 'NC', type: 'nc2', x: -12, y: 55 },
-          { id: 'no2', name: 'NO', type: 'no2', x: -35, y: 55 }
+          { id: 'no1', name: 'NO1 (3)', type: 'no1', x: -40, y: -48 },
+          { id: 'nc1', name: 'NC1 (1)', type: 'nc1', x: -21, y: -48 },
+          { id: 'coil_a', name: 'Coil (7)', type: 'coil_a', x: 21, y: -48 },
+          { id: 'com1', name: 'C1 (5)', type: 'com1', x: 40, y: -48 },
+          { id: 'no2', name: 'NO2 (4)', type: 'no2', x: -40, y: 48 },
+          { id: 'nc2', name: 'NC2 (2)', type: 'nc2', x: -21, y: 48 },
+          { id: 'coil_b', name: 'Coil (8)', type: 'coil_b', x: 21, y: 48 },
+          { id: 'com2', name: 'C2 (6)', type: 'com2', x: 40, y: 48 }
         ],
-        state: {}
+        state: { coilVoltage: 24 }
       },
       {
         id: 'red_lamp',
@@ -2008,16 +2008,16 @@ export const levels: Level[] = [
         y: 440,
         label: 'Altronix Relay',
         terminals: [
-          { id: 'coil_b', name: '-', type: 'coil_b', x: 35, y: -55 },
-          { id: 'com1', name: 'C', type: 'com1', x: 12, y: -55 },
-          { id: 'nc1', name: 'NC', type: 'nc1', x: -12, y: -55 },
-          { id: 'no1', name: 'NO', type: 'no1', x: -35, y: -55 },
-          { id: 'coil_a', name: '+', type: 'coil_a', x: 35, y: 55 },
-          { id: 'com2', name: 'C', type: 'com2', x: 12, y: 55 },
-          { id: 'nc2', name: 'NC', type: 'nc2', x: -12, y: 55 },
-          { id: 'no2', name: 'NO', type: 'no2', x: -35, y: 55 }
+          { id: 'no1', name: 'NO1 (3)', type: 'no1', x: -40, y: -48 },
+          { id: 'nc1', name: 'NC1 (1)', type: 'nc1', x: -21, y: -48 },
+          { id: 'coil_a', name: 'Coil (7)', type: 'coil_a', x: 21, y: -48 },
+          { id: 'com1', name: 'C1 (5)', type: 'com1', x: 40, y: -48 },
+          { id: 'no2', name: 'NO2 (4)', type: 'no2', x: -40, y: 48 },
+          { id: 'nc2', name: 'NC2 (2)', type: 'nc2', x: -21, y: 48 },
+          { id: 'coil_b', name: 'Coil (8)', type: 'coil_b', x: 21, y: 48 },
+          { id: 'com2', name: 'C2 (6)', type: 'com2', x: 40, y: 48 }
         ],
-        state: {}
+        state: { coilVoltage: 24 }
       },
       {
         id: 'led_red',

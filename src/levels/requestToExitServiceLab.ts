@@ -58,7 +58,7 @@ export const requestToExitServiceLab: Level = {
       type: 'rocker_switch_2pos',
       x: 315,
       y: 155,
-      label: 'RCI 909 Service',
+      label: 'Maintained Switch',
       terminals: [
         { id: 'com', name: 'C', type: 'in', x: -30, y: 0 },
         { id: 'nc', name: 'NC', type: 'out_a', x: 30, y: -20 },
@@ -71,7 +71,7 @@ export const requestToExitServiceLab: Level = {
       type: 'button_no',
       x: 315,
       y: 365,
-      label: 'RCI 909 REX',
+      label: 'Momentary Switch',
       terminals: [
         { id: 'com', name: 'C', type: 'com', x: -30, y: 15 },
         { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -25 },
@@ -86,16 +86,16 @@ export const requestToExitServiceLab: Level = {
       y: 285,
       label: 'MY2 DPDT Relay',
       terminals: [
-        { id: 'coil_b', name: 'A2', type: 'coil_b', x: 35, y: -55 },
-        { id: 'com1', name: 'C1', type: 'com1', x: 12, y: -55 },
-        { id: 'nc1', name: 'NC1', type: 'nc1', x: -12, y: -55 },
-        { id: 'no1', name: 'NO1', type: 'no1', x: -35, y: -55 },
-        { id: 'coil_a', name: 'A1', type: 'coil_a', x: 35, y: 55 },
-        { id: 'com2', name: 'C2', type: 'com2', x: 12, y: 55 },
-        { id: 'nc2', name: 'NC2', type: 'nc2', x: -12, y: 55 },
-        { id: 'no2', name: 'NO2', type: 'no2', x: -35, y: 55 }
+        { id: 'no1', name: 'NO1 (3)', type: 'no1', x: -40, y: -48 },
+        { id: 'nc1', name: 'NC1 (1)', type: 'nc1', x: -21, y: -48 },
+        { id: 'coil_a', name: 'Coil (7)', type: 'coil_a', x: 21, y: -48 },
+        { id: 'com1', name: 'C1 (5)', type: 'com1', x: 40, y: -48 },
+        { id: 'no2', name: 'NO2 (4)', type: 'no2', x: -40, y: 48 },
+        { id: 'nc2', name: 'NC2 (2)', type: 'nc2', x: -21, y: 48 },
+        { id: 'coil_b', name: 'Coil (8)', type: 'coil_b', x: 21, y: 48 },
+        { id: 'com2', name: 'C2 (6)', type: 'com2', x: 40, y: 48 }
       ],
-      state: {}
+      state: { coilVoltage: 24 }
     },
     {
       id: 'lab21_red',

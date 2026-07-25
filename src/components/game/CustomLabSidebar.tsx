@@ -26,31 +26,37 @@ import {
 import { ComponentRenderer } from './components/ComponentRenderer';
 
 const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
-  pull_station: '-82 -112 164 214',
+  pull_station: '-78 -84 156 212',
   key_switch: '-78 -86 156 172',
-  relay_dpdt: '-72 -92 144 184',
+  relay_dpdt: '-76 -80 152 184',
+  relay_rb1224: '-72 -76 144 172',
+  relay_rbsnttl: '-82 -76 164 178',
   timer_relay: '-72 -72 144 144',
   power_supply: '-88 -66 176 132',
   transformer: '-58 -78 116 156',
   maglock: '-102 -58 204 116',
+  door_strike: '-50 -50 100 120',
   led_strip: '-76 -52 152 104',
-  sliding_gate: '-148 -86 296 172'
+  sliding_gate: '-148 -86 296 172',
+  wave_sensor: '-38 -92 76 184'
 };
 
 const LibraryThumbnail: React.FC<{
   component: CircuitComponent;
   selected?: boolean;
 }> = ({ component, selected = false }) => (
-  <div className={`relative flex h-12 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border transition ${
+  <div className={`relative flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border transition ${
     selected
-      ? 'border-blue-400/25 bg-blue-400/[0.08] shadow-[inset_0_0_18px_rgba(59,130,246,0.08)]'
-      : 'border-white/[0.07] bg-[#0a101c] group-hover:border-white/[0.13]'
+      ? 'border-blue-400/40 bg-gradient-to-b from-[#7c8ba5] to-[#55637c] shadow-[0_0_0_1px_rgba(59,130,246,0.25),inset_0_1px_0_rgba(255,255,255,0.22)]'
+      : 'border-white/[0.14] bg-gradient-to-b from-[#6b7893] to-[#48546b] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] group-hover:from-[#7c8ba5] group-hover:to-[#55637c]'
   }`}>
+    {/* Soft top-left key light so both dark and light devices separate from the tile */}
+    <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_22%,rgba(255,255,255,0.28),transparent_65%)]" />
     <svg
       viewBox={thumbnailViewBoxes[component.type] ?? '-76 -72 152 144'}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
-      className="h-[44px] w-[52px] overflow-visible pointer-events-none"
+      className="relative h-[50px] w-[58px] overflow-visible pointer-events-none [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.45))]"
     >
       <ComponentRenderer
         component={{ ...component, x: 0, y: 0, state: { ...component.state, active: false, energized: false } }}

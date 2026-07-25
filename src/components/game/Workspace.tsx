@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { ComponentRenderer } from './components/ComponentRenderer';
+import { DPDT_TERMINAL_POSITIONS } from './components/relayPinout';
+import { RB1224_TERMINAL_POSITIONS } from './components/rb1224Pinout';
+import { RBSNTTL_TERMINAL_POSITIONS } from './components/rbsnttlPinout';
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
 import { levels } from '../../levels/levelData';
@@ -311,7 +314,7 @@ export const Workspace: React.FC = () => {
           ? 85
           : 70;
       const halfHeight = c.type === 'pull_station'
-        ? 94
+        ? 112
         : c.type === 'key_switch'
         ? 82
         : c.type === 'relay_dpdt'
@@ -405,7 +408,9 @@ export const Workspace: React.FC = () => {
   const handleCompPointerDown = (e: React.PointerEvent, comp: CircuitComponent) => {
     if (probeMode) return;
     const target = e.target as SVGElement;
-    if (target.closest('.connector-control')) return;
+    // Interactive sub-controls opt out of the drag: taking a pointer capture here
+    // would retarget their pointerup/click to this group and swallow the press.
+    if (target.closest('.connector-control, .device-control')) return;
     if (target.classList.contains('terminal-hitbox')) return;
     if (comp.state.lockedPosition) {
       e.stopPropagation();
@@ -599,20 +604,23 @@ export const Workspace: React.FC = () => {
     } else if (comp.type === 'power_supply') {
       y = 43;  // Move terminal connection points to bottom screw strip
     } else if (comp.type === 'relay_dpdt') {
-      const sidePorts: Record<string, { x: number; y: number }> = {
-        no1: { x: -52, y: -39 },
-        nc1: { x: -52, y: -13 },
-        com1: { x: -52, y: 13 },
-        coil_b: { x: -52, y: 39 },
-        no2: { x: 52, y: -39 },
-        nc2: { x: 52, y: -13 },
-        com2: { x: 52, y: 13 },
-        coil_a: { x: 52, y: 39 }
-      };
-      const sidePort = sidePorts[term.id];
-      if (sidePort) {
-        x = sidePort.x;
-        y = sidePort.y;
+      // Snap to the numbered socket screws drawn by the RDC12 base artwork.
+      const screw = DPDT_TERMINAL_POSITIONS[term.id];
+      if (screw) {
+        x = screw.x;
+        y = screw.y;
+      }
+    } else if (comp.type === 'relay_rbsnttl') {
+      const screw = RBSNTTL_TERMINAL_POSITIONS[term.id];
+      if (screw) {
+        x = screw.x;
+        y = screw.y;
+      }
+    } else if (comp.type === 'relay_rb1224') {
+      const screw = RB1224_TERMINAL_POSITIONS[term.id];
+      if (screw) {
+        x = screw.x;
+        y = screw.y;
       }
     } else if (comp.type === 'junction') {
       const scale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
@@ -977,6 +985,17 @@ export const Workspace: React.FC = () => {
     if (!term) return { x: 0, y: 1 };
     const local = getTerminalLocalPos(comp, term);
 
+    if (
+      comp.type === 'relay_rb1224' ||
+      comp.type === 'relay_rbsnttl' ||
+      comp.type === 'relay_dpdt' ||
+      comp.type === 'terminal_block' ||
+      comp.type === 'wave_sensor'
+    ) {
+      if (local.y < -10) return { x: 0, y: -1 };
+      if (local.y > 10) return { x: 0, y: 1 };
+    }
+
     // Top-edge wiring is visually ambiguous because it can look like the route is
     // passing through the device. Send those terminals toward the nearest side;
     // bottom and side terminals keep their natural outward direction.
@@ -1033,12 +1052,18 @@ export const Workspace: React.FC = () => {
       y: fan.y + direction.y * (WIRE_TERMINAL_LEAD + Math.abs(fanOffset) * 0.35)
     };
 
+    const componentWires = wires.filter(candidate =>
+      candidate.fromComponentId === componentId || candidate.toComponentId === componentId
+    );
+    const localWireIndex = componentWires.findIndex(candidate => candidate.id === wire.id);
+    const clearanceOffset = (localWireIndex >= 0 ? localWireIndex : 0) * 16;
+
     // Extend every lead fully past its component enclosure. This matters for the
     // transformer because its protected bounds include the outlet strip behind it;
     // beginning a route inside those bounds forces an unnecessary trip sideways.
     if (component && direction.y === 0) {
       const bounds = getComponentBounds(component);
-      const sideClearance = 8 + Math.abs(fanOffset) * 0.35;
+      const sideClearance = 8 + Math.abs(fanOffset) * 0.35 + clearanceOffset;
       exit = {
         x: direction.x < 0
           ? Math.min(exit.x, bounds.left - sideClearance)
@@ -1047,7 +1072,7 @@ export const Workspace: React.FC = () => {
       };
     } else if (component && direction.x === 0) {
       const bounds = getComponentBounds(component);
-      const verticalClearance = 8 + Math.abs(fanOffset) * 0.35;
+      const verticalClearance = 8 + Math.abs(fanOffset) * 0.35 + clearanceOffset;
       exit = {
         x: exit.x,
         y: direction.y < 0
@@ -1089,11 +1114,15 @@ export const Workspace: React.FC = () => {
       power_supply: [77, 54],
       timer_relay: [54, 68],
       relay: [50, 60],
-      relay_dpdt: [56, 90],
-      pull_station: [60, 90],
+      relay_dpdt: [58, 92],
+      relay_rb1224: [60, 86],
+      relay_rbsnttl: [68, 92],
+      pull_station: [58, 112],
       key_switch: [56, 78],
       card_reader: [30, 82],
+      wave_sensor: [30, 82],
       maglock: [66, 50],
+      door_strike: [40, 54],
       actuator: [165, 50],
       elevator_motor: [52, 90],
       roland_fan: [66, 84],
@@ -1313,7 +1342,15 @@ export const Workspace: React.FC = () => {
     addCandidate([start, { x: start.x, y: end.y }, end]);
 
     const laneVariants = [stableOffset, stableOffset + WIRE_GRID, stableOffset - WIRE_GRID];
-    const edgeClearances = [16, 32].map(clearance => clearance + Math.abs(stableOffset) * 0.2);
+    const sharingWires = wires.filter(candidate =>
+      candidate.fromComponentId === wire.fromComponentId ||
+      candidate.toComponentId === wire.fromComponentId ||
+      candidate.fromComponentId === wire.toComponentId ||
+      candidate.toComponentId === wire.toComponentId
+    );
+    const localIndex = sharingWires.findIndex(candidate => candidate.id === wire.id);
+    const laneOffset = (localIndex >= 0 ? localIndex : 0) * 16;
+    const edgeClearances = [16, 32].map(clearance => clearance + laneOffset);
     const obstacleXLanes = obstacles.flatMap(bounds => edgeClearances.flatMap(clearance => [
       snapWireCoord(bounds.left - clearance),
       snapWireCoord(bounds.right + clearance)
@@ -1529,7 +1566,7 @@ export const Workspace: React.FC = () => {
   const getWireColorHex = (colorName: string) => {
     switch (colorName) {
       case 'red': return '#ef4444';   // Positive / Hot
-      case 'black': return '#526077'; // Negative / Neutral (slate grey-blue for high contrast)
+      case 'black': return '#94a3b8'; // Negative / Neutral — lifted well clear of the dark canvas so the run always reads as a wire
       case 'green': return '#22c55e'; // PE Ground
       case 'orange': return '#f97316'; // Control loops
       default: return '#f59e0b';
@@ -2644,16 +2681,10 @@ export const Workspace: React.FC = () => {
                         )
                       ) : (
                         // Board components print their own aligned terminal legends.
-                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && (() => {
-                          let labelX = 0;
-                          let labelY = -10;
-                          let anchor: 'middle' | 'start' | 'end' = 'middle';
-
-                          if (comp.type === 'relay_dpdt') {
-                            labelX = localPos.x < 0 ? 11 : -11;
-                            labelY = 3;
-                            anchor = localPos.x < 0 ? 'start' : 'end';
-                          }
+                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && (() => {
+                          const labelX = 0;
+                          const labelY = -10;
+                          const anchor: 'middle' | 'start' | 'end' = 'middle';
 
                           return (
                             <g transform={`translate(${labelX}, ${labelY})`}>

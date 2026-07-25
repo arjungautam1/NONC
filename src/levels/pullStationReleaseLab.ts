@@ -1,4 +1,5 @@
 import type { Level } from '../types/game';
+import { pullStationTerminals } from '../components/game/components/pullStationPinout';
 
 /**
  * Reference-based emergency release circuit derived from the supplied
@@ -9,16 +10,16 @@ export const pullStationReleaseLab: Level = {
   title: 'Emergency Pull-Station Release',
   description: 'Use an NC pull-station loop to release a fail-safe lock and change status from green to red.',
   instructions: [
-    'In the normal state, the pull station NC loop keeps the relay, green indicator, and fail-safe maglock energized.',
+    'In the normal state, the pull station N/C circuit keeps the relay, green indicator, and fail-safe maglock energized.',
     'Board input: Transformer (+) → Altronix AC1; Transformer (-) → Altronix AC2.',
-    'Control loop: Altronix (+) → Pull Station C → Pull Station NC → Release Relay A1; Relay A2 → Altronix (-). Leave Pull Station NO unused.',
+    'Control loop: Altronix (+) → Pull Station 1; Pull Station 2 → Release Relay A1; Relay A2 → Altronix (-). Screws 1-2 are the N/C circuit; leave the N/O circuit (3-4) unused.',
     'Output pole: Altronix (+) → Release Relay COM. Connect Relay NO to green NORMAL (+) and Maglock (+). Connect Relay NC to red RELEASED (+).',
     'Return green (-), red (-), and Maglock (-) to Altronix (-).',
     'Test: verify green/locked, pull the station for red/released, then reset it and confirm green/locked returns.'
   ],
   goals: [
     'Energize the Altronix board',
-    'Hold the relay through the pull station NC contact',
+    'Hold the relay through the pull station N/C circuit (screws 1-2)',
     'Verify green and maglock power in the normal state',
     'Pull for red indication and lock release',
     'Reset and restore the normal state'
@@ -56,12 +57,8 @@ export const pullStationReleaseLab: Level = {
       type: 'pull_station',
       x: 340,
       y: 245,
-      label: 'Emergency Pull',
-      terminals: [
-        { id: 'com', name: 'C', type: 'com', x: -55, y: 30 },
-        { id: 'no', name: 'NO', type: 'no', x: 55, y: -25 },
-        { id: 'nc', name: 'NC', type: 'nc', x: 55, y: 20 }
-      ],
+      label: 'Camden CM-702',
+      terminals: pullStationTerminals(),
       state: { toggled: false }
     },
     {
@@ -119,7 +116,7 @@ export const pullStationReleaseLab: Level = {
   preplacedWires: [],
   hints: [
     'Board input: Transformer (+) → Altronix AC1; Transformer (-) → AC2.',
-    'Control: Altronix (+) → Pull Station C → NC → Release Relay A1; Relay A2 → Altronix (-).',
+    'Control: Altronix (+) → Pull Station 1; Pull Station 2 → Release Relay A1; Relay A2 → Altronix (-).',
     'Relay supply: Altronix (+) → Release Relay COM.',
     'Normal branch: Relay NO → green NORMAL (+) and Maglock (+).',
     'Released branch: Relay NC → red RELEASED (+). Return both pilots and the maglock to Altronix (-).',
@@ -165,7 +162,7 @@ export const pullStationReleaseLab: Level = {
     if (!pullStation.state.releaseVerified) {
       return {
         success: false,
-        feedback: 'Pull-state test failed. Activate the station; the NC loop, relay, and maglock power must drop while red turns ON.'
+        feedback: 'Pull-state test failed. Pull the plate; the N/C circuit, relay, and maglock power must drop while red turns ON.'
       };
     }
 

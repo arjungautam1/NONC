@@ -222,3 +222,20 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+/* Waving hand animation for touchless switch */
+@keyframes wave-hand {
+  0% { transform: scale(0) rotate(35deg); opacity: 0; }
+  15% { transform: scale(1.2) rotate(15deg); opacity: 0.95; }
+  30% { transform: scale(1.2) rotate(-15deg); opacity: 0.95; }
+  45% { transform: scale(1.2) rotate(15deg); opacity: 0.95; }
+  60% { transform: scale(1.2) rotate(-15deg); opacity: 0.95; }
+  75% { transform: scale(1.2) rotate(15deg); opacity: 0.95; }
+  90% { transform: scale(1.2) rotate(0deg); opacity: 0.95; }
+  100% { transform: scale(0) rotate(35deg); opacity: 0; }
+}
+
+.animate-wave-hand {
+  animation: wave-hand 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform-origin: 0px 20px;
+}
