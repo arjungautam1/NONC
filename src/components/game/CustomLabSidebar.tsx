@@ -31,7 +31,7 @@ const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   relay_dpdt: '-76 -80 152 184',
   relay_rb1224: '-72 -76 144 172',
   relay_rbsnttl: '-82 -76 164 178',
-  timer_relay: '-72 -72 144 144',
+  timer_relay: '-100 -100 200 200',
   power_supply: '-88 -66 176 132',
   transformer: '-58 -78 116 156',
   maglock: '-102 -58 204 116',
@@ -45,7 +45,7 @@ const LibraryThumbnail: React.FC<{
   component: CircuitComponent;
   selected?: boolean;
 }> = ({ component, selected = false }) => (
-  <div className={`relative flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border transition ${
+  <div className={`relative flex h-[68px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl border transition ${
     selected
       ? 'border-blue-400/40 bg-gradient-to-b from-[#7c8ba5] to-[#55637c] shadow-[0_0_0_1px_rgba(59,130,246,0.25),inset_0_1px_0_rgba(255,255,255,0.22)]'
       : 'border-white/[0.14] bg-gradient-to-b from-[#6b7893] to-[#48546b] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] group-hover:from-[#7c8ba5] group-hover:to-[#55637c]'
@@ -56,7 +56,7 @@ const LibraryThumbnail: React.FC<{
       viewBox={thumbnailViewBoxes[component.type] ?? '-76 -72 152 144'}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
-      className="relative h-[50px] w-[58px] overflow-visible pointer-events-none [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.45))]"
+      className="relative h-[60px] w-[68px] overflow-visible pointer-events-none [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.45))]"
     >
       <ComponentRenderer
         component={{ ...component, x: 0, y: 0, state: { ...component.state, active: false, energized: false } }}
@@ -118,7 +118,7 @@ export const CustomLabSidebar: React.FC = () => {
   return (
     <div className={`relative flex shrink-0 transition-all duration-300 ease-in-out ${
       sidebarOpen
-        ? 'h-[380px] max-h-[48vh] w-full md:h-full md:max-h-none md:w-[340px]'
+        ? 'h-[380px] max-h-[48vh] w-full md:h-full md:max-h-none md:w-[380px]'
         : 'h-10 w-full md:h-full md:w-[28px]'
     }`}>
       {!sidebarOpen && (
@@ -135,7 +135,7 @@ export const CustomLabSidebar: React.FC = () => {
       )}
 
       {sidebarOpen && (
-        <aside className="flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[340px] md:border-b-0 md:border-r">
+        <aside className="flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r">
           <div className="shrink-0 border-b border-white/10 bg-white/[0.015] p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -235,7 +235,7 @@ export const CustomLabSidebar: React.FC = () => {
                         <p className="truncate text-[9.5px] font-semibold text-slate-300">
                           {component.id === 'custom_psu' ? 'Altronix power supply' : component.label}
                         </p>
-                        <p className="mt-0.5 truncate text-[8px] uppercase tracking-wide text-slate-600">
+                        <p className="mt-1 truncate text-[9.5px] font-medium uppercase tracking-wider text-slate-400">
                           {component.type === 'transformer' ? 'AC/AC source' : 'AC input · DC output'}
                         </p>
                       </div>
@@ -282,7 +282,7 @@ export const CustomLabSidebar: React.FC = () => {
                         return (
                           <div
                             key={option.id}
-                            className={`group flex min-h-[60px] items-center gap-2 rounded-lg border p-1.5 transition ${
+                            className={`group flex min-h-[74px] items-center gap-3 rounded-xl border p-2.5 transition ${
                               selected
                                 ? 'border-blue-400/20 bg-blue-400/[0.07]'
                                 : 'border-white/[0.05] bg-black/15 hover:border-white/10 hover:bg-white/[0.035]'
@@ -301,8 +301,8 @@ export const CustomLabSidebar: React.FC = () => {
                               }}
                             />
                             <div className="min-w-0 flex-1">
-                              <p className={`truncate text-[9.5px] font-semibold ${selected ? 'text-blue-200' : 'text-slate-400'}`}>{option.name}</p>
-                              <p className="mt-0.5 truncate text-[8px] uppercase tracking-wide text-slate-600">{option.terminalSummary}</p>
+                              <p className={`line-clamp-2 text-[12.5px] font-semibold leading-snug ${selected ? 'text-blue-100' : 'text-slate-100'}`}>{option.name}</p>
+                              <p className="mt-1 truncate text-[9.5px] font-medium uppercase tracking-wider text-slate-400">{option.terminalSummary}</p>
                             </div>
                             <button
                               type="button"
@@ -310,13 +310,13 @@ export const CustomLabSidebar: React.FC = () => {
                               disabled={disabled}
                               aria-label={`${selected ? 'Remove' : 'Add'} ${option.name}`}
                               title={selected ? 'Remove component and its connected wires' : disabled ? `Maximum ${MAX_CUSTOM_COMPONENTS} devices` : 'Add component to canvas'}
-                              className={`flex h-7 shrink-0 items-center justify-center gap-1 rounded-md border px-2 text-[8.5px] font-bold transition ${
+                              className={`flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-3 text-[11px] font-bold transition ${
                                 selected
                                   ? 'border-red-400/15 bg-red-400/[0.04] text-slate-500 hover:border-red-400/25 hover:bg-red-400/[0.09] hover:text-red-300'
                                   : 'border-blue-400/18 bg-blue-400/[0.07] text-blue-300 hover:bg-blue-400/[0.14] disabled:cursor-not-allowed disabled:border-white/[0.05] disabled:bg-white/[0.02] disabled:text-slate-700'
                               }`}
                             >
-                              {selected ? <Trash2 className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                              {selected ? <Trash2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                               {selected ? 'Remove' : 'Add'}
                             </button>
                           </div>

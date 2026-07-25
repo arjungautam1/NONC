@@ -4,6 +4,7 @@ import { ComponentRenderer } from './components/ComponentRenderer';
 import { DPDT_TERMINAL_POSITIONS } from './components/relayPinout';
 import { RB1224_TERMINAL_POSITIONS } from './components/rb1224Pinout';
 import { RBSNTTL_TERMINAL_POSITIONS } from './components/rbsnttlPinout';
+import { TIMER_6062_SCALE, TIMER_6062_TERMINAL_POSITIONS } from '../../simulation/timer6062';
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
 import { levels } from '../../levels/levelData';
@@ -253,6 +254,8 @@ export const Workspace: React.FC = () => {
   // than part of the circuit that is dynamically centered. Coordinates are
   // converted back into the scaled SVG space so its terminals and wires still
   // behave exactly like every other circuit component.
+  const componentLayoutKey = components.map(component => component.id).join('|');
+
   const getComponentCanvasPosition = (component: CircuitComponent) => {
     const sourceLeft = (20 - offsets.shiftX) / zoomScale;
     const sourceTop = (20 - offsets.shiftY) / zoomScale;
@@ -341,7 +344,10 @@ export const Workspace: React.FC = () => {
       shiftX: targetCenterX - compCenterX * zoomScale,
       shiftY: targetCenterY - compCenterY * zoomScale
     });
-  }, [components, zoomScale, sidebarOpen, bottomPanelOpen, resizeToggle]);
+    // Re-centre only when the SET of components changes (added/removed/level
+    // loaded). Depending on `components` itself re-ran this on every drag, which
+    // shifted the canvas back and made components feel unmovable.
+  }, [componentLayoutKey, zoomScale, sidebarOpen, bottomPanelOpen, resizeToggle]);
 
   // Convert screen coordinates of DMM ports to SVG coordinates relative to the SVG container
   const getPortCoords = (portId: string) => {
@@ -430,8 +436,11 @@ export const Workspace: React.FC = () => {
       const coords = getSVGCoords(e);
       const gridX = Math.round((coords.x - dragOffset.x) / 10) * 10;
       const gridY = Math.round((coords.y - dragOffset.y) / 10) * 10;
-      const clampedX = Math.max(-120, Math.min(920, gridX));
-      const clampedY = Math.max(80, Math.min(480, gridY));
+      // Keep components on the board without fencing them into the old, much
+      // smaller canvas — wide access-control layouts run well past x 920 / y 480,
+      // and a tight clamp makes those components snap back instead of dragging.
+      const clampedX = Math.max(-400, Math.min(2200, gridX));
+      const clampedY = Math.max(-200, Math.min(1400, gridY));
       updateComponentPosition(draggedCompId, clampedX, clampedY);
     }
   };
@@ -622,6 +631,11 @@ export const Workspace: React.FC = () => {
         x = screw.x;
         y = screw.y;
       }
+    } else if (comp.type === 'timer_relay') {
+      // Snap to the drawn screws, then follow the artwork's scale.
+      const screw = TIMER_6062_TERMINAL_POSITIONS[term.id] ?? { x: term.x, y: term.y };
+      x = screw.x * TIMER_6062_SCALE;
+      y = screw.y * TIMER_6062_SCALE;
     } else if (comp.type === 'junction') {
       const scale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
       x = term.x * scale;
@@ -1112,7 +1126,7 @@ export const Workspace: React.FC = () => {
     const halfSizeByType: Partial<Record<CircuitComponent['type'], [number, number]>> = {
       battery: [64, 46],
       power_supply: [77, 54],
-      timer_relay: [54, 68],
+      timer_relay: [76, 90],
       relay: [50, 60],
       relay_dpdt: [58, 92],
       relay_rb1224: [60, 86],
@@ -1913,11 +1927,17 @@ export const Workspace: React.FC = () => {
                 strokeWidth="1.2"
               />
               <path d="M -99 8 H 99" stroke="#0c0f13" strokeWidth="1.3" opacity="0.8" />
+              {/* Live rail: a bright, unmistakable strip when system power is on. */}
               <path
                 d="M -98 7 H 98"
-                stroke={isRunning ? '#34d399' : '#64748b'}
-                strokeWidth="0.8"
-                opacity={isRunning ? 0.8 : 0.35}
+                stroke={isRunning ? '#4ade80' : '#5b6674'}
+                strokeWidth={isRunning ? 2.2 : 0.9}
+                strokeLinecap="round"
+                opacity={isRunning ? 1 : 0.4}
+                style={{
+                  filter: isRunning ? 'drop-shadow(0 0 3px rgba(74,222,128,0.9))' : 'none',
+                  transition: 'stroke 160ms ease, stroke-width 160ms ease'
+                }}
               />
 
               {/* Three NEMA 5-15 receptacles; the transformer covers the center one. */}
@@ -1938,12 +1958,21 @@ export const Workspace: React.FC = () => {
 
               {/* Dedicated label plates remain readable and are never covered by the adapter. */}
               <g>
-                <rect x="-101" y="8" width="43" height="15" rx="3" fill="#10141a" stroke="#59636f" strokeWidth="0.7" />
+                <rect x="-101" y="8" width="43" height="15" rx="3" fill="#10141a" stroke={isRunning ? '#4ade80' : '#59636f'} strokeWidth={isRunning ? 1 : 0.7} opacity={isRunning ? 0.95 : 1} />
                 <text x="-79.5" y="14.5" fill="#f1f5f9" fontSize="4.1" fontWeight="900" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.25">
                   SYSTEM POWER
                 </text>
-                <circle cx="-91" cy="19.2" r="1.7" fill={isRunning ? '#34d399' : '#ef4444'} />
-                <text x="-79" y="21" fill={isRunning ? '#a7f3d0' : '#cbd5e1'} fontSize="4" fontWeight="900" fontFamily="monospace" textAnchor="middle">
+                {isRunning && <circle cx="-91" cy="19.2" r="3.4" fill="#4ade80" opacity="0.28" />}
+                <circle
+                  cx="-91"
+                  cy="19.2"
+                  r="2"
+                  fill={isRunning ? '#4ade80' : '#ef4444'}
+                  stroke={isRunning ? '#dcfce7' : '#7f1d1d'}
+                  strokeWidth="0.5"
+                  style={{ filter: isRunning ? 'drop-shadow(0 0 3px rgba(74,222,128,0.95))' : 'none' }}
+                />
+                <text x="-79" y="21" fill={isRunning ? '#dcfce7' : '#cbd5e1'} fontSize="4" fontWeight="900" fontFamily="monospace" textAnchor="middle">
                   {isRunning ? 'ON' : 'OFF'}
                 </text>
               </g>
@@ -2228,7 +2257,10 @@ export const Workspace: React.FC = () => {
                 pointerEvents="none"
                 className={`transition-all duration-300 ${
                   isEndpointBeingDragged ? 'opacity-15' :
-                  isWireDead ? 'opacity-40 brightness-[0.4] saturate-[0.2]' :
+                  // An un-energised run is still a real wire — keep it plainly
+                  // readable and let the flow dots/glow carry the "current here"
+                  // signal instead of hiding the conductor.
+                  isWireDead ? 'opacity-80 saturate-[0.7]' :
                   isBlocked ? 'brightness-[0.9] saturate-[0.8]' :
                   'brightness-110'
                 }`}

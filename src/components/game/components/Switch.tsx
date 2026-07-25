@@ -14,27 +14,10 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   const isRunning = useGameStore(state => state.isRunning);
   
   const isPressed = component.state.pressed || false;
-  const isMomentaryRef = React.useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    if (e.shiftKey) {
-      isMomentaryRef.current = false;
-      pressButton(component.id, !isPressed);
-    } else {
-      isMomentaryRef.current = true;
-      // @ts-ignore
-      e.currentTarget.setPointerCapture(e.pointerId);
-      pressButton(component.id, true);
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    if (isMomentaryRef.current) {
-      pressButton(component.id, false);
-      isMomentaryRef.current = false;
-    }
+    pressButton(component.id, !isPressed);
   };
 
   const hasCom = component.terminals.some(t => t.id === 'com');
@@ -47,7 +30,6 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
       transform="translate(-40, -40)"
       className="cursor-pointer select-none"
       onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
     >
       {/* DIN Rail mounting plate */}
       <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />

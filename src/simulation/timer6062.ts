@@ -43,6 +43,25 @@ export const DEFAULT_6062_CONFIG: Timer6062Config = {
   adjustment: 2
 };
 
+/** Canvas scale for the 6062 artwork. The board carries a lot of fine
+ * silkscreen, so it is drawn larger than its raw 100x120 unit footprint.
+ * Workspace scales the terminal positions by the same factor. */
+export const TIMER_6062_SCALE = 1.4;
+
+/**
+ * Screw positions from the 6062 board drawing, in unscaled artwork units.
+ * The catalogue spaces its terminals evenly at 16, but the real board's screws
+ * sit at ~14.5 centres, so wires must snap to these rather than the raw values.
+ */
+export const TIMER_6062_TERMINAL_POSITIONS: Record<string, { x: number; y: number }> = {
+  coil_a: { x: -36, y: 40 },
+  coil_b: { x: -22, y: 40 },
+  pos_dummy: { x: -7, y: 40 },
+  no: { x: 7, y: 40 },
+  com: { x: 22, y: 40 },
+  nc: { x: 36, y: 40 }
+};
+
 const clampAdjustment = (value: number) => Math.min(60, Math.max(1, value));
 
 export function getTimer6062Config(component: CircuitComponent): Timer6062Config {

@@ -4,7 +4,8 @@ import {
   getTimer6062Config,
   getTimer6062DurationMs,
   getTimer6062PhaseLabel,
-  isTimer6062RelayActive
+  isTimer6062RelayActive,
+  TIMER_6062_SCALE
 } from '../../../simulation/timer6062';
 
 interface TimerRelayProps {
@@ -59,6 +60,8 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
           </feMerge>
         </filter>
       </defs>
+
+      <g transform={`scale(${TIMER_6062_SCALE})`}>
 
       {/* The DWG outline is 2.5000 × 3.0118 inches, scaled to 100 × 120. */}
       <rect
@@ -272,6 +275,7 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
           <text x="22" y="0">C</text>
           <text x="36" y="0">NC</text>
         </g>
+      </g>
       </g>
     </g>
   );
