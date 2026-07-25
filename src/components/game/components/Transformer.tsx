@@ -111,6 +111,11 @@ export const Transformer: React.FC<TransformerProps> = ({ component }) => {
         </g>
       </g>
 
+      {/* Label tag below transformer */}
+      <text x="0" y="70" fill="#cbd5e1" fontSize="10.5" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
       <defs>
         {/* Shiny plastic cylinder/body gradient */}
         <linearGradient id="transf-casing" x1="0%" y1="0%" x2="100%" y2="100%">

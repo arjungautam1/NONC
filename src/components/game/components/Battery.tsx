@@ -199,6 +199,11 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         );
       })}
 
+      {/* Label tag below power supply */}
+      <text x="75" y="116" fill="#cbd5e1" fontSize="10.5" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
       <defs>
         {/* Silver screw gradient */}
         <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
