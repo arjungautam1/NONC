@@ -154,9 +154,14 @@ export const Sidebar: React.FC = () => {
       </button>
 
       {/* Main Sidebar Panel */}
-      <div className={`w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0 transition-all duration-300 ${
-        sidebarOpen ? 'opacity-100 translate-x-0' : 'pointer-events-none opacity-0 -translate-x-[20px]'
-      }`}>
+      <div
+        className="w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0 transition-all duration-300"
+        style={{
+          opacity: sidebarOpen ? 1 : 0,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-20px)',
+          pointerEvents: sidebarOpen ? 'auto' : 'none'
+        }}
+      >
         
         {/* 1. Level Selector Header */}
         <div className="p-3 border-b border-white/10 bg-white/[0.015] flex flex-col gap-2 shrink-0">

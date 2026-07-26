@@ -139,9 +139,14 @@ export const CustomLabSidebar: React.FC = () => {
         <span className="text-[9px] font-black tracking-[0.18em] text-slate-500 transition group-hover:text-white md:[writing-mode:vertical-rl]">COMPONENTS</span>
       </button>
 
-      <aside className={`flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r transition-all duration-300 ${
-        sidebarOpen ? 'opacity-100 translate-x-0' : 'pointer-events-none opacity-0 -translate-x-[20px]'
-      }`}>
+      <aside
+        className="flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r transition-all duration-300"
+        style={{
+          opacity: sidebarOpen ? 1 : 0,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-20px)',
+          pointerEvents: sidebarOpen ? 'auto' : 'none'
+        }}
+      >
           <div className="shrink-0 border-b border-white/10 bg-white/[0.015] p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
