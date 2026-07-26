@@ -130,32 +130,33 @@ export const Sidebar: React.FC = () => {
   return (
     <div className={`relative transition-all duration-300 ease-in-out shrink-0 flex ${
       sidebarOpen ? 'w-full md:w-[320px] h-[255px] md:h-full' : 'w-full md:w-[28px] h-10 md:h-full'
-    }`}>
+    } overflow-hidden`}>
 
       {/* ── Slim Edge Tab (visible when closed) ── */}
-      {!sidebarOpen && (
-        <button
-          onClick={toggleSidebar}
-          title="Open Sidebar"
-          className="w-full md:w-[28px] h-10 md:h-full bg-[#080d19] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/[0.04] transition-all group shrink-0"
-          style={{ pointerEvents: 'auto' }}
-        >
-          {/* Glow pill indicator */}
-          <span className="h-1 w-10 md:w-1 md:h-10 rounded-full bg-[#2563eb]/45 group-hover:bg-[#60a5fa] transition-colors shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
-          <div className="flex md:flex-col items-center justify-center text-[9px] font-black text-slate-400 group-hover:text-white font-mono leading-none gap-0.5 md:gap-1.5 md:mt-2">
-            <span>G</span>
-            <span>U</span>
-            <span>I</span>
-            <span>D</span>
-            <span>E</span>
-          </div>
-        </button>
-      )}
+      <button
+        onClick={toggleSidebar}
+        title="Open Sidebar"
+        className={`w-full md:w-[28px] h-10 md:h-full bg-[#080d19] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/[0.04] transition-all duration-300 group shrink-0 ${
+          sidebarOpen ? 'pointer-events-none opacity-0 w-0 md:w-0 md:h-0 overflow-hidden border-none p-0 m-0' : 'opacity-100'
+        }`}
+        style={{ pointerEvents: sidebarOpen ? 'none' : 'auto' }}
+      >
+        {/* Glow pill indicator */}
+        <span className="h-1 w-10 md:w-1 md:h-10 rounded-full bg-[#2563eb]/45 group-hover:bg-[#60a5fa] transition-colors shadow-[0_0_8px_rgba(59,130,246,0.45)]" />
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+        <div className="flex md:flex-col items-center justify-center text-[9px] font-black text-slate-400 group-hover:text-white font-mono leading-none gap-0.5 md:gap-1.5 md:mt-2">
+          <span>G</span>
+          <span>U</span>
+          <span>I</span>
+          <span>D</span>
+          <span>E</span>
+        </div>
+      </button>
 
       {/* Main Sidebar Panel */}
-      {sidebarOpen && (
-      <div className="w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0">
+      <div className={`w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0 transition-all duration-300 ${
+        sidebarOpen ? 'opacity-100 translate-x-0' : 'pointer-events-none opacity-0 -translate-x-[20px]'
+      }`}>
         
         {/* 1. Level Selector Header */}
         <div className="p-3 border-b border-white/10 bg-white/[0.015] flex flex-col gap-2 shrink-0">
@@ -408,7 +409,6 @@ export const Sidebar: React.FC = () => {
           </span>
         </div>
       </div>
-      )}
     </div>
   );
 };

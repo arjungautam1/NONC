@@ -164,10 +164,11 @@ export const HelpOverlay: React.FC = () => {
     toggleBottomPanel,
     useHint,
     shortCircuitPopup,
-    dismissShortCircuitPopup
+    dismissShortCircuitPopup,
+    isCustomLab
   } = useGameStore();
 
-  const level = levels[currentLevelIndex];
+  const level = levels[currentLevelIndex] || levels[0];
   const multimeterModeLabel =
     multimeter.mode === 'VOLTAGE' ? 'V' :
       multimeter.mode === 'CONTINUITY' ? 'CONT' :
@@ -293,7 +294,7 @@ export const HelpOverlay: React.FC = () => {
 
       {/* 2. Interactive Diagnostic Console (Panel) */}
       {bottomPanelOpen ? (
-      <div className={`fixed bottom-0 left-0 ${sidebarOpen ? 'md:left-[320px]' : 'md:left-0'} right-0 h-44 md:h-40 bg-[#090d14]/94 border-t border-white/10 flex flex-col md:flex-row p-2 md:p-2.5 gap-2 md:gap-3 pointer-events-auto z-10 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-[0_-18px_40px_rgba(0,0,0,0.26)] overflow-y-auto md:overflow-hidden`}>
+      <div className={`fixed bottom-0 left-0 ${sidebarOpen ? (isCustomLab ? 'md:left-[380px]' : 'md:left-[320px]') : 'md:left-0'} right-0 h-44 md:h-40 bg-[#090d14]/94 border-t border-white/10 flex flex-col md:flex-row p-2 md:p-2.5 gap-2 md:gap-3 pointer-events-auto z-10 transition-all duration-300 ease-in-out backdrop-blur-xl shadow-[0_-18px_40px_rgba(0,0,0,0.26)] overflow-y-auto md:overflow-hidden`}>
         <button
           onClick={toggleBottomPanel}
           className="absolute right-2 top-2 z-20 h-7 px-2 rounded border border-white/10 bg-slate-950/80 hover:bg-slate-900 text-[9px] font-bold uppercase text-slate-400 hover:text-white cursor-pointer transition-all flex items-center gap-1"
@@ -304,6 +305,7 @@ export const HelpOverlay: React.FC = () => {
         </button>
 
         {/* Diagnostic Status Box */}
+        {!isCustomLab && (
         <div className="hidden xl:flex w-72 border border-white/10 bg-white/[0.035] rounded-md p-3 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
@@ -331,9 +333,12 @@ export const HelpOverlay: React.FC = () => {
             </p>
           </div>
         </div>
+        )}
 
         {/* 3. DMM Troubleshooting Multimeter Panel */}
-        <div className="w-full md:w-[360px] xl:w-[390px] h-auto md:h-full border border-white/10 bg-white/[0.035] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden">
+        <div className={`h-auto md:h-full border border-white/10 bg-white/[0.035] rounded-md p-2 flex gap-3 select-none shrink-0 overflow-hidden ${
+          isCustomLab ? 'w-full md:w-[420px] mx-auto justify-center' : 'w-full md:w-[360px] xl:w-[390px]'
+        }`}>
           {/* DMM Yellow Housing */}
           <div className="w-[164px] h-full min-h-[122px] bg-[#fcc419] p-1.5 rounded-md border border-[#ca8a04] shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_18px_rgba(0,0,0,0.25)] flex flex-col gap-1 shrink-0 justify-between">
             {/* LCD Screen */}
@@ -426,6 +431,7 @@ export const HelpOverlay: React.FC = () => {
           </div>
 
           {/* Dynamic DMM Hints Container */}
+          {!isCustomLab && (
           <div className="hidden sm:flex flex-1 flex-col justify-between min-w-0 overflow-hidden py-0.5 select-none">
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-1">
@@ -469,9 +475,11 @@ export const HelpOverlay: React.FC = () => {
               <p className="text-[9.5px] text-slate-500 font-medium mt-1">No hints available for this training module.</p>
             )}
           </div>
+          )}
         </div>
 
         {/* Dynamic Hints & Real World Application Panel */}
+        {!isCustomLab && (
         <div className="flex-1 border border-white/10 bg-white/[0.035] rounded-md p-2.5 flex flex-col justify-center min-w-0">
           {/* Lower Section: Real-World Application with SVG visual */}
           {(() => {
@@ -508,11 +516,12 @@ export const HelpOverlay: React.FC = () => {
             );
           })()}
         </div>
+        )}
       </div>
       ) : (
         <button
           onClick={toggleBottomPanel}
-          className={`fixed bottom-3 ${sidebarOpen ? 'left-3 md:left-[332px]' : 'left-3 md:left-10'} z-20 pointer-events-auto h-9 px-3 rounded-md border border-white/10 bg-[#090d14]/94 hover:bg-[#111827] text-slate-300 hover:text-white shadow-lg backdrop-blur-xl text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all flex items-center gap-2`}
+          className={`fixed bottom-3 ${sidebarOpen ? (isCustomLab ? 'left-3 md:left-[392px]' : 'left-3 md:left-[332px]') : 'left-3 md:left-10'} z-20 pointer-events-auto h-9 px-3 rounded-md border border-white/10 bg-[#090d14]/94 hover:bg-[#111827] text-slate-300 hover:text-white shadow-lg backdrop-blur-xl text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all flex items-center gap-2`}
           title="Show multimeter"
         >
           <Activity className="w-3.5 h-3.5 text-emerald-400" />

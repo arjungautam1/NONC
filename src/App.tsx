@@ -57,7 +57,7 @@ function App() {
         {/* Center Schematic Canvas & Diagnostics */}
         <div className="flex-1 flex flex-col overflow-hidden relative min-w-0 min-h-0">
           <Workspace />
-          {!isCustomLab && <HelpOverlay />}
+          <HelpOverlay />
         </div>
       </div>
     </div>

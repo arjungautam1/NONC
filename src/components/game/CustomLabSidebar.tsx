@@ -125,22 +125,23 @@ export const CustomLabSidebar: React.FC = () => {
       sidebarOpen
         ? 'h-[380px] max-h-[48vh] w-full md:h-full md:max-h-none md:w-[380px]'
         : 'h-10 w-full md:h-full md:w-[28px]'
-    }`}>
-      {!sidebarOpen && (
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          title="Open component library"
-          className="group flex h-10 w-full shrink-0 items-center justify-center gap-2 border-b border-white/10 bg-[#080d19] transition hover:bg-white/[0.04] md:h-full md:w-[28px] md:flex-col md:border-b-0 md:border-r"
-        >
-          <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-10 md:w-1" />
-          <ChevronRight className="h-3.5 w-3.5 text-slate-500 transition group-hover:text-white" />
-          <span className="text-[9px] font-black tracking-[0.18em] text-slate-500 transition group-hover:text-white md:[writing-mode:vertical-rl]">COMPONENTS</span>
-        </button>
-      )}
+    } overflow-hidden`}>
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        title="Open component library"
+        className={`group flex h-10 w-full shrink-0 items-center justify-center gap-2 border-b border-white/10 bg-[#080d19] hover:bg-white/[0.04] md:h-full md:w-[28px] md:flex-col md:border-b-0 md:border-r transition-all duration-300 ${
+          sidebarOpen ? 'pointer-events-none opacity-0 w-0 md:w-0 overflow-hidden border-none p-0 m-0' : 'opacity-100'
+        }`}
+      >
+        <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-10 md:w-1" />
+        <ChevronRight className="h-3.5 w-3.5 text-slate-500 transition group-hover:text-white" />
+        <span className="text-[9px] font-black tracking-[0.18em] text-slate-500 transition group-hover:text-white md:[writing-mode:vertical-rl]">COMPONENTS</span>
+      </button>
 
-      {sidebarOpen && (
-        <aside className="flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r">
+      <aside className={`flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r transition-all duration-300 ${
+        sidebarOpen ? 'opacity-100 translate-x-0' : 'pointer-events-none opacity-0 -translate-x-[20px]'
+      }`}>
           <div className="shrink-0 border-b border-white/10 bg-white/[0.015] p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -351,7 +352,6 @@ export const CustomLabSidebar: React.FC = () => {
             </div>
           </div>
         </aside>
-      )}
     </div>
   );
 };

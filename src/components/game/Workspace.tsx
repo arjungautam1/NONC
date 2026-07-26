@@ -140,13 +140,19 @@ export const Workspace: React.FC = () => {
     setSidebarOpen,
     bottomPanelOpen,
     setBottomPanelOpen,
-    shortCircuitSmoke
+    shortCircuitSmoke,
+    isCustomLab,
+    removeCustomLabComponent
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
   const [zoomScale, setZoomScale] = useState<number>(1.0);
   const [draggedCompId, setDraggedCompId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Custom Lab deletion selection and trash states
+  const [selectedCompId, setSelectedCompId] = useState<string | null>(null);
+  const [isOverTrash, setIsOverTrash] = useState<boolean>(false);
 
   // Wire drawing state
   const [drawingWireStart, setDrawingWireStart] = useState<{ componentId: string; terminalId: string } | null>(null);
@@ -410,6 +416,53 @@ export const Workspace: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Get components visual boundaries for drawing selection highlights
+  const getSelectionHighlightBounds = (type: string) => {
+    switch (type) {
+      case 'cx12plus':
+        return { x: -125, y: -65, w: 250, h: 130 };
+      case 'junction':
+        return { x: -45, y: -22, w: 90, h: 44 };
+      case 'timer_relay':
+      case 'power_supply':
+        return { x: -65, y: -85, w: 130, h: 170 };
+      case 'sliding_gate':
+        return { x: -125, y: -25, w: 250, h: 50 };
+      case 'transformer':
+        return { x: -40, y: -20, w: 80, h: 80 };
+      case 'maglock':
+      case 'door_strike':
+        return { x: -65, y: -25, w: 130, h: 50 };
+      case 'cube_power':
+        return { x: -55, y: -75, w: 110, h: 150 };
+      default:
+        return { x: -50, y: -50, w: 100, h: 100 };
+    }
+  };
+
+  // Keyboard listener to delete selected component in Custom Lab
+  useEffect(() => {
+    if (!isCustomLab) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return;
+      }
+      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedCompId) {
+        e.preventDefault();
+        soundManager.playClick();
+        const optionId = selectedCompId.replace('custom_', '');
+        removeCustomLabComponent(optionId);
+        setSelectedCompId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCustomLab, selectedCompId, removeCustomLabComponent]);
+
   // Component Dragging — blocked in probe mode
   const handleCompPointerDown = (e: React.PointerEvent, comp: CircuitComponent) => {
     if (probeMode) return;
@@ -442,13 +495,37 @@ export const Workspace: React.FC = () => {
       const clampedX = Math.max(-400, Math.min(2200, gridX));
       const clampedY = Math.max(-200, Math.min(1400, gridY));
       updateComponentPosition(draggedCompId, clampedX, clampedY);
+
+      // Check if dragged over trash zone (only in custom lab)
+      if (isCustomLab) {
+        const trashEl = document.getElementById('workspace-trash-zone');
+        if (trashEl) {
+          const rect = trashEl.getBoundingClientRect();
+          const over = (
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom
+          );
+          setIsOverTrash(over);
+        }
+      }
     }
   };
 
   const handleCompPointerUp = (e: React.PointerEvent) => {
     if (draggedCompId) {
       e.stopPropagation();
+      if (isCustomLab && isOverTrash) {
+        soundManager.playClick();
+        const optionId = draggedCompId.replace('custom_', '');
+        removeCustomLabComponent(optionId);
+        if (selectedCompId === draggedCompId) {
+          setSelectedCompId(null);
+        }
+      }
       setDraggedCompId(null);
+      setIsOverTrash(false);
     }
   };
 
@@ -1864,6 +1941,7 @@ export const Workspace: React.FC = () => {
         onClick={() => {
           if (probeMode) setProbeMode(null);
           setSelectedTimerId(null);
+          setSelectedCompId(null);
         }}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -2010,6 +2088,7 @@ export const Workspace: React.FC = () => {
 
 
           {/* 1. Placed components casing layer */}
+{/* 1. Placed components casing layer */}
           {components.map(comp => {
           const isEnergized = isRunning && simulation.energizedComponents.has(comp.id);
           const isFaulty = isRunning && simulation.faultLocation?.split(':')[0] === comp.id;
@@ -2021,7 +2100,12 @@ export const Workspace: React.FC = () => {
             <g
               key={comp.id}
               transform={`translate(${componentPosition.x}, ${componentPosition.y})`}
-              onPointerDown={(e) => handleCompPointerDown(e, comp)}
+              onPointerDown={(e) => {
+                handleCompPointerDown(e, comp);
+                if (isCustomLab) {
+                  setSelectedCompId(comp.id);
+                }
+              }}
               onPointerMove={handleCompPointerMove}
               onPointerUp={handleCompPointerUp}
               onPointerOver={() => setHoveredCompId(comp.id)}
@@ -2029,6 +2113,9 @@ export const Workspace: React.FC = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 if (comp.type === 'timer_relay') setSelectedTimerId(comp.id);
+                if (isCustomLab) {
+                  setSelectedCompId(comp.id);
+                }
               }}
               onKeyDown={(e) => {
                 if (comp.type === 'timer_relay' && (e.key === 'Enter' || e.key === ' ')) {
@@ -2041,6 +2128,26 @@ export const Workspace: React.FC = () => {
               tabIndex={comp.type === 'timer_relay' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
+              {/* Placed selection border */}
+              {isCustomLab && selectedCompId === comp.id && (() => {
+                const bounds = getSelectionHighlightBounds(comp.type);
+                return (
+                  <rect
+                    x={bounds.x}
+                    y={bounds.y}
+                    width={bounds.w}
+                    height={bounds.h}
+                    rx="8"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="2.5"
+                    strokeDasharray="5,3"
+                    className="animate-pulse"
+                    style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+                  />
+                );
+              })()}
+
               {/* Highlight bounding box if diagnostic fault is here */}
               {isFaulty && (
                 <rect
@@ -2973,6 +3080,41 @@ export const Workspace: React.FC = () => {
           );
         })()}
       </svg>
+
+      {/* Drag-to-Delete Trash Zone overlay */}
+      {isCustomLab && draggedCompId && (
+        <div
+          id="workspace-trash-zone"
+          className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-center gap-1.5 p-3 rounded-full border shadow-2xl transition-all duration-300 pointer-events-none ${
+            isOverTrash
+              ? 'bg-red-500/20 border-red-500 text-red-400 scale-110 shadow-red-950/40 ring-4 ring-red-500/20'
+              : 'bg-[#0f172a]/95 border-slate-700 text-slate-400 scale-100 shadow-black/40'
+          }`}
+          style={{ width: '120px', height: '120px', borderRadius: '50%' }}
+        >
+          {/* Animated Lucide Trash Icon */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`transition-all duration-300 ${isOverTrash ? 'animate-bounce text-red-500' : 'text-slate-400'}`}
+          >
+            <path d="M3 6h18" />
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          </svg>
+          <span className={`text-[9px] font-black tracking-widest uppercase transition-all ${isOverTrash ? 'text-red-400' : 'text-slate-400'}`}>
+            {isOverTrash ? 'Release' : 'Drop Here'}
+          </span>
+          <span className="text-[8px] font-bold text-slate-500 tracking-wide">to delete</span>
+        </div>
+      )}
 
       {selectedTimerId && (() => {
         const timer = components.find(component => component.id === selectedTimerId && component.type === 'timer_relay');
