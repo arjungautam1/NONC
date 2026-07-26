@@ -38,7 +38,12 @@ const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   door_strike: '-50 -50 100 120',
   led_strip: '-76 -52 152 104',
   sliding_gate: '-148 -86 296 172',
-  wave_sensor: '-38 -92 76 184'
+  wave_sensor: '-52 -92 104 200',
+  cube_power: '-96 -78 166 168',
+  wireless_transmitter: '-40 -50 80 155',
+  sm500_maglock: '-66 -112 140 230',
+  actuator: '-80 -35 200 70',
+  cx12plus: '-135 -72 270 200'
 };
 
 const LibraryThumbnail: React.FC<{

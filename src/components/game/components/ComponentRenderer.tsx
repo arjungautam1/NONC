@@ -23,6 +23,12 @@ import { ParkingGate } from './ParkingGate';
 import { SlidingGate } from './SlidingGate';
 import { DoorSensor } from './DoorSensor';
 import { KeySwitch, PullStation } from './FieldControls';
+import { CubePower } from './CubePower';
+import { WirelessTransmitter } from './WirelessTransmitter';
+import { SM500Maglock } from './SM500Maglock';
+import { CX12Plus } from './CX12Plus';
+import { STISirenStrobe } from './STISirenStrobe';
+import { DCCoolingFan } from './DCCoolingFan';
 
 const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
 
@@ -158,6 +164,18 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <RelayDPDT component={component} />;
     case 'led_strip':
       return <LEDStrip component={component} isEnergized={isEnergized} />;
+    case 'cube_power':
+      return <CubePower component={component} isEnergized={isEnergized} />;
+    case 'wireless_transmitter':
+      return <WirelessTransmitter component={component} />;
+    case 'sm500_maglock':
+      return <SM500Maglock component={component} isEnergized={isEnergized} />;
+    case 'cx12plus':
+      return <CX12Plus component={component} isEnergized={isEnergized} />;
+    case 'sti_siren_strobe':
+      return <STISirenStrobe component={component} />;
+    case 'dc_fan':
+      return <DCCoolingFan component={component} isEnergized={isEnergized} />;
     default:
       return null;
   }

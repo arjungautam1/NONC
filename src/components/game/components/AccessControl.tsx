@@ -488,7 +488,7 @@ export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
     e.stopPropagation();
   };
 
-  // Determine light ring color and glow filter (CM-333 battery powered has no standby glow)
+  // Battery-powered sensor: no standby glow, the ring only lights on activation.
   let ringColor = '#27272a'; // dark bezel/unlit
   let ringGlow = undefined;
   if (isActive) {
@@ -544,23 +544,10 @@ export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
         <line x1="1.8" y1="-1.8" x2="-1.8" y2="1.8" stroke="#475569" strokeWidth="0.8" />
       </g>
       {/* Bottom Screw */}
-      <g transform="translate(30, 148)">
+      <g transform="translate(30, 157)">
         <circle cx="0" cy="0" r="3.2" fill="url(#screwGrad)" stroke="#475569" strokeWidth="0.8" />
         <line x1="-1.8" y1="0" x2="1.8" y2="0" stroke="#475569" strokeWidth="0.8" />
       </g>
-
-      {/* ── Camden Brand Logo (small engraved text) ── */}
-      <text
-        x="30" y="28"
-        textAnchor="middle"
-        fill="#334155"
-        fontSize="5"
-        fontWeight="bold"
-        fontFamily="sans-serif"
-        letterSpacing="0.4"
-      >
-        CAMDEN DOOR CONTROLS
-      </text>
 
       {/* ── Interactive Waving Zone ── */}
       <g
@@ -625,30 +612,44 @@ export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
           <circle cx="0.8" cy="-0.8" r="1" fill="#ffffff" opacity="0.4" />
         </g>
 
-        {/* ── Text "WAVE TO ACTIVATE" ── */}
+        {/* ── Engraved callout ── */}
         <text
-          x="30" y="128"
+          x="30" y="126"
           textAnchor="middle"
           fill="#334155"
-          fontSize="7.2"
+          fontSize="7"
           fontWeight="bold"
           fontFamily="sans-serif"
-          letterSpacing="0.3"
+          letterSpacing="0.4"
         >
-          WAVE
-        </text>
-        <text
-          x="30" y="137"
-          textAnchor="middle"
-          fill="#334155"
-          fontSize="7.2"
-          fontWeight="bold"
-          fontFamily="sans-serif"
-          letterSpacing="0.3"
-        >
-          TO OPEN
+          WAVE TO OPEN
         </text>
       </g>
+
+      {/* ── Camden Door Controls brand block, etched into the plate ── */}
+      <line x1="15" y1="132" x2="45" y2="132" stroke="#64748b" strokeWidth="0.6" opacity="0.55" />
+      <text
+        x="30" y="143"
+        textAnchor="middle"
+        fill="#1e293b"
+        fontSize="8.6"
+        fontWeight="900"
+        fontFamily="system-ui, sans-serif"
+        letterSpacing="1.6"
+      >
+        CAMDEN
+      </text>
+      <text
+        x="30" y="149.5"
+        textAnchor="middle"
+        fill="#475569"
+        fontSize="3.9"
+        fontWeight="700"
+        fontFamily="system-ui, sans-serif"
+        letterSpacing="1.1"
+      >
+        DOOR CONTROLS
+      </text>
 
       {/* ── Virtual Waving Hand Overlay ── */}
       {isActive && (
@@ -671,10 +672,20 @@ export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
         </g>
       )}
 
-      {/* Label tag below plate */}
-      <text x="30" y="174" fill="#cbd5e1" fontSize="9.5" fontWeight="bold" textAnchor="middle">
-        {component.label}
-      </text>
+      {/* Nameplate chip below the plate, matching the other field devices */}
+      <g transform="translate(30, 178)" pointerEvents="none">
+        <rect x="-46" y="-9" width="92" height="18" rx="5" fill="#070b13" fillOpacity="0.96" stroke="#334155" strokeWidth="1" />
+        <text
+          x="0" y="3"
+          fill="#f1f5f9"
+          fontSize={component.label.length > 16 ? 7.2 : 8.5}
+          fontWeight="800"
+          textAnchor="middle"
+          fontFamily="monospace"
+        >
+          {component.label}
+        </text>
+      </g>
     </g>
   );
 };

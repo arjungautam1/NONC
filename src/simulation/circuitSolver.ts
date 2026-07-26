@@ -42,6 +42,10 @@ export function solveCircuit(
   components.forEach(c => {
     if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl') {
       coilStates[c.id] = c.state.energized || false;
+    } else if (c.type === 'sm500_maglock') {
+      coilStates[c.id] = c.state.active || false;
+    } else if (c.type === 'cx12plus') {
+      coilStates[c.id] = c.state.boardPowered || false;
     }
   });
 
@@ -164,6 +168,35 @@ export function solveCircuit(
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
         } else {
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        }
+      } else if (c.type === 'cube_power') {
+        // Relay is switched wirelessly (transmitter/phone), not by a wired
+        // trigger, so its contact position comes straight from relayTriggered.
+        if (c.state.relayTriggered) {
+          addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+        } else {
+          addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        }
+      } else if (c.type === 'sm500_maglock') {
+        // Built-in holding-force sensor: NO once the lock is driven closed,
+        // NC at rest. Driven by the same coil hysteresis as a relay.
+        if (coilStates[c.id]) {
+          addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+        } else {
+          addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        }
+      } else if (c.type === 'cx12plus') {
+        // Two independent Form C outputs, driven by the pulse-timer runtime
+        // in useGameStore rather than by these terminals' own power path.
+        if (c.state.relay1Active) {
+          addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
+        } else {
+          addConnection(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'nc1'));
+        }
+        if (c.state.relay2Active) {
+          addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'no2'));
+        } else {
+          addConnection(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
         }
       } else if (c.type === 'junction') {
         const ports = c.terminals.map(t => getTerminalKey(c.id, t.id));
@@ -440,12 +473,28 @@ export function solveCircuit(
         // separate positive-voltage input and must not stand in for board power.
         inKey = getTerminalKey(c.id, terminals.positive);
         outKey = getTerminalKey(c.id, terminals.negative);
-      } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
+      } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'dc_fan') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'maglock' || c.type === 'door_strike') {
         inKey = getTerminalKey(c.id, 'in');
         outKey = getTerminalKey(c.id, 'out');
+      } else if (c.type === 'cube_power') {
+        // 12/24V AC/DC autodetect board power. Not a coil: the relay contact
+        // is switched by relayTriggered above, this only drives the LED/UI.
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'sm500_maglock') {
+        isCoil = true;
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'cx12plus') {
+        isCoil = true;
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'sti_siren_strobe') {
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
       }
 
       if (inKey && outKey) {
@@ -598,11 +647,12 @@ export function queryMultimeter(
     pathComponents.forEach(c => {
       if (c.type === 'bulb') resistance += 15.0;
       else if (c.type === 'led' || c.type === 'led_strip') resistance += 220.0;
-      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'roland_fan') resistance += 45.0;
+      else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'roland_fan' || c.type === 'dc_fan') resistance += 45.0;
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
-      else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl' || c.type === 'timer_relay') resistance += 80.0;
-      else if (c.type === 'maglock' || c.type === 'door_strike') resistance += 120.0;
+      else if (c.type === 'sti_siren_strobe') resistance += 60.0;
+      else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl' || c.type === 'timer_relay' || c.type === 'cube_power' || c.type === 'cx12plus') resistance += 80.0;
+      else if (c.type === 'maglock' || c.type === 'door_strike' || c.type === 'sm500_maglock') resistance += 120.0;
       else if (c.type === 'card_reader' || c.type === 'wave_sensor') resistance += 100.0;
     });
     
@@ -709,7 +759,7 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'led_strip', 'motor', 'buzzer', 'maglock', 'door_strike', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'sti_siren_strobe' || c.type === 'dc_fan') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
@@ -722,6 +772,31 @@ function checkPathBetween(
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'cube_power') {
+      if (c.state.relayTriggered) {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'sm500_maglock') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      if (c.state.active) {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'cx12plus') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      if (c.state.relay1Active) {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'nc1'));
+      }
+      if (c.state.relay2Active) {
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'no2'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
       }
     } else if (c.type === 'junction') {
       const ports = c.terminals.map(t => getTerminalKey(c.id, t.id));
@@ -837,7 +912,7 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 't3'), getTerminalKey(c.id, 't4'));
     } else if (['bulb', 'led', 'led_strip', 'motor', 'buzzer', 'maglock', 'door_strike', 'lamp_indicator', 'roland_fan'].includes(c.type)) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
+    } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'sti_siren_strobe' || c.type === 'dc_fan') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
@@ -850,6 +925,31 @@ function getComponentsInPath(
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'cube_power') {
+      if (c.state.relayTriggered) {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'sm500_maglock') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      if (c.state.active) {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'cx12plus') {
+      addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      if (c.state.relay1Active) {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'no1'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, 'nc1'));
+      }
+      if (c.state.relay2Active) {
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'no2'));
+      } else {
+        addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, 'nc2'));
       }
     } else if (c.type === 'junction') {
       const ports = c.terminals.map(t => getTerminalKey(c.id, t.id));

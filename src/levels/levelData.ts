@@ -3,6 +3,7 @@ import { requestToExitServiceLab } from './requestToExitServiceLab';
 import { slidingGateOperatorLab } from './slidingGateOperatorLab';
 import { pullStationReleaseLab } from './pullStationReleaseLab';
 import { keySwitchActuatorLab } from './keySwitchActuatorLab';
+import { cx12DoorOperatorLab } from './cx12DoorOperatorLab';
 
 export const levels: Level[] = [
   {
@@ -1449,7 +1450,7 @@ export const levels: Level[] = [
         type: 'power_supply',
         x: 80,
         y: 300,
-        label: 'Altronix Board',
+        label: 'Power Supply',
         terminals: [
           { id: 'ac1', name: 'AC', type: 'in', x: -45, y: 35 },
           { id: 'ac2', name: 'AC', type: 'in', x: -15, y: 35 },
@@ -1966,7 +1967,7 @@ export const levels: Level[] = [
         type: 'power_supply',
         x: -20,
         y: 325,
-        label: 'Altronix Board',
+        label: 'Power Supply',
         terminals: [
           { id: 'ac1', name: 'AC', type: 'in', x: -45, y: 35 },
           { id: 'ac2', name: 'AC', type: 'in', x: -15, y: 35 },
@@ -2136,3 +2137,4 @@ levels.push(requestToExitServiceLab);
 levels.push(slidingGateOperatorLab);
 levels.push(pullStationReleaseLab);
 levels.push(keySwitchActuatorLab);
+levels.push(cx12DoorOperatorLab);

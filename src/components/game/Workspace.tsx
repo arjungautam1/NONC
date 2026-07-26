@@ -669,7 +669,7 @@ export const Workspace: React.FC = () => {
       for (const terminal of component.terminals) {
         if (
           excluded?.componentId === component.id &&
-          excluded?.terminalId === terminal.id
+          (component.type === 'junction' || excluded?.terminalId === terminal.id)
         ) continue;
         const terminalPosition = getTerminalPos(component.id, terminal.id);
         const distance = Math.hypot(point.x - terminalPosition.x, point.y - terminalPosition.y);
@@ -1004,7 +1004,8 @@ export const Workspace: React.FC = () => {
       comp.type === 'relay_rbsnttl' ||
       comp.type === 'relay_dpdt' ||
       comp.type === 'terminal_block' ||
-      comp.type === 'wave_sensor'
+      comp.type === 'wave_sensor' ||
+      comp.type === 'cx12plus'
     ) {
       if (local.y < -10) return { x: 0, y: -1 };
       if (local.y > 10) return { x: 0, y: 1 };
@@ -1134,7 +1135,7 @@ export const Workspace: React.FC = () => {
       pull_station: [58, 112],
       key_switch: [56, 78],
       card_reader: [30, 82],
-      wave_sensor: [30, 82],
+      wave_sensor: [48, 106],
       maglock: [66, 50],
       door_strike: [40, 54],
       actuator: [165, 50],
@@ -1144,7 +1145,11 @@ export const Workspace: React.FC = () => {
       sliding_gate: [120, 70],
       led_strip: [58, 34],
       door_sensor: [54, 38],
-      terminal_block: [56, 44]
+      terminal_block: [56, 44],
+      cube_power: [92, 70],
+      sm500_maglock: [64, 106],
+      cx12plus: [135, 120],
+      wireless_transmitter: [34, 84]
     };
     const [halfWidth, halfHeight] = halfSizeByType[comp.type] || [54, 54];
 
@@ -1895,6 +1900,23 @@ export const Workspace: React.FC = () => {
                   <stop offset="0%" stopColor="#353b43" />
                   <stop offset="100%" stopColor="#171a1f" />
                 </linearGradient>
+                <linearGradient id="power-rail-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#4ade80" stopOpacity="0" />
+                  <stop offset="14%" stopColor="#4ade80" stopOpacity="0.85" />
+                  <stop offset="50%" stopColor="#86efac" stopOpacity="1" />
+                  <stop offset="86%" stopColor="#4ade80" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="power-rail-core" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#bbf7d0" stopOpacity="0" />
+                  <stop offset="16%" stopColor="#bbf7d0" />
+                  <stop offset="50%" stopColor="#f0fdf4" />
+                  <stop offset="84%" stopColor="#bbf7d0" />
+                  <stop offset="100%" stopColor="#bbf7d0" stopOpacity="0" />
+                </linearGradient>
+                <filter id="power-rail-blur" x="-30%" y="-200%" width="160%" height="500%">
+                  <feGaussianBlur stdDeviation="1.6" />
+                </filter>
               </defs>
 
               {/* Short molded cord entering from the left side of the outlet strip. */}
@@ -1926,19 +1948,16 @@ export const Workspace: React.FC = () => {
                 stroke="#66707b"
                 strokeWidth="1.2"
               />
-              <path d="M -99 8 H 99" stroke="#0c0f13" strokeWidth="1.3" opacity="0.8" />
-              {/* Live rail: a bright, unmistakable strip when system power is on. */}
-              <path
-                d="M -98 7 H 98"
-                stroke={isRunning ? '#4ade80' : '#5b6674'}
-                strokeWidth={isRunning ? 2.2 : 0.9}
-                strokeLinecap="round"
-                opacity={isRunning ? 1 : 0.4}
-                style={{
-                  filter: isRunning ? 'drop-shadow(0 0 3px rgba(74,222,128,0.9))' : 'none',
-                  transition: 'stroke 160ms ease, stroke-width 160ms ease'
-                }}
-              />
+              {/* Recessed LED accent channel — a diffused backlit strip rather than a flat line. */}
+              <rect x="-99" y="4.6" width="198" height="4.2" rx="2.1" fill="#04060a" stroke="#000000" strokeWidth="0.4" opacity="0.9" />
+              {isRunning ? (
+                <g style={{ transition: 'opacity 200ms ease' }}>
+                  <rect x="-96" y="5" width="192" height="3.4" rx="1.7" fill="url(#power-rail-glow)" filter="url(#power-rail-blur)" opacity="0.85" />
+                  <rect x="-93" y="5.7" width="186" height="1.9" rx="0.95" fill="url(#power-rail-core)" opacity="0.95" />
+                </g>
+              ) : (
+                <rect x="-88" y="6.1" width="176" height="1" rx="0.5" fill="#454e58" opacity="0.5" />
+              )}
 
               {/* Three NEMA 5-15 receptacles; the transformer covers the center one. */}
               {[-55, 0, 55].map(outletX => (
@@ -2544,6 +2563,7 @@ export const Workspace: React.FC = () => {
                 const hasBlackProbe = multimeter.blackProbe?.componentId === comp.id && multimeter.blackProbe?.terminalId === term.id;
 
                 const localPos = getTerminalLocalPos(comp, term);
+                const jScale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
                 const terminalDisplayName = comp.type === 'power_supply'
                   ? term.id === 'ac1'
                     ? 'AC1'
@@ -2594,25 +2614,69 @@ export const Workspace: React.FC = () => {
 
                       {/* Wire targeting ring */}
                       {isTargeting && !isDrawingStart && !isHovered && (
-                        <circle cx="0" cy="0" r="13" fill="none" stroke="#818cf8" strokeWidth="1.4" strokeDasharray="3 3" opacity="0.72" />
+                        <circle
+                          cx="0"
+                          cy="0"
+                          r={comp.type === 'junction' ? jScale * 3.6 : 13}
+                          fill="none"
+                          stroke="#818cf8"
+                          strokeWidth={comp.type === 'junction' ? 1.0 : 1.4}
+                          strokeDasharray="3 3"
+                          opacity="0.72"
+                        />
                       )}
 
                       {isDrawingStart && (
-                        <circle cx="0" cy="0" r="11" fill="none" stroke="#c084fc" strokeWidth="2" className="animate-pulse" />
+                        <circle
+                          cx="0"
+                          cy="0"
+                          r={comp.type === 'junction' ? jScale * 3.2 : 11}
+                          fill="none"
+                          stroke="#c084fc"
+                          strokeWidth={comp.type === 'junction' ? 1.5 : 2}
+                          className="animate-pulse"
+                        />
                       )}
 
                       {isHovered && !isMagnetTarget && (
                         <g>
-                          <circle cx="0" cy="0" r="13" fill="none" stroke="#60a5fa" strokeWidth="1.8" />
-                          <circle cx="0" cy="0" r="8" fill="rgba(96, 165, 250, 0.16)" />
+                          <circle
+                            cx="0"
+                            cy="0"
+                            r={comp.type === 'junction' ? jScale * 3.6 : 13}
+                            fill="none"
+                            stroke="#60a5fa"
+                            strokeWidth={comp.type === 'junction' ? 1.2 : 1.8}
+                          />
+                          <circle
+                            cx="0"
+                            cy="0"
+                            r={comp.type === 'junction' ? jScale * 2.2 : 8}
+                            fill="rgba(96, 165, 250, 0.16)"
+                          />
                         </g>
                       )}
 
                       {isMagnetTarget && (
                         <g pointerEvents="none">
-                          <circle cx="0" cy="0" r="18" fill="rgba(16, 185, 129, 0.18)" stroke="#34d399" strokeWidth="2.2" className="animate-pulse" />
-                          <circle cx="0" cy="0" r="10" fill="rgba(52, 211, 153, 0.18)" stroke="#a7f3d0" strokeWidth="1.4" />
-                          <g transform="translate(0, -29)">
+                          <circle
+                            cx="0"
+                            cy="0"
+                            r={comp.type === 'junction' ? jScale * 5 : 18}
+                            fill="rgba(16, 185, 129, 0.18)"
+                            stroke="#34d399"
+                            strokeWidth={comp.type === 'junction' ? 1.5 : 2.2}
+                            className="animate-pulse"
+                          />
+                          <circle
+                            cx="0"
+                            cy="0"
+                            r={comp.type === 'junction' ? jScale * 2.8 : 10}
+                            fill="rgba(52, 211, 153, 0.18)"
+                            stroke="#a7f3d0"
+                            strokeWidth={comp.type === 'junction' ? 1.0 : 1.4}
+                          />
+                          <g transform={`translate(0, ${comp.type === 'junction' ? -20 : -29})`}>
                             <rect x="-31" y="-8" width="62" height="15" rx="7.5" fill="#052e2b" stroke="#34d399" strokeWidth="1" />
                             <text x="0" y="2.5" fill="#a7f3d0" fontSize="7" fontWeight="900" textAnchor="middle">
                               SNAP · {terminalDisplayName}
@@ -2625,7 +2689,7 @@ export const Workspace: React.FC = () => {
                       <circle 
                         cx="0" 
                         cy="0" 
-                        r={comp.type === 'timer_relay' ? 7.5 : 22}
+                        r={comp.type === 'junction' ? jScale * 3.5 : (comp.type === 'timer_relay' ? 7.5 : 22)}
                         fill="transparent" 
                         className="terminal-hitbox" 
                         data-component-id={comp.id}
@@ -2713,7 +2777,7 @@ export const Workspace: React.FC = () => {
                         )
                       ) : (
                         // Board components print their own aligned terminal legends.
-                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && (() => {
+                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (() => {
                           const labelX = 0;
                           const labelY = -10;
                           const anchor: 'middle' | 'start' | 'end' = 'middle';

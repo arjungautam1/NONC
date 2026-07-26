@@ -20,6 +20,7 @@ import {
   type Timer6062Config,
   type Timer6062Phase
 } from '../simulation/timer6062';
+import { getCX12PlusConfig, type CX12PlusConfig } from '../components/game/components/cx12plusPinout';
 import { soundManager } from '../audio/soundManager';
 import {
   buildCustomLabComponents,
@@ -70,6 +71,8 @@ interface GameState {
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
   triggerWaveSensor: (id: string) => void;
+  triggerWirelessTransmitter: (id: string) => void;
+  configureCX12Plus: (id: string, patch: Partial<CX12PlusConfig>) => void;
   
   addWire: (
     fromCId: string, 
@@ -190,6 +193,33 @@ const clearAllTimer6062Runtimes = () => {
   timer6062Runtimes.forEach(clearTimer6062Schedule);
   timer6062Runtimes.clear();
 };
+
+interface CX12PlusRuntime {
+  lastInput1: boolean;
+  lastInput2: boolean;
+  relay1Generation: number;
+  relay2Generation: number;
+  chainGeneration: number;
+}
+
+const cx12PlusRuntimes = new Map<string, CX12PlusRuntime>();
+
+const createCX12PlusRuntime = (): CX12PlusRuntime => ({
+  lastInput1: false,
+  lastInput2: false,
+  relay1Generation: 0,
+  relay2Generation: 0,
+  chainGeneration: 0
+});
+
+const clearCX12PlusRuntime = (componentId: string) => {
+  cx12PlusRuntimes.delete(componentId);
+};
+
+const clearAllCX12PlusRuntimes = () => {
+  cx12PlusRuntimes.clear();
+};
+
 let motionIntervalId: any = null;
 
 const getAltronixTerminals = (component: CircuitComponent) => {
@@ -236,7 +266,9 @@ const normalizePowerStack = (components: CircuitComponent[]) => {
     const normalizedPowerSupply: CircuitComponent = {
       ...component,
       type: 'power_supply',
-      label: 'Altronix Board',
+      label: component.label && component.label !== '24V PSU' && component.label !== '24V Power Supply'
+        ? component.label
+        : 'Power Supply',
       terminals: getAltronixTerminals(component),
       state: {
         ...component.state,
@@ -487,6 +519,52 @@ export const useGameStore = create<GameState>((set, get) => {
     };
   };
 
+  // Schedules the "turn back off" side of a CX-12 PLUS relay pulse. The
+  // caller sets the relay true in its own pass; this only owns the delayed
+  // flip back to false, generation-guarded so a reset or a fresh pulse
+  // can't have a stale timeout fire late.
+  const scheduleCX12PulseEnd = (
+    componentId: string,
+    key: 'relay1Active' | 'relay2Active',
+    seconds: number,
+    runtime: CX12PlusRuntime
+  ) => {
+    const genKey = key === 'relay1Active' ? 'relay1Generation' : 'relay2Generation';
+    runtime[genKey] += 1;
+    const generation = runtime[genKey];
+    setTimeout(() => {
+      const liveRuntime = cx12PlusRuntimes.get(componentId);
+      if (!liveRuntime || liveRuntime[genKey] !== generation) return;
+      const offComponents = get().components.map(c =>
+        c.id === componentId ? { ...c, state: { ...c.state, [key]: false } } : c
+      );
+      runSimulation(offComponents, get().wires, get().isRunning);
+    }, Math.max(0, seconds) * 1000);
+  };
+
+  // Standard Timer Mode chaining: Relay 2 auto-fires D.O.O.RL2 seconds after
+  // Relay 1, as long as the board is still powered when the delay elapses.
+  const scheduleCX12Chain = (
+    componentId: string,
+    delaySeconds: number,
+    holdSeconds: number,
+    runtime: CX12PlusRuntime
+  ) => {
+    runtime.chainGeneration += 1;
+    const generation = runtime.chainGeneration;
+    setTimeout(() => {
+      const liveRuntime = cx12PlusRuntimes.get(componentId);
+      if (!liveRuntime || liveRuntime.chainGeneration !== generation) return;
+      if (!get().simulation.energizedComponents.has(componentId)) return;
+      soundManager.playClick();
+      scheduleCX12PulseEnd(componentId, 'relay2Active', holdSeconds, liveRuntime);
+      const onComponents = get().components.map(c =>
+        c.id === componentId ? { ...c, state: { ...c.state, relay2Active: true } } : c
+      );
+      runSimulation(onComponents, get().wires, get().isRunning);
+    }, Math.max(0, delaySeconds) * 1000);
+  };
+
   const runSimulation = (currentComponents: CircuitComponent[], currentWires: Wire[], currentIsRunning: boolean) => {
     // Solve circuit
     const solverResult = solveCircuit(currentComponents, currentWires, currentIsRunning);
@@ -496,9 +574,21 @@ export const useGameStore = create<GameState>((set, get) => {
     // Synchronize sounds (continuous hums)
     if (currentIsRunning && !solverResult.shortCircuit) {
       currentComponents.forEach(c => {
+        if (c.type === 'sti_siren_strobe') {
+          const boardPowered = solverResult.energizedComponents.has(c.id);
+          const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
+          const sirenActive = boardPowered && v('b_siren') > 2;
+          if (sirenActive) {
+            soundManager.startHum(c.id, 'buzzer');
+          } else {
+            soundManager.stopHum(c.id);
+          }
+          return;
+        }
+
         const isEnergized = solverResult.energizedComponents.has(c.id);
         if (isEnergized) {
-          if (c.type === 'motor' || c.type === 'roland_fan') soundManager.startHum(c.id, 'motor');
+          if (c.type === 'motor' || c.type === 'roland_fan' || c.type === 'dc_fan') soundManager.startHum(c.id, 'motor');
           else if (c.type === 'buzzer') soundManager.startHum(c.id, 'buzzer');
           else if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator' || c.type === 'led_strip') {
             soundManager.startHum(c.id, 'bulb');
@@ -649,9 +739,74 @@ export const useGameStore = create<GameState>((set, get) => {
         }
         return { ...c, state: nextState };
       }
-      if (c.type === 'maglock' || c.type === 'door_strike') {
+      if (c.type === 'maglock' || c.type === 'door_strike' || c.type === 'sm500_maglock') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
         return { ...c, state: { ...c.state, active: isEnergized } };
+      }
+      if (c.type === 'sti_siren_strobe') {
+        const boardPowered = solverResult.energizedComponents.has(c.id);
+        const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
+        const strobeActive = boardPowered && v('y_strobe') > 2;
+        const sirenActive = boardPowered && v('b_siren') > 2;
+        return {
+          ...c,
+          state: {
+            ...c.state,
+            active: boardPowered,
+            strobeActive,
+            sirenActive
+          }
+        };
+      }
+      if (c.type === 'cx12plus') {
+        const config = getCX12PlusConfig(c);
+        const boardPowered = solverResult.energizedComponents.has(c.id);
+        const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
+        const input1Voltage = Math.max(v('wet1_a'), v('wet1_b'), v('dry1_a'), v('dry1_b'));
+        const input2Voltage = Math.max(v('wet2_a'), v('wet2_b'), v('dry2_a'), v('dry2_b'));
+        const input1Active = boardPowered && input1Voltage > 2;
+        const input2Active = boardPowered && input2Voltage > 2;
+
+        const runtime = cx12PlusRuntimes.get(c.id) ?? createCX12PlusRuntime();
+        cx12PlusRuntimes.set(c.id, runtime);
+
+        const relay1WasActive = Boolean(c.state.relay1Active);
+        const relay2WasActive = Boolean(c.state.relay2Active);
+        let relay1Active = relay1WasActive;
+        let relay2Active = relay2WasActive;
+
+        if (!boardPowered) {
+          runtime.relay1Generation += 1;
+          runtime.relay2Generation += 1;
+          runtime.chainGeneration += 1;
+          runtime.lastInput1 = false;
+          runtime.lastInput2 = false;
+          relay1Active = false;
+          relay2Active = false;
+        } else {
+          const risingInput1 = !runtime.lastInput1 && input1Active;
+          const risingInput2 = !runtime.lastInput2 && input2Active;
+          runtime.lastInput1 = input1Active;
+          runtime.lastInput2 = input2Active;
+
+          if (risingInput1) {
+            soundManager.playClick();
+            relay1Active = true;
+            scheduleCX12PulseEnd(c.id, 'relay1Active', config.dorRl1, runtime);
+            scheduleCX12Chain(c.id, config.dooRl2, config.dorRl2, runtime);
+          }
+          if (risingInput2) {
+            soundManager.playClick();
+            relay2Active = true;
+            scheduleCX12PulseEnd(c.id, 'relay2Active', config.dorRl2, runtime);
+          }
+        }
+
+        if (relay1Active !== relay1WasActive || relay2Active !== relay2WasActive) {
+          timerContactChanged = true;
+        }
+
+        return { ...c, state: { ...c.state, cx12Config: config, boardPowered, relay1Active, relay2Active } };
       }
       return c;
     });
@@ -835,6 +990,7 @@ export const useGameStore = create<GameState>((set, get) => {
       get().stopTimer();
       soundManager.stopAllHums();
       clearAllTimer6062Runtimes();
+      clearAllCX12PlusRuntimes();
 
       set({
         components: customComponents,
@@ -904,6 +1060,7 @@ export const useGameStore = create<GameState>((set, get) => {
       const blackProbe = state.multimeter.blackProbe?.componentId === componentId ? null : state.multimeter.blackProbe;
 
       clearTimer6062Runtime(componentId);
+      clearCX12PlusRuntime(componentId);
 
       saveToHistory(state.components, state.wires);
       set({
@@ -927,6 +1084,7 @@ export const useGameStore = create<GameState>((set, get) => {
       get().stopTimer();
       soundManager.stopAllHums();
       clearAllTimer6062Runtimes();
+      clearAllCX12PlusRuntimes();
 
       // Deep copy level components
       const newComps = normalizePowerStack(JSON.parse(JSON.stringify(level.preplacedComponents)));
@@ -996,6 +1154,7 @@ export const useGameStore = create<GameState>((set, get) => {
     removeComponent: (id) => {
       saveToHistory(get().components, get().wires);
       clearTimer6062Runtime(id);
+      clearCX12PlusRuntime(id);
       // Remove component and any wires snapped to it
       const newComponents = get().components.filter(c => c.id !== id);
       const newWires = get().wires.filter(w => w.fromComponentId !== id && w.toComponentId !== id);
@@ -1058,6 +1217,34 @@ export const useGameStore = create<GameState>((set, get) => {
       );
 
       clearTimer6062Runtime(id);
+      clearCX12PlusRuntime(id);
+      saveToHistory(current.components, current.wires);
+      soundManager.playClick();
+      runSimulation(components, current.wires, false);
+    },
+
+    configureCX12Plus: (id, patch) => {
+      const current = get();
+      if (current.isRunning) return;
+      const device = current.components.find(component => component.id === id && component.type === 'cx12plus');
+      if (!device) return;
+
+      const config: CX12PlusConfig = { ...getCX12PlusConfig(device), ...patch };
+      const components = current.components.map(component => component.id === id
+        ? {
+            ...component,
+            state: {
+              ...component.state,
+              cx12Config: config,
+              relay1Active: false,
+              relay2Active: false,
+              boardPowered: false
+            }
+          }
+        : component
+      );
+
+      clearCX12PlusRuntime(id);
       saveToHistory(current.components, current.wires);
       soundManager.playClick();
       runSimulation(components, current.wires, false);
@@ -1108,20 +1295,39 @@ export const useGameStore = create<GameState>((set, get) => {
 
     triggerWaveSensor: (id) => {
       soundManager.playCardScan(); // trigger scan chirp
-      
+
       // Sensor goes active for 3 seconds, then resets
-      const newComponents = get().components.map(c => 
+      const newComponents = get().components.map(c =>
         c.id === id ? { ...c, state: { ...c.state, active: true } } : c
       );
       runSimulation(newComponents, get().wires, get().isRunning);
 
       setTimeout(() => {
         // Reset wave sensor
-        const resetComps = get().components.map(c => 
+        const resetComps = get().components.map(c =>
           c.id === id ? { ...c, state: { ...c.state, active: false } } : c
         );
         runSimulation(resetComps, get().wires, get().isRunning);
       }, 3000);
+    },
+
+    triggerWirelessTransmitter: () => {
+      // A handheld RF fob has no wired connection to the receiver — it toggles
+      // the relay (Latch mode) on any powered CUBE POWER units in range,
+      // exactly like pressing the receiver's own pairing/test button.
+      const state = get();
+      if (!state.isRunning) return;
+      const poweredIds = state.simulation.energizedComponents;
+      const hasTarget = state.components.some(c => c.type === 'cube_power' && poweredIds.has(c.id));
+      if (!hasTarget) return;
+
+      soundManager.playClick();
+      const newComponents = state.components.map(c =>
+        c.type === 'cube_power' && poweredIds.has(c.id)
+          ? { ...c, state: { ...c.state, relayTriggered: !c.state.relayTriggered } }
+          : c
+      );
+      runSimulation(newComponents, state.wires, state.isRunning);
     },
 
     addWire: (fromCId, fromTId, toCId, toTId, color, waypoints) => {

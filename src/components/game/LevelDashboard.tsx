@@ -92,10 +92,6 @@ export const LevelDashboard: React.FC = () => {
     });
   }, [activeTrack, searchQuery]);
 
-  const scrollToModules = () => {
-    moduleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const openCustomLab = () => {
     if (isCustomLab) {
       setViewMode('lab');
@@ -190,11 +186,11 @@ export const LevelDashboard: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={scrollToModules}
+                  onClick={openCustomLab}
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-5 text-sm font-semibold text-slate-200 transition-all hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 >
                   <LayoutGrid className="h-4 w-4 text-slate-400" />
-                  Browse modules
+                  Custom labs
                 </button>
               </div>
 

@@ -34,7 +34,13 @@ export type ComponentType =
   | 'relay_rbsnttl'
   | 'led_strip'
   | 'rocker_switch_2pos'
-  | 'wave_sensor';
+  | 'wave_sensor'
+  | 'cube_power'
+  | 'wireless_transmitter'
+  | 'sm500_maglock'
+  | 'cx12plus'
+  | 'sti_siren_strobe'
+  | 'dc_fan';
 
 export type TerminalType =
   | 'pos'
@@ -60,7 +66,11 @@ export type TerminalType =
   | 'no2'
   | 'nc2'
   | 'trg_pos'
-  | 'trg_neg';
+  | 'trg_neg'
+  | 'wet_a'
+  | 'wet_b'
+  | 'dry_a'
+  | 'dry_b';
 
 export interface Terminal {
   id: string;

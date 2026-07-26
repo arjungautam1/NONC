@@ -161,27 +161,31 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
             </g>
           );
         })}
-        <text x="-6.4" y="23" fill="#f8fafc" fontSize="3.1" fontFamily="Arial, sans-serif" fontWeight="700">ON</text>
-        <path d="M -1.6 21.8 H -5.1 M -5.1 21.8 l 1.6 -1.2 M -5.1 21.8 l 1.6 1.2" fill="none" stroke="#f8fafc" strokeWidth="0.6" />
-        <text x="11.1" y="23" fill="#f8fafc" fontSize="3.1" fontFamily="Arial, sans-serif" fontWeight="700">OFF</text>
-        <path d="M 12.8 21.8 H 16.3 M 16.3 21.8 l -1.6 -1.2 M 16.3 21.8 l -1.6 1.2" fill="none" stroke="#f8fafc" strokeWidth="0.6" />
+        <text x="3" y="25" fill="#f8fafc" fontSize="2.8" fontFamily="Arial, sans-serif" fontWeight="700" textAnchor="middle">ON</text>
+        <path d="M 4.5 21.5 H 1.5 M 1.5 21.5 l 1.2 -0.9 M 1.5 21.5 l 1.2 0.9" fill="none" stroke="#f8fafc" strokeWidth="0.6" />
+        <text x="9" y="25" fill="#f8fafc" fontSize="2.8" fontFamily="Arial, sans-serif" fontWeight="700" textAnchor="middle">OFF</text>
+        <path d="M 7.5 21.5 H 10.5 M 10.5 21.5 l -1.2 -0.9 M 10.5 21.5 l -1.2 0.9" fill="none" stroke="#f8fafc" strokeWidth="0.6" />
       </g>
 
       {/* ---- Jumper legends and their cuttable links (J1/J2 top, J3 mid) ---- */}
-      <g fill="#ffffff" fontSize="2.9" fontWeight="700" fontFamily="Arial, sans-serif">
-        <text x="-45" y="-51.5">CUT J1 FOR REPEAT</text>
-        <text x="-45" y="-46.5">CUT J2 FOR DELAYED PULS</text>
-        <text x="4" y="-51.5">J1</text>
-        <text x="4" y="-46.5">J2</text>
-        <text x="-19" y="-6">CUT J3 FOR RESET</text>
-        <text x="-19" y="-1.8">ON POWER-UP</text>
-        <text x="18.5" y="-2.6">J3</text>
+      <g fill="#ffffff" fontSize="2.5" fontWeight="700" fontFamily="Arial, sans-serif">
+        <text x="-36" y="-51.5">CUT J1 FOR REPEAT</text>
+        <text x="-36" y="-46.5">CUT J2 FOR DELAYED PULS</text>
+        <text x="8" y="-51.5">J1</text>
+        <text x="8" y="-46.5">J2</text>
+      </g>
+      <g fill="#ffffff" fontSize="2.5" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">
+        <text x="4" y="-6">CUT J3 FOR RESET</text>
+        <text x="4" y="-1.8">ON POWER-UP</text>
+      </g>
+      <g fill="#ffffff" fontSize="2.5" fontWeight="700" fontFamily="Arial, sans-serif">
+        <text x="8" y="-2.6">J3</text>
       </g>
       {/* Axial link resistors — shown severed once the jumper is cut */}
       {([
-        { x: 10, y: -53, cut: config.j1Cut },
-        { x: 10, y: -48, cut: config.j2Cut },
-        { x: 2, y: -4, cut: config.j3Cut }
+        { x: 12, y: -53, cut: config.j1Cut },
+        { x: 12, y: -48, cut: config.j2Cut },
+        { x: 12, y: -4, cut: config.j3Cut }
       ] as const).map(({ x, y, cut }) => (
         <g key={`${x}-${y}`} transform={`translate(${x}, ${y})`}>
           <line x1="0" y1="0" x2={cut ? 4.5 : 14} y2="0" stroke="#cbd5e1" strokeWidth="0.7" />
@@ -233,9 +237,9 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
       </g>
 
       {/* CAD branding location. */}
-      <text x="-45.3" y="15" fill="#ffffff" fontSize="7" fontWeight="800" fontFamily="Arial, sans-serif">6062</text>
-      <text x="-45.3" y="24" fill="#ffffff" fontSize="6" fontWeight="800" fontFamily="Arial, sans-serif">TIMER</text>
-      <text x="-45.3" y="31.5" fill="#ffffff" fontSize="5" fontWeight="800" fontFamily="Arial, sans-serif">ALTRONIX CORP.</text>
+      <text x="-45.3" y="12" fill="#ffffff" fontSize="7" fontWeight="800" fontFamily="Arial, sans-serif">6062</text>
+      <text x="-45.3" y="19.5" fill="#ffffff" fontSize="6" fontWeight="800" fontFamily="Arial, sans-serif">TIMER</text>
+      <text x="-45.3" y="26.5" fill="#ffffff" fontSize="5" fontWeight="800" fontFamily="Arial, sans-serif">ALTRONIX CORP.</text>
 
       {/* Compact live training status in the otherwise blank lower-right CAD area. */}
       <g transform="translate(20, 19)">

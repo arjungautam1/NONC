@@ -3,6 +3,9 @@ import { DEFAULT_6062_CONFIG } from '../simulation/timer6062';
 import { pullStationTerminals } from '../components/game/components/pullStationPinout';
 import { rb1224Terminals } from '../components/game/components/rb1224Pinout';
 import { rbsnttlTerminals } from '../components/game/components/rbsnttlPinout';
+import { cubePowerTerminals } from '../components/game/components/cubePowerPinout';
+import { sm500Terminals } from '../components/game/components/sm500Pinout';
+import { cx12plusTerminals, DEFAULT_CX12PLUS_CONFIG } from '../components/game/components/cx12plusPinout';
 
 export type CustomLabCategory = 'input' | 'control' | 'output';
 
@@ -147,12 +150,12 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'wave_sensor',
     category: 'input',
-    name: 'Camden CM-333 wave sensor',
+    name: 'Wave sensor',
     description: 'Battery-powered touchless switch (2 AA batteries) with a Form C (SPDT) relay output. Requires no external power wiring.',
     terminalSummary: 'C · NC · NO',
     template: {
       type: 'wave_sensor',
-      label: 'Camden CM-333',
+      label: 'Wave Sensor',
       terminals: [
         { id: 'com', name: 'C', type: 'com', x: -20, y: -72 },
         { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -72 },
@@ -190,6 +193,19 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
         { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
       ],
+      state: {}
+    }
+  },
+  {
+    id: 'wireless_transmitter',
+    category: 'input',
+    name: 'RF keyfob transmitter',
+    description: 'Radium/Erone-style handheld RF remote — the entire line is compatible with the CDVI CUBE POWER receiver. No wiring: pressing the button pairs wirelessly and toggles the relay on any powered CUBE POWER unit on the bench.',
+    terminalSummary: 'Wireless — no terminals',
+    template: {
+      type: 'wireless_transmitter',
+      label: 'RF Transmitter',
+      terminals: [],
       state: {}
     }
   },
@@ -262,6 +278,19 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'cube_power',
+    category: 'control',
+    name: 'CDVI CUBE POWER',
+    description: 'Bluetooth stand-alone 1-relay wireless receiver. Powered on 0V/12-24V AC/DC (autodetect); the Form C relay is switched wirelessly by a paired transmitter or the UserCUBE app, not by a wired trigger — tap the device once powered to simulate that.',
+    terminalSummary: '0V / 12-24V power · NC / C / NO relay (wireless trigger)',
+    template: {
+      type: 'cube_power',
+      label: 'CUBE POWER',
+      terminals: cubePowerTerminals(),
+      state: { relayTriggered: false }
+    }
+  },
+  {
     id: 'timer_relay',
     category: 'control',
     name: 'Altronix 6062 timer',
@@ -279,6 +308,19 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
       ],
       state: { timer6062Config: { ...DEFAULT_6062_CONFIG } }
+    }
+  },
+  {
+    id: 'cx12plus',
+    category: 'control',
+    name: 'Camden CX-12 PLUS',
+    description: '12/24V AC/DC door interface relay with 2 Form C outputs and 4 isolated inputs (Wet1/Dry1/Wet2/Dry2). Wet1 or Dry1 pulses Relay 1 (lock) then auto-chains Relay 2 (operator) after a delay; Wet2/Dry2 also pulses Relay 2 directly. 8 modes selectable on the DIP switch.',
+    terminalSummary: 'Power · 2× Form C relay · Wet1/Dry1/Wet2/Dry2 inputs',
+    template: {
+      type: 'cx12plus',
+      label: 'CX-12 PLUS',
+      terminals: cx12plusTerminals(),
+      state: { cx12Config: { ...DEFAULT_CX12PLUS_CONFIG } }
     }
   },
   {
@@ -313,38 +355,7 @@ export const customLabOptions: CustomLabOption[] = [
       state: {}
     }
   },
-  {
-    id: 'pilot_red',
-    category: 'output',
-    name: 'Red pilot light',
-    description: 'Red 24 V status indicator for alarm or secure conditions.',
-    terminalSummary: '+ · −',
-    template: {
-      type: 'lamp_indicator',
-      label: 'RED STATUS',
-      terminals: [
-        { id: 'in', name: '+', type: 'in', x: -30, y: 15 },
-        { id: 'out', name: '-', type: 'out', x: 30, y: 15 }
-      ],
-      state: { color: 'red' }
-    }
-  },
-  {
-    id: 'pilot_green',
-    category: 'output',
-    name: 'Green pilot light',
-    description: 'Green 24 V status indicator for active or released conditions.',
-    terminalSummary: '+ · −',
-    template: {
-      type: 'lamp_indicator',
-      label: 'GREEN STATUS',
-      terminals: [
-        { id: 'in', name: '+', type: 'in', x: -30, y: 15 },
-        { id: 'out', name: '-', type: 'out', x: 30, y: 15 }
-      ],
-      state: { color: 'green' }
-    }
-  },
+
   {
     id: 'buzzer',
     category: 'output',
@@ -359,6 +370,22 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'out', name: '-', type: 'out', x: 50, y: 15 }
       ],
       state: {}
+    }
+  },
+  {
+    id: 'actuator',
+    category: 'output',
+    name: 'Linear actuator',
+    description: '24VDC linear actuator, 150mm stroke. Extends on POS-high polarity and retracts when reversed — pair with a DPDT relay or two SPDT relays to drive both directions.',
+    terminalSummary: 'POS · NEG',
+    template: {
+      type: 'actuator',
+      label: 'Linear Actuator',
+      terminals: [
+        { id: 'pos', name: 'POS', type: 'pos', x: -30, y: 35 },
+        { id: 'neg', name: 'NEG', type: 'neg', x: 30, y: 35 }
+      ],
+      state: { travel: 0 }
     }
   },
   {
@@ -391,6 +418,19 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'out', name: '-', type: 'out', x: 70, y: 10 }
       ],
       state: { failSecure: false }
+    }
+  },
+  {
+    id: 'sm500_maglock',
+    category: 'output',
+    name: 'CDVI SM500 maglock',
+    description: 'Surface-mount 500kg (1,100 lb) electromagnetic lock. Fail-safe only — locks while powered on +/-, unlocks on power loss. Built-in PCB adds a holding-force sensor: a dry contact (NC/COM/NO) that reports NO once the lock is closed and driven at full force.',
+    terminalSummary: '+ / − power · NC/COM/NO holding-force sensor',
+    template: {
+      type: 'sm500_maglock',
+      label: 'CDVI SM500',
+      terminals: sm500Terminals(),
+      state: {}
     }
   },
   {
@@ -503,6 +543,40 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'neg', name: 'M−', type: 'neg', x: -112, y: 16 }
       ],
       state: { travel: 0 }
+    }
+  },
+  {
+    id: 'sti_sa5500_b',
+    category: 'output',
+    name: 'Strobe (STI SA5500-B)',
+    description: 'Round, blue siren/strobe combination. Operates on 12-24 VDC. Features independent input terminals for triggering the strobe (YEL) and the siren (BLU) after supplying power (RED/BLK).',
+    terminalSummary: 'RED (+) · BLK (-) · YEL · BLU',
+    template: {
+      type: 'sti_siren_strobe',
+      label: 'Strobe',
+      terminals: [
+        { id: 'pos', name: 'RED (+)', type: 'pos', x: -30, y: 44 },
+        { id: 'neg', name: 'BLK (-)', type: 'neg', x: -10, y: 44 },
+        { id: 'y_strobe', name: 'YEL', type: 'in', x: 10, y: 44 },
+        { id: 'b_siren', name: 'BLU', type: 'in', x: 30, y: 44 }
+      ],
+      state: {}
+    }
+  },
+  {
+    id: 'dc_fan',
+    category: 'output',
+    name: 'DC cooling fan',
+    description: '12-24VDC square cooling fan with rotating impeller blades. Spins and hums when powered.',
+    terminalSummary: '+ · −',
+    template: {
+      type: 'dc_fan',
+      label: 'DC Fan',
+      terminals: [
+        { id: 'pos', name: '+', type: 'pos', x: -20, y: 40 },
+        { id: 'neg', name: '-', type: 'neg', x: 20, y: 40 }
+      ],
+      state: {}
     }
   }
 ];
