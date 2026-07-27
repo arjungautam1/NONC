@@ -1858,7 +1858,7 @@ export const Workspace: React.FC = () => {
             <button
               onClick={() => setZoomScale(prev => Math.max(0.6, parseFloat((prev - 0.1).toFixed(1))))}
               className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
-              title="Zoom Out"
+              title="Zoom Out Canvas"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
@@ -1868,7 +1868,7 @@ export const Workspace: React.FC = () => {
             <button
               onClick={() => setZoomScale(prev => Math.min(2.0, parseFloat((prev + 0.1).toFixed(1))))}
               className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
-              title="Zoom In"
+              title="Zoom In Canvas"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
@@ -1882,6 +1882,78 @@ export const Workspace: React.FC = () => {
               </button>
             )}
           </div>
+
+          {/* Selected Device Scale & Actions Top Pill */}
+          {selectedCompId && (() => {
+            const selectedComp = components.find(c => c.id === selectedCompId);
+            if (!selectedComp) return null;
+            const currentScale = getComponentEffectiveScale(selectedComp);
+            return (
+              <div className="flex h-7 items-center gap-1.5 bg-blue-950/70 border border-blue-500/40 px-2.5 rounded-md text-xs text-blue-200 shadow-md">
+                <span className="font-semibold text-white max-w-[120px] truncate">{selectedComp.label}</span>
+                <span className="text-[10px] text-blue-300 font-mono">({currentScale}x)</span>
+                <div className="flex items-center gap-0.5 bg-black/40 rounded p-0.5 ml-0.5">
+                  <button
+                    onClick={() => {
+                      soundManager.playClick();
+                      let next = parseFloat((currentScale - 0.25).toFixed(2));
+                      if (next < 0.75) next = 0.75;
+                      setComponentState(selectedComp.id, 'scale', next);
+                    }}
+                    className="w-5 h-5 flex items-center justify-center text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                    title="Zoom Out Selected Device"
+                  >
+                    <ZoomOut className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      soundManager.playClick();
+                      let next = parseFloat((currentScale + 0.35).toFixed(2));
+                      if (next > 2.2) next = 1.0;
+                      setComponentState(selectedComp.id, 'scale', next);
+                    }}
+                    className="w-5 h-5 flex items-center justify-center text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                    title="Zoom In Selected Device / Cycle Scale"
+                  >
+                    <ZoomIn className="w-3 h-3" />
+                  </button>
+                  {currentScale !== 1.0 && (
+                    <button
+                      onClick={() => {
+                        soundManager.playClick();
+                        setComponentState(selectedComp.id, 'scale', 1.0);
+                      }}
+                      className="px-1 text-[9px] font-bold text-blue-400 hover:text-white cursor-pointer ml-0.5"
+                      title="Reset Device Scale to 1.0x"
+                    >
+                      1.0x
+                    </button>
+                  )}
+                </div>
+                {isCustomLab && (
+                  <button
+                    onClick={() => {
+                      soundManager.playClick();
+                      const optionId = selectedComp.id.replace('custom_', '');
+                      removeCustomLabComponent(optionId);
+                      setSelectedCompId(null);
+                    }}
+                    className="ml-1 px-1.5 py-0.5 text-[9px] font-bold bg-red-500/25 hover:bg-red-500/45 text-red-300 rounded border border-red-500/40 cursor-pointer transition-colors"
+                    title="Delete selected component"
+                  >
+                    Delete
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedCompId(null)}
+                  className="ml-0.5 text-slate-400 hover:text-white cursor-pointer p-0.5"
+                  title="Deselect device"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })()}
 
           <button
             onClick={handleDownloadSchematic}
@@ -2198,56 +2270,21 @@ export const Workspace: React.FC = () => {
               tabIndex={comp.type === 'timer_relay' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
-              {/* Selection border & 1-click 'Make Bigger / Zoom' resize badge */}
+              {/* Clean selection border outline when selected (move/drag indicator) */}
               {selectedCompId === comp.id && (
-                <g>
-                  <rect
-                    x={getSelectionHighlightBounds(comp.type, compScale).x}
-                    y={getSelectionHighlightBounds(comp.type, compScale).y}
-                    width={getSelectionHighlightBounds(comp.type, compScale).w}
-                    height={getSelectionHighlightBounds(comp.type, compScale).h}
-                    rx="8"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="2.5"
-                    strokeDasharray="5,3"
-                    className="animate-pulse"
-                    style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
-                  />
-                  {/* 1-Click Blue 'Make Bigger / Zoom' Resize Badge */}
-                  <g
-                    transform={`translate(${getSelectionHighlightBounds(comp.type, compScale).x + getSelectionHighlightBounds(comp.type, compScale).w + 4}, ${getSelectionHighlightBounds(comp.type, compScale).y - 4})`}
-                    className="cursor-pointer device-control group/resize"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onPointerUp={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      soundManager.playClick();
-                      const current = getComponentEffectiveScale(comp);
-                      let next = parseFloat((current + 0.35).toFixed(2));
-                      if (next > 2.1) next = 1.0;
-                      setComponentState(comp.id, 'scale', next);
-                    }}
-                  >
-                    <title>Click to zoom component / change scale</title>
-                    <circle
-                      cx="0"
-                      cy="0"
-                      r="12"
-                      fill="#2563eb"
-                      stroke="#ffffff"
-                      strokeWidth="1.8"
-                      filter="drop-shadow(0 2px 6px rgba(37,99,235,0.6))"
-                    />
-                    {/* ZoomIn / Make Bigger SVG Icon inside badge */}
-                    <g stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" transform="translate(-6, -6) scale(0.5)">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                      <line x1="11" y1="8" x2="11" y2="14" />
-                      <line x1="8" y1="11" x2="14" y2="11" />
-                    </g>
-                  </g>
-                </g>
+                <rect
+                  x={getSelectionHighlightBounds(comp.type, compScale).x}
+                  y={getSelectionHighlightBounds(comp.type, compScale).y}
+                  width={getSelectionHighlightBounds(comp.type, compScale).w}
+                  height={getSelectionHighlightBounds(comp.type, compScale).h}
+                  rx="8"
+                  fill="none"
+                  stroke="#3b82f6"
+                  strokeWidth="2.5"
+                  strokeDasharray="5,3"
+                  className="animate-pulse pointer-events-none"
+                  style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+                />
               )}
 
               {/* Highlight bounding box if diagnostic fault is here */}
