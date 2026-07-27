@@ -549,16 +549,16 @@ export const customLabOptions: CustomLabOption[] = [
     id: 'sti_sa5500_b',
     category: 'output',
     name: 'Blue Strobe (STI SA5500-B)',
-    description: 'Round, blue siren/strobe combination. Operates on 12-24 VDC. Features independent input terminals for triggering the strobe (YEL) and the siren (BLU) after supplying power (RED/BLK).',
-    terminalSummary: '+ (RED) · − (BLK) · YEL · BLU',
+    description: 'Round, blue siren/strobe combination. Operates on 12-24 VDC. Features independent input terminals for triggering the strobe (STR) and the siren (SIR) after supplying power (+ / -).',
+    terminalSummary: '+ · − · STR · SIR',
     template: {
       type: 'sti_siren_strobe',
       label: 'Blue Strobe',
       terminals: [
         { id: 'pos', name: '+', type: 'pos', x: -30, y: 44 },
         { id: 'neg', name: '−', type: 'neg', x: -10, y: 44 },
-        { id: 'y_strobe', name: 'YEL', type: 'in', x: 10, y: 44 },
-        { id: 'b_siren', name: 'BLU', type: 'in', x: 30, y: 44 }
+        { id: 'y_strobe', name: 'STR', type: 'in', x: 10, y: 44 },
+        { id: 'b_siren', name: 'SIR', type: 'in', x: 30, y: 44 }
       ],
       state: { lensColor: 'blue' }
     }
@@ -567,16 +567,16 @@ export const customLabOptions: CustomLabOption[] = [
     id: 'sti_sa5500_r',
     category: 'output',
     name: 'Red Strobe (STI SA5500-R)',
-    description: 'Round, red siren/strobe combination. Operates on 12-24 VDC. Features independent input terminals for triggering the strobe (YEL) and the siren (BLU) after supplying power (RED/BLK).',
-    terminalSummary: '+ (RED) · − (BLK) · YEL · BLU',
+    description: 'Round, red siren/strobe combination. Operates on 12-24 VDC. Features independent input terminals for triggering the strobe (STR) and the siren (SIR) after supplying power (+ / -).',
+    terminalSummary: '+ · − · STR · SIR',
     template: {
       type: 'sti_siren_strobe',
       label: 'Red Strobe',
       terminals: [
         { id: 'pos', name: '+', type: 'pos', x: -30, y: 44 },
         { id: 'neg', name: '−', type: 'neg', x: -10, y: 44 },
-        { id: 'y_strobe', name: 'YEL', type: 'in', x: 10, y: 44 },
-        { id: 'b_siren', name: 'BLU', type: 'in', x: 30, y: 44 }
+        { id: 'y_strobe', name: 'STR', type: 'in', x: 10, y: 44 },
+        { id: 'b_siren', name: 'SIR', type: 'in', x: 30, y: 44 }
       ],
       state: { lensColor: 'red' }
     }

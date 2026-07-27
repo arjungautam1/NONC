@@ -2730,13 +2730,13 @@ export const Workspace: React.FC = () => {
 
                 const terminalHoverLabel = comp.type === 'sti_siren_strobe'
                   ? term.id === 'pos'
-                    ? 'RED (+) · Main Power Input'
+                    ? '+ · Power Supply Input (+)'
                     : term.id === 'neg'
-                      ? 'BLK (-) · Main Ground Input'
+                      ? '− · Ground Input (-)'
                       : term.id === 'y_strobe'
-                        ? 'YEL · Strobe Flash Trigger'
+                        ? 'STR · Strobe Trigger'
                         : term.id === 'b_siren'
-                          ? 'BLU · Siren Sound Trigger'
+                          ? 'SIR · Siren Alarm Trigger'
                           : term.name
                   : terminalDisplayName;
 
