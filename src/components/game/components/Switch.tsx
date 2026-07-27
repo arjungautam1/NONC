@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { useGameStore } from '../../../store/useGameStore';
 import { getTerminalKey } from '../../../simulation/circuitSolver';
@@ -15,9 +15,22 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   
   const isPressed = component.state.pressed || false;
 
+  useEffect(() => {
+    if (!isPressed) return;
+    const handleGlobalUp = () => {
+      pressButton(component.id, false);
+    };
+    window.addEventListener('pointerup', handleGlobalUp);
+    window.addEventListener('pointercancel', handleGlobalUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalUp);
+      window.removeEventListener('pointercancel', handleGlobalUp);
+    };
+  }, [isPressed, component.id, pressButton]);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    pressButton(component.id, !isPressed);
+    pressButton(component.id, true);
   };
 
   const hasCom = component.terminals.some(t => t.id === 'com');
@@ -134,9 +147,22 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
   
   const isPressed = component.state.pressed || false;
 
+  useEffect(() => {
+    if (!isPressed) return;
+    const handleGlobalUp = () => {
+      pressButton(component.id, false);
+    };
+    window.addEventListener('pointerup', handleGlobalUp);
+    window.addEventListener('pointercancel', handleGlobalUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalUp);
+      window.removeEventListener('pointercancel', handleGlobalUp);
+    };
+  }, [isPressed, component.id, pressButton]);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    pressButton(component.id, !isPressed);
+    pressButton(component.id, true);
   };
 
   // Determine voltage presence at switch terminals

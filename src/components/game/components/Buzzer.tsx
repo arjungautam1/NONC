@@ -24,15 +24,6 @@ export const Buzzer: React.FC<ComponentProps> = ({ component, isEnergized }) => 
       <path d="M 58 15 C 58 5, 34 -5, 30 -10 L 30 20 Z" fill="#1e293b" stroke="#0f172a" strokeWidth="1.5" />
       <circle cx="50" cy="15" r="4.5" fill="#475569" stroke="#1e293b" strokeWidth="1" />
 
-      {/* Wire Leads coming from bottom of the siren body to the terminal studs */}
-      {/* Red Lead (+) on left */}
-      <path d="M -6 16 C -6 26, -50 26, -50 15" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M -6 16 C -6 26, -50 26, -50 15" fill="none" stroke="#b91c1c" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-
-      {/* Black Lead (-) on right */}
-      <path d="M 6 16 C 6 26, 50 26, 50 15" fill="none" stroke="#1f2937" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M 6 16 C 6 26, 50 26, 50 15" fill="none" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-
       {/* Main Piezo Siren Cylinder Body */}
       <circle cx="0" cy="-15" r="32" fill="url(#sirenBodyGrad)" stroke="#0f172a" strokeWidth="2.5" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.5))" />
       

@@ -575,14 +575,7 @@ export const useGameStore = create<GameState>((set, get) => {
     if (currentIsRunning && !solverResult.shortCircuit) {
       currentComponents.forEach(c => {
         if (c.type === 'sti_siren_strobe') {
-          const boardPowered = solverResult.energizedComponents.has(c.id);
-          const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
-          const sirenActive = boardPowered && v('b_siren') > 2;
-          if (sirenActive) {
-            soundManager.startHum(c.id, 'buzzer');
-          } else {
-            soundManager.stopHum(c.id);
-          }
+          soundManager.stopHum(c.id);
           return;
         }
 
@@ -745,16 +738,13 @@ export const useGameStore = create<GameState>((set, get) => {
       }
       if (c.type === 'sti_siren_strobe') {
         const boardPowered = solverResult.energizedComponents.has(c.id);
-        const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
-        const strobeActive = boardPowered && v('y_strobe') > 2;
-        const sirenActive = boardPowered && v('b_siren') > 2;
         return {
           ...c,
           state: {
             ...c.state,
             active: boardPowered,
-            strobeActive,
-            sirenActive
+            strobeActive: boardPowered,
+            sirenActive: false
           }
         };
       }

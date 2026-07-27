@@ -416,28 +416,70 @@ export const Workspace: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Get default scale for each component type (1.35x default zoom for power supply & relays)
+  const getComponentDefaultScale = (type: string): number => {
+    switch (type) {
+      case 'power_supply':
+      case 'relay':
+      case 'relay_dpdt':
+      case 'relay_rbsnttl':
+      case 'relay_rb1224':
+      case 'timer_relay':
+        return 1.35;
+      case 'cx12plus':
+      case 'cube_power':
+      case 'pull_station':
+      default:
+        return 1.0;
+    }
+  };
+
+  const getComponentEffectiveScale = (comp: CircuitComponent): number => {
+    if (comp.type === 'junction') return comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
+    if (comp.state?.scale) return comp.state.scale;
+    return getComponentDefaultScale(comp.type);
+  };
+
   // Get components visual boundaries for drawing selection highlights
-  const getSelectionHighlightBounds = (type: string) => {
+  const getSelectionHighlightBounds = (type: string, scale: number = 1.0) => {
+    let base = { x: -50, y: -50, w: 100, h: 100 };
     switch (type) {
       case 'cx12plus':
-        return { x: -125, y: -65, w: 250, h: 130 };
+        base = { x: -125, y: -65, w: 250, h: 130 };
+        break;
       case 'junction':
-        return { x: -45, y: -22, w: 90, h: 44 };
+        base = { x: -45, y: -22, w: 90, h: 44 };
+        break;
       case 'timer_relay':
       case 'power_supply':
-        return { x: -65, y: -85, w: 130, h: 170 };
+        base = { x: -65, y: -85, w: 130, h: 170 };
+        break;
       case 'sliding_gate':
-        return { x: -125, y: -25, w: 250, h: 50 };
+        base = { x: -125, y: -25, w: 250, h: 50 };
+        break;
       case 'transformer':
-        return { x: -40, y: -20, w: 80, h: 80 };
+        base = { x: -40, y: -20, w: 80, h: 80 };
+        break;
       case 'maglock':
       case 'door_strike':
-        return { x: -65, y: -25, w: 130, h: 50 };
+        base = { x: -65, y: -25, w: 130, h: 50 };
+        break;
       case 'cube_power':
-        return { x: -55, y: -75, w: 110, h: 150 };
+        base = { x: -55, y: -75, w: 110, h: 150 };
+        break;
       default:
-        return { x: -50, y: -50, w: 100, h: 100 };
+        base = { x: -50, y: -50, w: 100, h: 100 };
+        break;
     }
+    if (scale !== 1.0) {
+      return {
+        x: base.x * scale,
+        y: base.y * scale,
+        w: base.w * scale,
+        h: base.h * scale
+      };
+    }
+    return base;
   };
 
   // Keyboard listener to delete selected component in Custom Lab
@@ -717,6 +759,11 @@ export const Workspace: React.FC = () => {
       const scale = comp.state?.scale || SPLICE_CONNECTOR_DEFAULT_SCALE;
       x = term.x * scale;
       y = term.y * scale;
+    }
+    const effScale = getComponentEffectiveScale(comp);
+    if (comp.type !== 'junction' && effScale !== 1.0) {
+      x = x * effScale;
+      y = y * effScale;
     }
     return { x, y };
   };
@@ -1966,124 +2013,125 @@ export const Workspace: React.FC = () => {
           {(() => {
             const transformer = components.find(c => c.type === 'transformer');
             const transformerPosition = transformer ? getComponentCanvasPosition(transformer) : null;
-            return transformer ? (
-            <g transform={`translate(${transformerPosition!.x}, ${transformerPosition!.y - 18})`}>
-              <defs>
-                <linearGradient id="corded-strip-top" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#4b5563" />
-                  <stop offset="55%" stopColor="#252a31" />
-                  <stop offset="100%" stopColor="#111418" />
-                </linearGradient>
-                <linearGradient id="corded-strip-front" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#353b43" />
-                  <stop offset="100%" stopColor="#171a1f" />
-                </linearGradient>
-                <linearGradient id="power-rail-glow" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#4ade80" stopOpacity="0" />
-                  <stop offset="14%" stopColor="#4ade80" stopOpacity="0.85" />
-                  <stop offset="50%" stopColor="#86efac" stopOpacity="1" />
-                  <stop offset="86%" stopColor="#4ade80" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="power-rail-core" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#bbf7d0" stopOpacity="0" />
-                  <stop offset="16%" stopColor="#bbf7d0" />
-                  <stop offset="50%" stopColor="#f0fdf4" />
-                  <stop offset="84%" stopColor="#bbf7d0" />
-                  <stop offset="100%" stopColor="#bbf7d0" stopOpacity="0" />
-                </linearGradient>
-                <filter id="power-rail-blur" x="-30%" y="-200%" width="160%" height="500%">
-                  <feGaussianBlur stdDeviation="1.6" />
-                </filter>
-              </defs>
+            if (!transformer || !transformerPosition) return null;
+            return (
+              <g transform={`translate(${transformerPosition.x}, ${transformerPosition.y - 18})`}>
+                <defs>
+                  <linearGradient id="corded-strip-top" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#4b5563" />
+                    <stop offset="55%" stopColor="#252a31" />
+                    <stop offset="100%" stopColor="#111418" />
+                  </linearGradient>
+                  <linearGradient id="corded-strip-front" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#353b43" />
+                    <stop offset="100%" stopColor="#171a1f" />
+                  </linearGradient>
+                  <linearGradient id="power-rail-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#4ade80" stopOpacity="0" />
+                    <stop offset="14%" stopColor="#4ade80" stopOpacity="0.85" />
+                    <stop offset="50%" stopColor="#86efac" stopOpacity="1" />
+                    <stop offset="86%" stopColor="#4ade80" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="power-rail-core" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#bbf7d0" stopOpacity="0" />
+                    <stop offset="16%" stopColor="#bbf7d0" />
+                    <stop offset="50%" stopColor="#f0fdf4" />
+                    <stop offset="84%" stopColor="#bbf7d0" />
+                    <stop offset="100%" stopColor="#bbf7d0" stopOpacity="0" />
+                  </linearGradient>
+                  <filter id="power-rail-blur" x="-30%" y="-200%" width="160%" height="500%">
+                    <feGaussianBlur stdDeviation="1.6" />
+                  </filter>
+                </defs>
 
-              {/* Short molded cord entering from the left side of the outlet strip. */}
-              <path
-                d="M -104 -2 C -116 -2 -119 5 -130 5 C -139 5 -145 1 -151 1"
-                fill="none"
-                stroke="#121417"
-                strokeWidth="7"
-                strokeLinecap="round"
-                filter="drop-shadow(0 2px 2px rgba(0,0,0,0.45))"
-              />
-              <path d="M -104 -2 H -114" stroke="#47505a" strokeWidth="9" strokeLinecap="round" />
-
-              {/* Low-profile black metal body. */}
-              <path
-                d="M -108 -27 Q -106 -33 -99 -35 H 99 Q 106 -34 108 -27 L 104 18 Q 103 24 96 25 H -96 Q -104 24 -105 17 Z"
-                fill="url(#corded-strip-front)"
-                stroke="#0b0d10"
-                strokeWidth="1.5"
-                filter="drop-shadow(0 6px 8px rgba(0,0,0,0.38))"
-              />
-              <rect
-                x="-103"
-                y="-31"
-                width="206"
-                height="40"
-                rx="7"
-                fill="url(#corded-strip-top)"
-                stroke="#66707b"
-                strokeWidth="1.2"
-              />
-              {/* Recessed LED accent channel — a diffused backlit strip rather than a flat line. */}
-              <rect x="-99" y="4.6" width="198" height="4.2" rx="2.1" fill="#04060a" stroke="#000000" strokeWidth="0.4" opacity="0.9" />
-              {isRunning ? (
-                <g style={{ transition: 'opacity 200ms ease' }}>
-                  <rect x="-96" y="5" width="192" height="3.4" rx="1.7" fill="url(#power-rail-glow)" filter="url(#power-rail-blur)" opacity="0.85" />
-                  <rect x="-93" y="5.7" width="186" height="1.9" rx="0.95" fill="url(#power-rail-core)" opacity="0.95" />
-                </g>
-              ) : (
-                <rect x="-88" y="6.1" width="176" height="1" rx="0.5" fill="#454e58" opacity="0.5" />
-              )}
-
-              {/* Three NEMA 5-15 receptacles; the transformer covers the center one. */}
-              {[-55, 0, 55].map(outletX => (
-                <g key={outletX} transform={`translate(${outletX}, -11)`}>
-                  <rect x="-17" y="-12" width="34" height="24" rx="4" fill="#15191e" stroke="#69727d" strokeWidth="1" />
-                  <rect x="-8" y="-6" width="4" height="9" rx="1" fill="#050607" />
-                  <rect x="4" y="-6" width="4" height="9" rx="1" fill="#050607" />
-                  <path d="M -3 6 Q 0 3 3 6 V 9 H -3 Z" fill="#050607" />
-                  <path d="M -13 -8 H 12" stroke="#8b949e" strokeWidth="0.7" opacity="0.35" />
-                </g>
-              ))}
-
-              {/* The outlet-strip rocker is the real System Power control. */}
-              <g transform="translate(-102, -27) scale(0.42)">
-                <SystemPowerRocker isRunning={isRunning} onToggle={toggleSimulation} />
-              </g>
-
-              {/* Dedicated label plates remain readable and are never covered by the adapter. */}
-              <g>
-                <rect x="-101" y="8" width="43" height="15" rx="3" fill="#10141a" stroke={isRunning ? '#4ade80' : '#59636f'} strokeWidth={isRunning ? 1 : 0.7} opacity={isRunning ? 0.95 : 1} />
-                <text x="-79.5" y="14.5" fill="#f1f5f9" fontSize="4.1" fontWeight="900" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.25">
-                  SYSTEM POWER
-                </text>
-                {isRunning && <circle cx="-91" cy="19.2" r="3.4" fill="#4ade80" opacity="0.28" />}
-                <circle
-                  cx="-91"
-                  cy="19.2"
-                  r="2"
-                  fill={isRunning ? '#4ade80' : '#ef4444'}
-                  stroke={isRunning ? '#dcfce7' : '#7f1d1d'}
-                  strokeWidth="0.5"
-                  style={{ filter: isRunning ? 'drop-shadow(0 0 3px rgba(74,222,128,0.95))' : 'none' }}
+                {/* Short molded cord entering from the left side of the outlet strip. */}
+                <path
+                  d="M -104 -2 C -116 -2 -119 5 -130 5 C -139 5 -145 1 -151 1"
+                  fill="none"
+                  stroke="#121417"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  filter="drop-shadow(0 2px 2px rgba(0,0,0,0.45))"
                 />
-                <text x="-79" y="21" fill={isRunning ? '#dcfce7' : '#cbd5e1'} fontSize="4" fontWeight="900" fontFamily="monospace" textAnchor="middle">
-                  {isRunning ? 'ON' : 'OFF'}
-                </text>
-              </g>
+                <path d="M -104 -2 H -114" stroke="#47505a" strokeWidth="9" strokeLinecap="round" />
 
-              <g>
-                <rect x="60" y="8" width="41" height="15" rx="3" fill="#10141a" stroke="#59636f" strokeWidth="0.7" />
-                <text x="80.5" y="14.5" fill="#e2e8f0" fontSize="4.3" fontWeight="900" fontFamily="monospace" textAnchor="middle">120V AC</text>
-                <text x="80.5" y="20.5" fill="#94a3b8" fontSize="3.6" fontWeight="800" fontFamily="monospace" textAnchor="middle">3 OUTLETS</text>
-              </g>
+                {/* Low-profile black metal body. */}
+                <path
+                  d="M -108 -27 Q -106 -33 -99 -35 H 99 Q 106 -34 108 -27 L 104 18 Q 103 24 96 25 H -96 Q -104 24 -105 17 Z"
+                  fill="url(#corded-strip-front)"
+                  stroke="#0b0d10"
+                  strokeWidth="1.5"
+                  filter="drop-shadow(0 6px 8px rgba(0,0,0,0.38))"
+                />
+                <rect
+                  x="-103"
+                  y="-31"
+                  width="206"
+                  height="40"
+                  rx="7"
+                  fill="url(#corded-strip-top)"
+                  stroke="#66707b"
+                  strokeWidth="1.2"
+                />
+                {/* Recessed LED accent channel — a diffused backlit strip rather than a flat line. */}
+                <rect x="-99" y="4.6" width="198" height="4.2" rx="2.1" fill="#04060a" stroke="#000000" strokeWidth="0.4" opacity="0.9" />
+                {isRunning ? (
+                  <g style={{ transition: 'opacity 200ms ease' }}>
+                    <rect x="-96" y="5" width="192" height="3.4" rx="1.7" fill="url(#power-rail-glow)" filter="url(#power-rail-blur)" opacity="0.85" />
+                    <rect x="-93" y="5.7" width="186" height="1.9" rx="0.95" fill="url(#power-rail-core)" opacity="0.95" />
+                  </g>
+                ) : (
+                  <rect x="-88" y="6.1" width="176" height="1" rx="0.5" fill="#454e58" opacity="0.5" />
+                )}
 
-              <circle cx="-104" cy="18" r="1.7" fill="#111827" stroke="#7c8794" strokeWidth="0.7" />
-              <circle cx="104" cy="18" r="1.7" fill="#111827" stroke="#7c8794" strokeWidth="0.7" />
-            </g>
-            ) : null;
+                {/* Three NEMA 5-15 receptacles; the transformer covers the center one. */}
+                {[-55, 0, 55].map(outletX => (
+                  <g key={outletX} transform={`translate(${outletX}, -11)`}>
+                    <rect x="-17" y="-12" width="34" height="24" rx="4" fill="#15191e" stroke="#69727d" strokeWidth="1" />
+                    <rect x="-8" y="-6" width="4" height="9" rx="1" fill="#050607" />
+                    <rect x="4" y="-6" width="4" height="9" rx="1" fill="#050607" />
+                    <path d="M -3 6 Q 0 3 3 6 V 9 H -3 Z" fill="#050607" />
+                    <path d="M -13 -8 H 12" stroke="#8b949e" strokeWidth="0.7" opacity="0.35" />
+                  </g>
+                ))}
+
+                {/* The outlet-strip rocker is the real System Power control. */}
+                <g transform="translate(-102, -27) scale(0.42)">
+                  <SystemPowerRocker isRunning={isRunning} onToggle={toggleSimulation} />
+                </g>
+
+                {/* Dedicated label plates remain readable and are never covered by the adapter. */}
+                <g>
+                  <rect x="-101" y="8" width="43" height="15" rx="3" fill="#10141a" stroke={isRunning ? '#4ade80' : '#59636f'} strokeWidth={isRunning ? 1 : 0.7} opacity={isRunning ? 0.95 : 1} />
+                  <text x="-79.5" y="14.5" fill="#f1f5f9" fontSize="4.1" fontWeight="900" fontFamily="system-ui, sans-serif" textAnchor="middle" letterSpacing="0.25">
+                    SYSTEM POWER
+                  </text>
+                  {isRunning && <circle cx="-91" cy="19.2" r="3.4" fill="#4ade80" opacity="0.28" />}
+                  <circle
+                    cx="-91"
+                    cy="19.2"
+                    r="2"
+                    fill={isRunning ? '#4ade80' : '#ef4444'}
+                    stroke={isRunning ? '#dcfce7' : '#7f1d1d'}
+                    strokeWidth="0.5"
+                    style={{ filter: isRunning ? 'drop-shadow(0 0 3px rgba(74,222,128,0.95))' : 'none' }}
+                  />
+                  <text x="-79" y="21" fill={isRunning ? '#dcfce7' : '#cbd5e1'} fontSize="4" fontWeight="900" fontFamily="monospace" textAnchor="middle">
+                    {isRunning ? 'ON' : 'OFF'}
+                  </text>
+                </g>
+
+                <g>
+                  <rect x="60" y="8" width="41" height="15" rx="3" fill="#10141a" stroke="#59636f" strokeWidth="0.7" />
+                  <text x="80.5" y="14.5" fill="#e2e8f0" fontSize="4.3" fontWeight="900" fontFamily="monospace" textAnchor="middle">120V AC</text>
+                  <text x="80.5" y="20.5" fill="#94a3b8" fontSize="3.6" fontWeight="800" fontFamily="monospace" textAnchor="middle">3 OUTLETS</text>
+                </g>
+
+                <circle cx="-104" cy="18" r="1.7" fill="#111827" stroke="#7c8794" strokeWidth="0.7" />
+                <circle cx="104" cy="18" r="1.7" fill="#111827" stroke="#7c8794" strokeWidth="0.7" />
+              </g>
+            );
           })()}
 
 
@@ -2095,6 +2143,8 @@ export const Workspace: React.FC = () => {
           const componentPosition = getComponentCanvasPosition(comp);
           const connectorScale = Math.max(comp.state.scale || SPLICE_CONNECTOR_DEFAULT_SCALE, SPLICE_CONNECTOR_DEFAULT_SCALE);
           const connectorAtMinScale = connectorScale <= SPLICE_CONNECTOR_DEFAULT_SCALE;
+          const compScale = getComponentEffectiveScale(comp);
+          const graphicScaleTransform = comp.type !== 'junction' && compScale !== 1.0 ? `scale(${compScale})` : undefined;
 
           return (
             <g
@@ -2102,9 +2152,7 @@ export const Workspace: React.FC = () => {
               transform={`translate(${componentPosition.x}, ${componentPosition.y})`}
               onPointerDown={(e) => {
                 handleCompPointerDown(e, comp);
-                if (isCustomLab) {
-                  setSelectedCompId(comp.id);
-                }
+                setSelectedCompId(comp.id);
               }}
               onPointerMove={handleCompPointerMove}
               onPointerUp={handleCompPointerUp}
@@ -2113,9 +2161,7 @@ export const Workspace: React.FC = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 if (comp.type === 'timer_relay') setSelectedTimerId(comp.id);
-                if (isCustomLab) {
-                  setSelectedCompId(comp.id);
-                }
+                setSelectedCompId(comp.id);
               }}
               onContextMenu={(e) => {
                 if (isCustomLab) {
@@ -2138,60 +2184,57 @@ export const Workspace: React.FC = () => {
               tabIndex={comp.type === 'timer_relay' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
-              {/* Placed selection border & 1-click delete button */}
-              {isCustomLab && selectedCompId === comp.id && (() => {
-                const bounds = getSelectionHighlightBounds(comp.type);
-                const deleteX = bounds.x + bounds.w + 4;
-                const deleteY = bounds.y - 4;
-                return (
-                  <g>
-                    <rect
-                      x={bounds.x}
-                      y={bounds.y}
-                      width={bounds.w}
-                      height={bounds.h}
-                      rx="8"
-                      fill="none"
-                      stroke="#3b82f6"
-                      strokeWidth="2.5"
-                      strokeDasharray="5,3"
-                      className="animate-pulse"
-                      style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+              {/* Selection border & 1-click 'Make Bigger / Zoom' resize badge */}
+              {selectedCompId === comp.id && (
+                <g>
+                  <rect
+                    x={getSelectionHighlightBounds(comp.type, compScale).x}
+                    y={getSelectionHighlightBounds(comp.type, compScale).y}
+                    width={getSelectionHighlightBounds(comp.type, compScale).w}
+                    height={getSelectionHighlightBounds(comp.type, compScale).h}
+                    rx="8"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="2.5"
+                    strokeDasharray="5,3"
+                    className="animate-pulse"
+                    style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+                  />
+                  {/* 1-Click Blue 'Make Bigger / Zoom' Resize Badge */}
+                  <g
+                    transform={`translate(${getSelectionHighlightBounds(comp.type, compScale).x + getSelectionHighlightBounds(comp.type, compScale).w + 4}, ${getSelectionHighlightBounds(comp.type, compScale).y - 4})`}
+                    className="cursor-pointer device-control group/resize"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      soundManager.playClick();
+                      const current = getComponentEffectiveScale(comp);
+                      let next = parseFloat((current + 0.35).toFixed(2));
+                      if (next > 2.1) next = 1.0;
+                      setComponentState(comp.id, 'scale', next);
+                    }}
+                  >
+                    <title>Click to zoom component / change scale</title>
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r="12"
+                      fill="#2563eb"
+                      stroke="#ffffff"
+                      strokeWidth="1.8"
+                      filter="drop-shadow(0 2px 6px rgba(37,99,235,0.6))"
                     />
-                    {/* 1-Click Red Trash Delete Badge */}
-                    <g
-                      transform={`translate(${deleteX}, ${deleteY})`}
-                      className="cursor-pointer device-control group/del"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onPointerUp={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        soundManager.playClick();
-                        const optionId = comp.id.replace('custom_', '');
-                        removeCustomLabComponent(optionId);
-                        setSelectedCompId(null);
-                      }}
-                    >
-                      <title>Click to delete component (Right-click or Delete key)</title>
-                      <circle
-                        cx="0"
-                        cy="0"
-                        r="11"
-                        fill="#ef4444"
-                        stroke="#ffffff"
-                        strokeWidth="1.8"
-                        filter="drop-shadow(0 2px 6px rgba(239,68,68,0.6))"
-                      />
-                      {/* Trash SVG Icon inside badge */}
-                      <g stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" transform="translate(-5.5, -5.5) scale(0.46)">
-                        <path d="M 3 6 h 18" />
-                        <path d="M 19 6 v 14 c 0 1 -1 2 -2 2 H 7 c -1 0 -2 -1 -2 -2 V 6" />
-                        <path d="M 8 6 V 4 c 0 -1 1 -2 2 -2 h 4 c 1 0 2 1 2 2 v 2" />
-                      </g>
+                    {/* ZoomIn / Make Bigger SVG Icon inside badge */}
+                    <g stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" transform="translate(-6, -6) scale(0.5)">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      <line x1="11" y1="8" x2="11" y2="14" />
+                      <line x1="8" y1="11" x2="14" y2="11" />
                     </g>
                   </g>
-                );
-              })()}
+                </g>
+              )}
 
               {/* Highlight bounding box if diagnostic fault is here */}
               {isFaulty && (
@@ -2232,8 +2275,10 @@ export const Workspace: React.FC = () => {
                 </g>
               )}
 
-               {/* Specific component graphic */}
-              <ComponentRenderer component={comp} isEnergized={isEnergized} />
+              {/* Specific component graphic with scale transform */}
+              <g transform={graphicScaleTransform}>
+                <ComponentRenderer component={comp} isEnergized={isEnergized} />
+              </g>
 
               {/* Sleek, stable control tray (Zoom-Out, Zoom-In, Delete) for custom splice connectors when hovered */}
               {hoveredCompId === comp.id && comp.type === 'junction' && (
@@ -2469,71 +2514,69 @@ export const Workspace: React.FC = () => {
               )}
 
               {/* Compact wire toolbar keeps route, splice, and delete controls together. */}
-              {isSelected && !isEndpointBeingDragged && (() => {
-                const center = getWireCenterPos(wire);
-                return (
+              {isSelected && !isEndpointBeingDragged && (
+                <g
+                  transform={`translate(${getWireCenterPos(wire).x}, ${getWireCenterPos(wire).y - 34})`}
+                  className="selected-wire-toolbar"
+                  onPointerDown={(event) => event.stopPropagation()}
+                >
+                  <rect x="-39" y="-13" width="78" height="26" rx="13" fill="#07101f" stroke="#334155" strokeWidth="1" opacity="0.96" />
+
                   <g
-                    transform={`translate(${center.x}, ${center.y - 34})`}
-                    className="selected-wire-toolbar"
-                    onPointerDown={(event) => event.stopPropagation()}
-                  >
-                    <rect x="-39" y="-13" width="78" height="26" rx="13" fill="#07101f" stroke="#334155" strokeWidth="1" opacity="0.96" />
-
-                    <g
-                      transform="translate(-25, 0)"
-                      className="cursor-pointer"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        const junctionId = spliceWireAtCoords(wire, center.x, center.y);
-                        if (junctionId) {
-                          startFocusedWireDrawing({ componentId: junctionId, terminalId: 'port_2' });
-                          setActiveColor(wire.color);
-                          setMousePos({ x: center.x, y: center.y });
-                          setPointerDownCoords({ x: center.x, y: center.y });
-                          setSelectedWireId(null);
-                        }
-                      }}
-                    >
-                      <title>Splice Wire / Extend Joint</title>
-                      <circle cx="0" cy="0" r="8.5" fill="#2563eb" stroke="#93c5fd" strokeWidth="1" />
-                      <line x1="-4" y1="0" x2="4" y2="0" stroke="#ffffff" strokeWidth="1.5" />
-                      <line x1="0" y1="-4" x2="0" y2="4" stroke="#ffffff" strokeWidth="1.5" />
-                    </g>
-
-                    <g
-                      className="cursor-grab active:cursor-grabbing"
-                      onPointerDown={(event) => beginWireRouteDrag(event, wire, null)}
-                      onPointerMove={handleWireRouteDragMove}
-                      onPointerUp={handleWireRouteDragEnd}
-                    >
-                      <title>Drag to move wire route</title>
-                      <circle cx="0" cy="0" r="8.5" fill="#7c3aed" stroke="#ddd6fe" strokeWidth="1" />
-                      <path
-                        d="M -4 0 L 4 0 M 0 -4 L 0 4 M -4 0 L -2 -2 M -4 0 L -2 2 M 4 0 L 2 -2 M 4 0 L 2 2 M 0 -4 L -2 -2 M 0 -4 L 2 -2 M 0 4 L -2 2 M 0 4 L 2 2"
-                        stroke="#ffffff"
-                        strokeWidth="1.15"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </g>
-
-                    <g
-                      transform="translate(25, 0)"
-                      className="cursor-pointer"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeWire(wire.id);
+                    transform="translate(-25, 0)"
+                    className="cursor-pointer"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const center = getWireCenterPos(wire);
+                      const junctionId = spliceWireAtCoords(wire, center.x, center.y);
+                      if (junctionId) {
+                        startFocusedWireDrawing({ componentId: junctionId, terminalId: 'port_2' });
+                        setActiveColor(wire.color);
+                        setMousePos({ x: center.x, y: center.y });
+                        setPointerDownCoords({ x: center.x, y: center.y });
                         setSelectedWireId(null);
-                      }}
-                    >
-                      <title>Delete Wire</title>
-                      <circle cx="0" cy="0" r="8.5" fill="#dc2626" stroke="#fca5a5" strokeWidth="1" />
-                      <line x1="-3.5" y1="-3.5" x2="3.5" y2="3.5" stroke="#ffffff" strokeWidth="1.4" />
-                      <line x1="3.5" y1="-3.5" x2="-3.5" y2="3.5" stroke="#ffffff" strokeWidth="1.4" />
-                    </g>
+                      }
+                    }}
+                  >
+                    <title>Splice Wire / Extend Joint</title>
+                    <circle cx="0" cy="0" r="8.5" fill="#2563eb" stroke="#93c5fd" strokeWidth="1" />
+                    <line x1="-4" y1="0" x2="4" y2="0" stroke="#ffffff" strokeWidth="1.5" />
+                    <line x1="0" y1="-4" x2="0" y2="4" stroke="#ffffff" strokeWidth="1.5" />
                   </g>
-                );
-              })()}
+
+                  <g
+                    className="cursor-grab active:cursor-grabbing"
+                    onPointerDown={(event) => beginWireRouteDrag(event, wire, null)}
+                    onPointerMove={handleWireRouteDragMove}
+                    onPointerUp={handleWireRouteDragEnd}
+                  >
+                    <title>Drag to move wire route</title>
+                    <circle cx="0" cy="0" r="8.5" fill="#7c3aed" stroke="#ddd6fe" strokeWidth="1" />
+                    <path
+                      d="M -4 0 L 4 0 M 0 -4 L 0 4 M -4 0 L -2 -2 M -4 0 L -2 2 M 4 0 L 2 -2 M 4 0 L 2 2 M 0 -4 L -2 -2 M 0 -4 L 2 -2 M 0 4 L -2 2 M 0 4 L 2 2"
+                      stroke="#ffffff"
+                      strokeWidth="1.15"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </g>
+
+                  <g
+                    transform="translate(25, 0)"
+                    className="cursor-pointer"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      removeWire(wire.id);
+                      setSelectedWireId(null);
+                    }}
+                  >
+                    <title>Delete Wire</title>
+                    <circle cx="0" cy="0" r="8.5" fill="#dc2626" stroke="#fca5a5" strokeWidth="1" />
+                    <line x1="-3.5" y1="-3.5" x2="3.5" y2="3.5" stroke="#ffffff" strokeWidth="1.4" />
+                    <line x1="3.5" y1="-3.5" x2="-3.5" y2="3.5" stroke="#ffffff" strokeWidth="1.4" />
+                  </g>
+                </g>
+              )}
 
               {/* Waypoint markers for selected wire */}
               {isSelected && !isEndpointBeingDragged && getEditableWaypointsForWire(wire).map((wp, idx) => (
@@ -2586,7 +2629,8 @@ export const Workspace: React.FC = () => {
         })}
 
         {/* 3. Live wire drawing overlay */}
-        {drawingWireStart && (() => {
+        {(() => {
+          if (!drawingWireStart) return null;
           let finalColor = activeColor;
           if (activeColor === 'red') {
             const isNeg = (compId: string, termId: string) => {
@@ -2730,14 +2774,10 @@ export const Workspace: React.FC = () => {
 
                 const terminalHoverLabel = comp.type === 'sti_siren_strobe'
                   ? term.id === 'pos'
-                    ? '+ · Power Supply Input (+)'
+                    ? '+ · Positive Power (+)'
                     : term.id === 'neg'
-                      ? '− · Ground Input (-)'
-                      : term.id === 'y_strobe'
-                        ? 'STR · Strobe Trigger'
-                        : term.id === 'b_siren'
-                          ? 'SIR · Siren Alarm Trigger'
-                          : term.name
+                      ? '− · Negative / Ground (-)'
+                      : term.name
                   : terminalDisplayName;
 
                 return (
@@ -2930,76 +2970,63 @@ export const Workspace: React.FC = () => {
                       )}
 
                       {/* Floating label */}
-                      {isHovered ? (
-                        comp.type !== 'junction' && comp.type !== 'transformer' && comp.type !== 'power_supply' && comp.type !== 'timer_relay' && (() => {
-                          const textToShow = probeMode
-                            ? (probeMode === 'red' ? `🔴 Attach RED → ${terminalHoverLabel}` : `⚫ Attach BLK → ${terminalHoverLabel}`)
-                            : terminalHoverLabel;
-                          const bgWidth = Math.max(textToShow.length * 6 + 16, 36);
-                          return (
-                            <g transform="translate(0, -22)" pointerEvents="none">
-                              <rect
-                                x={-bgWidth / 2}
-                                y="-12"
-                                width={bgWidth}
-                                height="18"
-                                rx="9"
-                                fill="#090d16"
-                                stroke="#60a5fa"
-                                strokeWidth="1.2"
-                                filter="drop-shadow(0 4px 8px rgba(0,0,0,0.6))"
-                              />
-                              <text
-                                x="0"
-                                y="1"
-                                fill="#f8fafc"
-                                fontSize="9"
-                                fontWeight="900"
-                                textAnchor="middle"
-                                fontFamily="system-ui, -apple-system, sans-serif"
-                              >
-                                {textToShow}
-                              </text>
-                            </g>
-                          );
-                        })()
-                      ) : (
-                        // Board components print their own aligned terminal legends.
-                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (() => {
-                          const labelX = 0;
-                          const labelY = -10;
-                          const anchor: 'middle' | 'start' | 'end' = 'middle';
+                      {isHovered && comp.type !== 'junction' && comp.type !== 'transformer' && comp.type !== 'power_supply' && comp.type !== 'timer_relay' && (
+                        <g transform="translate(0, -22)" pointerEvents="none">
+                          <rect
+                            x={-Math.max((probeMode ? (probeMode === 'red' ? `🔴 Attach RED → ${terminalHoverLabel}` : `⚫ Attach BLK → ${terminalHoverLabel}`) : terminalHoverLabel).length * 6 + 16, 36) / 2}
+                            y="-12"
+                            width={Math.max((probeMode ? (probeMode === 'red' ? `🔴 Attach RED → ${terminalHoverLabel}` : `⚫ Attach BLK → ${terminalHoverLabel}`) : terminalHoverLabel).length * 6 + 16, 36)}
+                            height="18"
+                            rx="9"
+                            fill="#090d16"
+                            stroke="#60a5fa"
+                            strokeWidth="1.2"
+                            filter="drop-shadow(0 4px 8px rgba(0,0,0,0.6))"
+                          />
+                          <text
+                            x="0"
+                            y="1"
+                            fill="#f8fafc"
+                            fontSize="9"
+                            fontWeight="900"
+                            textAnchor="middle"
+                            fontFamily="system-ui, -apple-system, sans-serif"
+                          >
+                            {probeMode
+                              ? (probeMode === 'red' ? `🔴 Attach RED → ${terminalHoverLabel}` : `⚫ Attach BLK → ${terminalHoverLabel}`)
+                              : terminalHoverLabel}
+                          </text>
+                        </g>
+                      )}
 
-                          return (
-                            <g transform={`translate(${labelX}, ${labelY})`}>
-                              {/* High contrast dark stroke background outline */}
-                              <text
-                                x="0"
-                                y="0"
-                                fill="none"
-                                stroke="#09090b"
-                                strokeWidth="3.5"
-                                strokeLinejoin="round"
-                                strokeLinecap="round"
-                                fontSize="8.5"
-                                fontWeight="900"
-                                textAnchor={anchor}
-                              >
-                                {term.name}
-                              </text>
-                              <text
-                                x="0"
-                                y="0"
-                                fill={term.name === '+' ? '#fb7185' : term.name === '-' ? '#38bdf8' : '#f8fafc'}
-                                fontSize="8.5"
-                                fontWeight="900"
-                                textAnchor={anchor}
-                              >
-                                {term.name}
-                              </text>
-                            </g>
-                          );
-                        })()
+                      {!isHovered && comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (
+                        <g transform="translate(0, -10)">
+                          {/* High contrast dark stroke background outline */}
+                          <text
+                            x="0"
+                            y="0"
+                            fill="none"
+                            stroke="#09090b"
+                            strokeWidth="3.5"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                            fontSize="8.5"
+                            fontWeight="900"
+                            textAnchor="middle"
+                          >
+                            {term.name}
+                          </text>
+                          <text
+                            x="0"
+                            y="0"
+                            fill={term.name === '+' ? '#fb7185' : term.name === '-' ? '#38bdf8' : '#f8fafc'}
+                            fontSize="8.5"
+                            fontWeight="900"
+                            textAnchor="middle"
+                          >
+                            {term.name}
+                          </text>
+                        </g>
                       )}
                     </g>
                   </g>
@@ -3011,7 +3038,7 @@ export const Workspace: React.FC = () => {
         {/* 4.5. Funny Electrical POP & Smoke Sizzle Animation Overlay */}
         {shortCircuitSmoke?.active && (
           <g transform={`translate(${shortCircuitSmoke.x}, ${shortCircuitSmoke.y})`} pointerEvents="none" className="select-none z-40">
-            <style>{`
+            <style dangerouslySetInnerHTML={{ __html: `
               @keyframes billow-wispy-1 {
                 0% { transform: translate(0, 5px) scale(0.4) rotate(0deg); opacity: 0; }
                 10% { opacity: 0.55; }
@@ -3066,7 +3093,7 @@ export const Workspace: React.FC = () => {
               .smoke-w2 { animation: billow-wispy-2 2.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
               .smoke-w3 { animation: billow-wispy-3 2.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
               .core-active { animation: core-flicker 2.4s ease-out forwards; }
-            `}</style>
+            ` }} />
             
             <defs>
               {/* Volumetric smoke filter */}
@@ -3131,35 +3158,37 @@ export const Workspace: React.FC = () => {
       </g>
 
       {/* 5. Probe lead wires — draw from anchor dots to connected terminals (outside zoom scale group) */}
-        {multimeter.redProbe && (() => {
-          const pos = getTerminalPos(multimeter.redProbe.componentId, multimeter.redProbe.terminalId);
-          const anchor = getPortCoords('dmm-red-port');
-          return (
-            <path
-              d={getWirePath(anchor.x, anchor.y, pos.x * zoomScale + offsets.shiftX, pos.y * zoomScale + offsets.shiftY)}
-              fill="none"
-              stroke="#ef4444"
-              strokeWidth="3"
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-          );
-        })()}
+      {multimeter.redProbe && (
+        <path
+          d={getWirePath(
+            getPortCoords('dmm-red-port').x,
+            getPortCoords('dmm-red-port').y,
+            getTerminalPos(multimeter.redProbe.componentId, multimeter.redProbe.terminalId).x * zoomScale + offsets.shiftX,
+            getTerminalPos(multimeter.redProbe.componentId, multimeter.redProbe.terminalId).y * zoomScale + offsets.shiftY
+          )}
+          fill="none"
+          stroke="#ef4444"
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity="0.9"
+        />
+      )}
 
-        {multimeter.blackProbe && (() => {
-          const pos = getTerminalPos(multimeter.blackProbe.componentId, multimeter.blackProbe.terminalId);
-          const anchor = getPortCoords('dmm-black-port');
-          return (
-            <path
-              d={getWirePath(anchor.x, anchor.y, pos.x * zoomScale + offsets.shiftX, pos.y * zoomScale + offsets.shiftY)}
-              fill="none"
-              stroke="#475569"
-              strokeWidth="3"
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-          );
-        })()}
+      {multimeter.blackProbe && (
+        <path
+          d={getWirePath(
+            getPortCoords('dmm-black-port').x,
+            getPortCoords('dmm-black-port').y,
+            getTerminalPos(multimeter.blackProbe.componentId, multimeter.blackProbe.terminalId).x * zoomScale + offsets.shiftX,
+            getTerminalPos(multimeter.blackProbe.componentId, multimeter.blackProbe.terminalId).y * zoomScale + offsets.shiftY
+          )}
+          fill="none"
+          stroke="#475569"
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity="0.9"
+        />
+      )}
       </svg>
 
       {/* Drag-to-Delete Trash Zone overlay */}
@@ -3197,10 +3226,12 @@ export const Workspace: React.FC = () => {
         </div>
       )}
 
-      {selectedTimerId && (() => {
-        const timer = components.find(component => component.id === selectedTimerId && component.type === 'timer_relay');
-        return timer ? <Timer6062Panel component={timer} onClose={() => setSelectedTimerId(null)} /> : null;
-      })()}
+      {selectedTimerId && components.some(c => c.id === selectedTimerId && c.type === 'timer_relay') && (
+        <Timer6062Panel
+          component={components.find(c => c.id === selectedTimerId && c.type === 'timer_relay')!}
+          onClose={() => setSelectedTimerId(null)}
+        />
+      )}
     </div>
   );
 };

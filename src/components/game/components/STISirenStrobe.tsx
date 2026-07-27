@@ -51,14 +51,7 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
       };
 
   return (
-    <g className={sirenActive ? 'animate-vibrate' : ''} style={{ transformOrigin: '0px 0px' }}>
-      {/* Sound waves emitted when siren is active */}
-      {sirenActive && (
-        <g stroke={theme.soundWave} strokeWidth="2.5" fill="none" strokeLinecap="round" className="animate-pulse">
-          <circle cx="0" cy="0" r="48" strokeDasharray="12,12" opacity="0.6" />
-          <circle cx="0" cy="0" r="60" strokeDasharray="16,16" opacity="0.3" />
-        </g>
-      )}
+    <g style={{ transformOrigin: '0px 0px' }}>
 
       {/* Black round mounting base */}
       <circle cx="0" cy="0" r="36" fill="#1e222b" stroke="#334155" strokeWidth="2" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.4))" />
@@ -102,11 +95,19 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
         </g>
       )}
 
-      {/* Labeled base at the bottom for terminals */}
-      <rect x="-40" y="30" width="80" height="18" rx="2" fill="#0f172a" stroke="#334155" strokeWidth="1" />
+      {/* Siren active sound wave pulses */}
+      {sirenActive && (
+        <g className="animate-pulse" pointerEvents="none">
+          <path d="M -38 -14 A 40 40 0 0 0 -38 14" fill="none" stroke={theme.soundWave} strokeWidth="2.5" strokeLinecap="round" opacity="0.85" />
+          <path d="M 38 -14 A 40 40 0 0 1 38 14" fill="none" stroke={theme.soundWave} strokeWidth="2.5" strokeLinecap="round" opacity="0.85" />
+        </g>
+      )}
 
-      {/* Screw Terminals */}
-      {[-30, -10, 10, 30].map(x => (
+      {/* Labeled base at the bottom for terminals */}
+      <rect x="-30" y="30" width="60" height="18" rx="2" fill="#0f172a" stroke="#334155" strokeWidth="1" />
+
+      {/* Screw Terminals (+ and -) */}
+      {[-20, 20].map(x => (
         <g key={x} transform={`translate(${x}, 44)`}>
           <circle cx="0" cy="0" r="4.5" fill={`url(#${screwGradId})`} stroke="#475569" strokeWidth="0.8" />
           <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#475569" strokeWidth="0.8" />
