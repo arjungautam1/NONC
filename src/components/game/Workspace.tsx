@@ -2683,6 +2683,18 @@ export const Workspace: React.FC = () => {
                           : term.name
                   : term.name;
 
+                const terminalHoverLabel = comp.type === 'sti_siren_strobe'
+                  ? term.id === 'pos'
+                    ? 'RED (+) · Main Power Input'
+                    : term.id === 'neg'
+                      ? 'BLK (-) · Main Ground Input'
+                      : term.id === 'y_strobe'
+                        ? 'YEL · Strobe Flash Trigger'
+                        : term.id === 'b_siren'
+                          ? 'BLU · Siren Sound Trigger'
+                          : term.name
+                  : terminalDisplayName;
+
                 return (
                   <g 
                     key={term.id} 
@@ -2874,14 +2886,38 @@ export const Workspace: React.FC = () => {
 
                       {/* Floating label */}
                       {isHovered ? (
-                        comp.type !== 'junction' && comp.type !== 'transformer' && comp.type !== 'power_supply' && comp.type !== 'timer_relay' && (
-                          <text y="-22" fill="#ffffff" fontSize="9" fontWeight="black" textAnchor="middle" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.8))">
-                            {probeMode
-                              ? (probeMode === 'red' ? `🔴 Attach RED → ${terminalDisplayName}` : `⚫ Attach BLK → ${terminalDisplayName}`)
-                              : terminalDisplayName
-                            }
-                          </text>
-                        )
+                        comp.type !== 'junction' && comp.type !== 'transformer' && comp.type !== 'power_supply' && comp.type !== 'timer_relay' && (() => {
+                          const textToShow = probeMode
+                            ? (probeMode === 'red' ? `🔴 Attach RED → ${terminalHoverLabel}` : `⚫ Attach BLK → ${terminalHoverLabel}`)
+                            : terminalHoverLabel;
+                          const bgWidth = Math.max(textToShow.length * 6 + 16, 36);
+                          return (
+                            <g transform="translate(0, -22)" pointerEvents="none">
+                              <rect
+                                x={-bgWidth / 2}
+                                y="-12"
+                                width={bgWidth}
+                                height="18"
+                                rx="9"
+                                fill="#090d16"
+                                stroke="#60a5fa"
+                                strokeWidth="1.2"
+                                filter="drop-shadow(0 4px 8px rgba(0,0,0,0.6))"
+                              />
+                              <text
+                                x="0"
+                                y="1"
+                                fill="#f8fafc"
+                                fontSize="9"
+                                fontWeight="900"
+                                textAnchor="middle"
+                                fontFamily="system-ui, -apple-system, sans-serif"
+                              >
+                                {textToShow}
+                              </text>
+                            </g>
+                          );
+                        })()
                       ) : (
                         // Board components print their own aligned terminal legends.
                         comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (() => {
