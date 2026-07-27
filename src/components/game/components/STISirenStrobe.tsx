@@ -107,15 +107,38 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
 
       {/* Screw Terminals */}
       {[
-        { x: -30, color: '#ef4444', label: 'RED' },
-        { x: -10, color: '#94a3b8', label: 'BLK' },
-        { x: 10, color: '#eab308', label: 'YEL' },
-        { x: 30, color: '#3b82f6', label: 'BLU' }
+        { x: -30, color: '#f87171', label: 'RED (+)' },
+        { x: -10, color: '#cbd5e1', label: 'BLK (-)' },
+        { x: 10, color: '#facc15', label: 'YEL' },
+        { x: 30, color: '#60a5fa', label: 'BLU' }
       ].map(term => (
         <g key={term.x} transform={`translate(${term.x}, 39)`}>
           <circle cx="0" cy="0" r="4.5" fill={`url(#${screwGradId})`} stroke="#475569" strokeWidth="0.8" />
           <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#475569" strokeWidth="0.8" />
-          <text x="0" y="-8" fill={term.color} fontSize="5.5" fontWeight="900" textAnchor="middle" fontFamily="monospace">
+          {/* Background stroke for high contrast */}
+          <text
+            x="0"
+            y="-7.5"
+            stroke="#090d16"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            fill="none"
+            fontSize="4.8"
+            fontWeight="900"
+            textAnchor="middle"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            {term.label}
+          </text>
+          <text
+            x="0"
+            y="-7.5"
+            fill={term.color}
+            fontSize="4.8"
+            fontWeight="900"
+            textAnchor="middle"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
             {term.label}
           </text>
         </g>
