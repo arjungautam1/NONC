@@ -61,8 +61,8 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
     const x2 = CX12PLUS_PINS[toIdx].x;
     return (
       <g key={text}>
-        <line x1={x1 - 6} y1="82" x2={x2 + 6} y2="82" stroke="#8fb59a" strokeWidth="0.6" />
-        <text x={(x1 + x2) / 2} y="89" fill="#d7ead9" fontSize="4.6" fontWeight="800" fontFamily="sans-serif" textAnchor="middle">
+        <line x1={x1 - 6} y1="83" x2={x2 + 6} y2="83" stroke="#4ade80" strokeWidth="1" />
+        <text x={(x1 + x2) / 2} y="92" fill="#86efac" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">
           {text}
         </text>
       </g>
@@ -136,15 +136,17 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
       </text>
 
       {/* ---- Green terminal PCB strip ---- */}
-      <rect x="-125" y="38" width="250" height="46" rx="3" fill="#1e5631" stroke="#123d21" strokeWidth="1" />
+      <rect x="-128" y="36" width="256" height="50" rx="4" fill="#0d381e" stroke="#051a0d" strokeWidth="1.2" />
       {CX12PLUS_PINS.map(({ id, label, name, x, y }) => (
         <g key={id}>
-          <rect x={x - 6.5} y={y - 8} width="13" height="16" rx="1" fill="#164028" stroke="#0d2b19" strokeWidth="0.4" />
-          <circle cx={x} cy={y} r="4.3" fill="#c3cad6" stroke="#5b6373" strokeWidth="0.5" />
-          <path d={`M ${x - 2.6} ${y} L ${x + 2.6} ${y}`} stroke="#4a5262" strokeWidth="1.1" strokeLinecap="round" />
-          <path d={`M ${x} ${y - 2.6} L ${x} ${y + 2.6}`} stroke="#4a5262" strokeWidth="1.1" strokeLinecap="round" />
-          <text x={x} y={y - 11} fill="#e7f5eb" fontSize="4" fontWeight="800" fontFamily="monospace" textAnchor="middle">{name}</text>
-          <text x={x} y={y + 13.5} fill="#a8d8b6" fontSize="3.4" fontWeight="700" fontFamily="sans-serif" textAnchor="middle">{label}</text>
+          <rect x={x - 6.5} y={y - 9} width="13" height="18" rx="1.5" fill="#124525" stroke="#092614" strokeWidth="0.5" />
+          <circle cx={x} cy={y} r="4.3" fill="#e2e8f0" stroke="#475569" strokeWidth="0.6" />
+          <path d={`M ${x - 2.6} ${y} L ${x + 2.6} ${y}`} stroke="#334155" strokeWidth="1.1" strokeLinecap="round" />
+          <path d={`M ${x} ${y - 2.6} L ${x} ${y + 2.6}`} stroke="#334155" strokeWidth="1.1" strokeLinecap="round" />
+          {/* High-contrast terminal screw number (1 - 16) */}
+          <text x={x} y={y - 12} fill="#ffffff" fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="middle">{name}</text>
+          {/* High-contrast terminal function label (PWR, NO, COM, NC, W1, D1...) */}
+          <text x={x} y={y + 16} fill="#7ee787" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">{label}</text>
         </g>
       ))}
       {groupLegend(0, 1, 'POWER')}
