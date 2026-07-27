@@ -28,6 +28,7 @@ import { ComponentRenderer } from './components/ComponentRenderer';
 const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   pull_station: '-78 -84 156 212',
   key_switch: '-78 -86 156 172',
+  relay: '-60 -60 120 120',
   relay_dpdt: '-76 -80 152 184',
   relay_rb1224: '-72 -76 144 172',
   relay_rbsnttl: '-82 -76 164 178',
@@ -43,7 +44,23 @@ const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   wireless_transmitter: '-40 -50 80 155',
   sm500_maglock: '-66 -112 140 230',
   actuator: '-80 -35 200 70',
-  cx12plus: '-135 -72 270 200'
+  cx12plus: '-135 -72 270 200',
+  button_no: '-50 -50 100 100',
+  button_nc: '-50 -50 100 100',
+  rocker_switch_2pos: '-50 -50 100 100',
+  switch_selector: '-50 -50 100 100',
+  card_reader: '-40 -60 80 120',
+  door_sensor: '-50 -40 100 80',
+  limit_switch: '-50 -40 100 80',
+  buzzer: '-50 -50 100 100',
+  sti_siren_strobe: '-60 -60 120 120',
+  battery: '-75 -60 150 120',
+  junction: '-30 -30 60 60',
+  fuse: '-50 -30 100 60',
+  terminal_block: '-60 -50 120 100',
+  parking_gate: '-90 -80 180 160',
+  elevator_motor: '-65 -100 130 200',
+  roland_fan: '-80 -95 160 190'
 };
 
 const LibraryThumbnail: React.FC<{
@@ -61,7 +78,7 @@ const LibraryThumbnail: React.FC<{
       viewBox={thumbnailViewBoxes[component.type] ?? '-76 -72 152 144'}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
-      className="relative h-[44px] w-[48px] overflow-visible pointer-events-none [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.45))]"
+      className="relative h-[44px] w-[48px] overflow-hidden pointer-events-none [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.45))]"
     >
       <ComponentRenderer
         component={{ ...component, x: 0, y: 0, state: { ...component.state, active: false, energized: false } }}
