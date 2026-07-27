@@ -416,7 +416,7 @@ export const Workspace: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  // Get default scale for each component type (1.35x default zoom for power supply & relays)
+  // Get default scale for each component type (1.35x default zoom for all control & input devices)
   const getComponentDefaultScale = (type: string): number => {
     switch (type) {
       case 'power_supply':
@@ -425,10 +425,24 @@ export const Workspace: React.FC = () => {
       case 'relay_rbsnttl':
       case 'relay_rb1224':
       case 'timer_relay':
-        return 1.35;
       case 'cx12plus':
       case 'cube_power':
+      case 'transformer':
+      case 'wireless_transmitter':
+      case 'fuse':
+      case 'button_no':
+      case 'button_nc':
+      case 'rocker_switch_2pos':
+      case 'rocker_switch_3pos':
+      case 'switch_selector':
+      case 'key_switch':
       case 'pull_station':
+      case 'wave_sensor':
+      case 'card_reader':
+      case 'door_sensor':
+      case 'surface_contact':
+      case 'limit_switch':
+        return 1.35;
       default:
         return 1.0;
     }
