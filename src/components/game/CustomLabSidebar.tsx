@@ -143,29 +143,22 @@ export const CustomLabSidebar: React.FC = () => {
         ? 'h-[380px] max-h-[48vh] w-full md:h-full md:max-h-none md:w-[380px]'
         : 'h-12 w-full md:h-full md:w-[48px]'
     } overflow-hidden`}>
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        title="Show component library"
-        aria-label="Show component library"
-        className={`group flex h-12 w-full shrink-0 items-center justify-center gap-2.5 border-b border-white/10 bg-[#080d19] hover:bg-blue-400/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300 md:h-full md:w-[48px] md:flex-col md:border-b-0 md:border-r transition-all duration-300 ${
-          sidebarOpen ? 'pointer-events-none opacity-0 w-0 md:w-0 overflow-hidden border-none p-0 m-0' : 'opacity-100'
-        }`}
-      >
-        <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-12 md:w-1" />
-        <ChevronRight className="h-4 w-4 text-blue-300 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
-        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400 transition group-hover:text-white md:[writing-mode:vertical-rl] md:rotate-180">Show parts</span>
-      </button>
-
-      <aside
-        className={`flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r transition-all duration-300 ${sidebarOpen ? '' : 'hidden'}`}
-        aria-hidden={!sidebarOpen}
-        style={{
-          opacity: sidebarOpen ? 1 : 0,
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-20px)',
-          pointerEvents: sidebarOpen ? 'auto' : 'none'
-        }}
-      >
+      {!sidebarOpen ? (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          title="Show component library"
+          aria-label="Show component library"
+          className="group flex h-12 w-full shrink-0 items-center justify-center gap-2.5 border-b border-white/10 bg-[#080d19] hover:bg-blue-400/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300 md:h-full md:w-[48px] md:flex-col md:border-b-0 md:border-r transition-all duration-300"
+        >
+          <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-12 md:w-1" />
+          <ChevronRight className="h-4 w-4 text-blue-300 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+          <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400 transition group-hover:text-white md:[writing-mode:vertical-rl] md:rotate-180">Show parts</span>
+        </button>
+      ) : (
+        <aside
+          className="flex h-full w-full shrink-0 flex-col overflow-hidden border-b border-white/10 bg-[#070b13] md:w-[380px] md:border-b-0 md:border-r"
+        >
           <div className="shrink-0 border-b border-white/10 bg-white/[0.015] p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
@@ -378,6 +371,7 @@ export const CustomLabSidebar: React.FC = () => {
             </div>
           </div>
         </aside>
+      )}
     </div>
   );
 };

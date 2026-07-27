@@ -215,31 +215,21 @@ export const Sidebar: React.FC = () => {
       sidebarOpen ? 'w-full md:w-[320px] h-[255px] md:h-full' : 'w-full md:w-[48px] h-12 md:h-full'
     } overflow-hidden`}>
 
-      {/* ── Edge tab (visible when the guide is closed) ── */}
-      <button
-        onClick={toggleSidebar}
-        title="Show guide"
-        aria-label="Show guide"
-        className={`w-full md:w-[48px] h-12 md:h-full bg-[#080d19] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-center gap-2.5 cursor-pointer hover:bg-blue-400/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300 transition-all duration-300 group shrink-0 ${
-          sidebarOpen ? 'pointer-events-none opacity-0 w-0 md:w-0 md:h-0 overflow-hidden border-none p-0 m-0' : 'opacity-100'
-        }`}
-        style={{ pointerEvents: sidebarOpen ? 'none' : 'auto' }}
-      >
-        <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-12 md:w-1" />
-        <ChevronRight className="h-4 w-4 text-blue-300 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
-        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400 transition group-hover:text-white md:[writing-mode:vertical-rl] md:rotate-180">Show guide</span>
-      </button>
-
-      {/* Main Sidebar Panel */}
-      <div
-        className={`w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0 transition-all duration-300 ${sidebarOpen ? '' : 'hidden'}`}
-        aria-hidden={!sidebarOpen}
-        style={{
-          opacity: sidebarOpen ? 1 : 0,
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-20px)',
-          pointerEvents: sidebarOpen ? 'auto' : 'none'
-        }}
-      >
+      {!sidebarOpen ? (
+        <button
+          onClick={toggleSidebar}
+          title="Show guide"
+          aria-label="Show guide"
+          className="w-full md:w-[48px] h-12 md:h-full bg-[#080d19] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-center gap-2.5 cursor-pointer hover:bg-blue-400/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300 transition-all duration-300 group shrink-0"
+        >
+          <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-12 md:w-1" />
+          <ChevronRight className="h-4 w-4 text-blue-300 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+          <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400 transition group-hover:text-white md:[writing-mode:vertical-rl] md:rotate-180">Show guide</span>
+        </button>
+      ) : (
+        <div
+          className="w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0"
+        >
         
         {/* 1. Level Selector Header */}
         <div className="p-3 border-b border-white/10 bg-white/[0.015] flex flex-col gap-2 shrink-0">
@@ -496,7 +486,8 @@ export const Sidebar: React.FC = () => {
           </span>
         </div>
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 };
 export default Sidebar;
