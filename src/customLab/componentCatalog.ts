@@ -608,7 +608,7 @@ const createPowerStack = (): CircuitComponent[] => [
       { id: 'pos', name: '(+)', type: 'pos', x: -20, y: 35 },
       { id: 'neg', name: '(-)', type: 'neg', x: 20, y: 35 }
     ],
-    state: { lockedPosition: true }
+    state: {}
   },
   {
     id: 'custom_psu',
@@ -622,7 +622,7 @@ const createPowerStack = (): CircuitComponent[] => [
       { id: 'pos', name: '(+)', type: 'pos', x: 15, y: 35 },
       { id: 'neg', name: '(-)', type: 'neg', x: 45, y: 35 }
     ],
-    state: { requireAcInput: true, lockedPosition: true }
+    state: { requireAcInput: true }
   }
 ];
 

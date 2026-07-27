@@ -527,7 +527,7 @@ export const Workspace: React.FC = () => {
     // would retarget their pointerup/click to this group and swallow the press.
     if (target.closest('.connector-control, .device-control')) return;
     if (target.classList.contains('terminal-hitbox')) return;
-    if (comp.state.lockedPosition) {
+    if (!isCustomLab && comp.state.lockedPosition) {
       e.stopPropagation();
       return;
     }
@@ -1892,7 +1892,7 @@ export const Workspace: React.FC = () => {
               <div className="flex h-7 items-center gap-1.5 bg-blue-950/70 border border-blue-500/40 px-2.5 rounded-md text-xs text-blue-200 shadow-md">
                 <span className="font-semibold text-white max-w-[120px] truncate">{selectedComp.label}</span>
                 <span className="text-[10px] text-blue-300 font-mono">({currentScale}x)</span>
-                <div className="flex items-center gap-0.5 bg-black/40 rounded p-0.5 ml-0.5">
+                <div className="flex items-center gap-0.5 bg-black/40 rounded p-0.5 ml-0.5 border border-white/10">
                   <button
                     onClick={() => {
                       soundManager.playClick();
@@ -1900,10 +1900,10 @@ export const Workspace: React.FC = () => {
                       if (next < 0.75) next = 0.75;
                       setComponentState(selectedComp.id, 'scale', next);
                     }}
-                    className="w-5 h-5 flex items-center justify-center text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
-                    title="Zoom Out Selected Device"
+                    className="h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                    title="Make device smaller"
                   >
-                    <ZoomOut className="w-3 h-3" />
+                    − Scale
                   </button>
                   <button
                     onClick={() => {
@@ -1912,10 +1912,10 @@ export const Workspace: React.FC = () => {
                       if (next > 2.2) next = 1.0;
                       setComponentState(selectedComp.id, 'scale', next);
                     }}
-                    className="w-5 h-5 flex items-center justify-center text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
-                    title="Zoom In Selected Device / Cycle Scale"
+                    className="h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                    title="Make device bigger"
                   >
-                    <ZoomIn className="w-3 h-3" />
+                    + Scale
                   </button>
                   {currentScale !== 1.0 && (
                     <button
@@ -1923,7 +1923,7 @@ export const Workspace: React.FC = () => {
                         soundManager.playClick();
                         setComponentState(selectedComp.id, 'scale', 1.0);
                       }}
-                      className="px-1 text-[9px] font-bold text-blue-400 hover:text-white cursor-pointer ml-0.5"
+                      className="px-1.5 h-5 flex items-center justify-center text-[9px] font-bold text-indigo-300 hover:text-white hover:bg-indigo-500/20 rounded cursor-pointer border-l border-white/10"
                       title="Reset Device Scale to 1.0x"
                     >
                       1.0x

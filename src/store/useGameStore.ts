@@ -249,7 +249,7 @@ const getTransformerForPowerSupply = (component: CircuitComponent, id: string): 
       { id: 'pos', name: '(+)', type: 'pos', x: -20, y: 35 },
       { id: 'neg', name: '(-)', type: 'neg', x: 20, y: 35 }
     ],
-    state: { lockedPosition: true }
+    state: {}
   };
 };
 
@@ -272,7 +272,6 @@ const normalizePowerStack = (components: CircuitComponent[]) => {
       terminals: getAltronixTerminals(component),
       state: {
         ...component.state,
-        lockedPosition: true,
         requireAcInput: component.state.requireAcInput ?? (component.type === 'power_supply' && alreadyHasAcInputs),
         outputVoltage: Number(component.state.outputVoltage ?? (component.type === 'battery' ? 12 : labeledVoltage))
       }
@@ -290,12 +289,6 @@ const normalizePowerStack = (components: CircuitComponent[]) => {
   });
 
   return normalizedComponents.map(component => {
-    if (component.type === 'transformer') {
-      return {
-        ...component,
-        state: { ...component.state, lockedPosition: true }
-      };
-    }
     if (component.type !== 'timer_relay') return component;
     const config = getTimer6062Config(component);
     const duration = getTimer6062DurationMs(config);
