@@ -521,8 +521,8 @@ export const HelpOverlay: React.FC = () => {
       ) : (
         <button
           onClick={toggleBottomPanel}
-          className={`fixed bottom-3 ${sidebarOpen ? (isCustomLab ? 'left-3 md:left-[392px]' : 'left-3 md:left-[332px]') : 'left-3 md:left-10'} z-20 pointer-events-auto h-9 px-3 rounded-md border border-white/10 bg-[#090d14]/94 hover:bg-[#111827] text-slate-300 hover:text-white shadow-lg backdrop-blur-xl text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all flex items-center gap-2`}
-          title="Show multimeter"
+          className="fixed bottom-3 right-4 z-20 pointer-events-auto h-9 px-3 rounded-md border border-white/10 bg-[#090d14]/94 hover:bg-[#111827] text-slate-300 hover:text-white shadow-lg backdrop-blur-xl text-[10px] font-bold uppercase tracking-wide cursor-pointer transition-all flex items-center gap-2"
+          title="Show multimeter & diagnostics panel"
         >
           <Activity className="w-3.5 h-3.5 text-emerald-400" />
           Show Multimeter
