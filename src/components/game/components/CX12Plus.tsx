@@ -61,8 +61,8 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
     const x2 = CX12PLUS_PINS[toIdx].x;
     return (
       <g key={text}>
-        <line x1={x1 - 6} y1="83" x2={x2 + 6} y2="83" stroke="#4ade80" strokeWidth="1" />
-        <text x={(x1 + x2) / 2} y="92" fill="#86efac" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">
+        <line x1={x1 - 6} y1="83" x2={x2 + 6} y2="83" stroke="#ffffff" strokeWidth="1" opacity="0.8" />
+        <text x={(x1 + x2) / 2} y="92" fill="#ffffff" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">
           {text}
         </text>
       </g>
@@ -145,8 +145,8 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
           <path d={`M ${x} ${y - 2.6} L ${x} ${y + 2.6}`} stroke="#334155" strokeWidth="1.1" strokeLinecap="round" />
           {/* High-contrast terminal screw number (1 - 16) */}
           <text x={x} y={y - 12} fill="#ffffff" fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="middle">{name}</text>
-          {/* High-contrast terminal function label (PWR, NO, COM, NC, W1, D1...) */}
-          <text x={x} y={y + 16} fill="#7ee787" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">{label}</text>
+          {/* Pure white terminal function label (PWR, NO, COM, NC, W1, D1...) */}
+          <text x={x} y={y + 16} fill="#ffffff" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">{label}</text>
         </g>
       ))}
       {groupLegend(0, 1, 'POWER')}
