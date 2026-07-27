@@ -2117,6 +2117,16 @@ export const Workspace: React.FC = () => {
                   setSelectedCompId(comp.id);
                 }
               }}
+              onContextMenu={(e) => {
+                if (isCustomLab) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  soundManager.playClick();
+                  const optionId = comp.id.replace('custom_', '');
+                  removeCustomLabComponent(optionId);
+                  if (selectedCompId === comp.id) setSelectedCompId(null);
+                }
+              }}
               onKeyDown={(e) => {
                 if (comp.type === 'timer_relay' && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
@@ -2128,23 +2138,58 @@ export const Workspace: React.FC = () => {
               tabIndex={comp.type === 'timer_relay' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
-              {/* Placed selection border */}
+              {/* Placed selection border & 1-click delete button */}
               {isCustomLab && selectedCompId === comp.id && (() => {
                 const bounds = getSelectionHighlightBounds(comp.type);
+                const deleteX = bounds.x + bounds.w + 4;
+                const deleteY = bounds.y - 4;
                 return (
-                  <rect
-                    x={bounds.x}
-                    y={bounds.y}
-                    width={bounds.w}
-                    height={bounds.h}
-                    rx="8"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="2.5"
-                    strokeDasharray="5,3"
-                    className="animate-pulse"
-                    style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
-                  />
+                  <g>
+                    <rect
+                      x={bounds.x}
+                      y={bounds.y}
+                      width={bounds.w}
+                      height={bounds.h}
+                      rx="8"
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="2.5"
+                      strokeDasharray="5,3"
+                      className="animate-pulse"
+                      style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+                    />
+                    {/* 1-Click Red Trash Delete Badge */}
+                    <g
+                      transform={`translate(${deleteX}, ${deleteY})`}
+                      className="cursor-pointer device-control group/del"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onPointerUp={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundManager.playClick();
+                        const optionId = comp.id.replace('custom_', '');
+                        removeCustomLabComponent(optionId);
+                        setSelectedCompId(null);
+                      }}
+                    >
+                      <title>Click to delete component (Right-click or Delete key)</title>
+                      <circle
+                        cx="0"
+                        cy="0"
+                        r="11"
+                        fill="#ef4444"
+                        stroke="#ffffff"
+                        strokeWidth="1.8"
+                        filter="drop-shadow(0 2px 6px rgba(239,68,68,0.6))"
+                      />
+                      {/* Trash SVG Icon inside badge */}
+                      <g stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" transform="translate(-5.5, -5.5) scale(0.46)">
+                        <path d="M 3 6 h 18" />
+                        <path d="M 19 6 v 14 c 0 1 -1 2 -2 2 H 7 c -1 0 -2 -1 -2 -2 V 6" />
+                        <path d="M 8 6 V 4 c 0 -1 1 -2 2 -2 h 4 c 1 0 2 1 2 2 v 2" />
+                      </g>
+                    </g>
+                  </g>
                 );
               })()}
 
