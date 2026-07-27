@@ -2884,7 +2884,7 @@ export const Workspace: React.FC = () => {
                         )
                       ) : (
                         // Board components print their own aligned terminal legends.
-                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && comp.type !== 'sti_siren_strobe' && (() => {
+                        comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (() => {
                           const labelX = 0;
                           const labelY = -10;
                           const anchor: 'middle' | 'start' | 'end' = 'middle';
