@@ -194,6 +194,21 @@ body {
   animation: led-blink 1s infinite;
 }
 
+/* Xenon-style double flash for the STI SA5500-B strobe. Keep this global
+   rather than in the SVG so Chromium reliably animates the nested <g>. */
+@keyframes sti-strobe-double-flash {
+  0%, 7% { opacity: 1; }
+  8%, 19% { opacity: 0; }
+  20%, 27% { opacity: 1; }
+  28%, 100% { opacity: 0; }
+}
+
+.sti-strobe-flashing {
+  animation: sti-strobe-double-flash 1s steps(1, end) infinite;
+  transform-origin: 0 0;
+  will-change: opacity;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

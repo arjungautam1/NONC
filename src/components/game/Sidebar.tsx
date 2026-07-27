@@ -11,8 +11,83 @@ import {
   BookOpen,
   Compass,
   Eye,
-  EyeOff
+  EyeOff,
+  Rocket,
+  ShieldAlert,
+  CircleDot
 } from 'lucide-react';
+
+const RocketMissionPanel: React.FC = () => {
+  const { components, simulation, isRunning } = useGameStore();
+  const relay = components.find(component => component.id === 'rocket_relay');
+  const eStop = components.find(component => component.id === 'rocket_estop');
+  const launch = components.find(component => component.id === 'rocket_launch');
+
+  const standbyVerified = Boolean(relay?.state.standbyVerified);
+  const launchVerified = Boolean(relay?.state.launchVerified);
+  const emergencyVerified = Boolean(relay?.state.emergencyVerified);
+  const relayLive = simulation.energizedComponents.has('rocket_relay');
+  const eStopPressed = Boolean(eStop?.state.pressed);
+  const launchPressed = Boolean(launch?.state.pressed);
+  const missionComplete = standbyVerified && launchVerified && emergencyVerified;
+
+  const status = missionComplete
+    ? 'Mission complete'
+    : !isRunning
+      ? 'Awaiting system power'
+      : eStopPressed
+        ? 'E-STOP active'
+        : relayLive && launchPressed
+          ? 'Launch sequence live'
+          : standbyVerified
+            ? 'Launch is armed'
+            : 'Build the circuit';
+
+  const steps = [
+    { label: 'STANDBY', detail: 'Red lamp only', done: standbyVerified },
+    { label: 'LAUNCH', detail: 'Relay transfers', done: launchVerified },
+    { label: 'E-STOP', detail: 'Launch loads drop', done: emergencyVerified }
+  ];
+
+  return (
+    <section className="shrink-0 border-b border-violet-400/20 bg-[radial-gradient(circle_at_85%_0%,rgba(168,85,247,0.16),transparent_42%),linear-gradient(135deg,rgba(30,27,75,0.48),rgba(8,12,23,0.62))] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${missionComplete ? 'border-emerald-400/35 bg-emerald-400/10 text-emerald-300' : 'border-violet-400/30 bg-violet-400/10 text-violet-300'}`}>
+            <Rocket className={`h-4 w-4 ${relayLive ? 'animate-bounce' : ''}`} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-violet-300">Arcade mission</p>
+            <h3 className="truncate text-[12px] font-semibold text-white">Rocket Relay</h3>
+          </div>
+        </div>
+        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[8px] font-bold uppercase tracking-wide ${
+          missionComplete
+            ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300'
+            : eStopPressed
+              ? 'border-rose-400/25 bg-rose-400/10 text-rose-300'
+              : 'border-white/10 bg-black/20 text-slate-400'
+        }`}>
+          {eStopPressed && !missionComplete ? <ShieldAlert className="h-3 w-3" /> : <CircleDot className="h-3 w-3" />}
+          {status}
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        {steps.map((step, index) => (
+          <div key={step.label} className={`rounded-lg border p-2 transition ${step.done ? 'border-emerald-400/20 bg-emerald-400/[0.07]' : 'border-white/[0.07] bg-black/15'}`}>
+            <div className="flex items-center justify-between gap-1">
+              <span className={`text-[9px] font-bold ${step.done ? 'text-emerald-300' : 'text-slate-400'}`}>{String(index + 1).padStart(2, '0')}</span>
+              <span className={`h-1.5 w-1.5 rounded-full ${step.done ? 'bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.9)]' : 'bg-slate-700'}`} />
+            </div>
+            <p className="mt-1 text-[9px] font-bold text-slate-200">{step.label}</p>
+            <p className="mt-0.5 text-[8px] leading-tight text-slate-500">{step.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 export const Sidebar: React.FC = () => {
   const {
@@ -123,39 +198,42 @@ export const Sidebar: React.FC = () => {
       if (goalIndex === 3) return Boolean(service?.state.returnVerified);
       if (goalIndex === 4) return Boolean(service?.state.maintainedVerified);
     }
+    if (level.id === 26) {
+      const components = useGameStore.getState().components;
+      const relay = components.find(component => component.id === 'rocket_relay');
+      if (goalIndex === 0) return simulation.nodeVoltages['rocket_launch:in'] > 0;
+      if (goalIndex === 1) return Boolean(relay?.state.standbyVerified);
+      if (goalIndex === 2) return Boolean(relay?.state.launchVerified);
+      if (goalIndex === 3) return Boolean(relay?.state.emergencyVerified);
+    }
     
     return false;
   };
 
   return (
     <div className={`relative transition-all duration-300 ease-in-out shrink-0 flex ${
-      sidebarOpen ? 'w-full md:w-[320px] h-[255px] md:h-full' : 'w-full md:w-[28px] h-10 md:h-full'
+      sidebarOpen ? 'w-full md:w-[320px] h-[255px] md:h-full' : 'w-full md:w-[48px] h-12 md:h-full'
     } overflow-hidden`}>
 
-      {/* ── Slim Edge Tab (visible when closed) ── */}
+      {/* ── Edge tab (visible when the guide is closed) ── */}
       <button
         onClick={toggleSidebar}
-        title="Open Sidebar"
-        className={`w-full md:w-[28px] h-10 md:h-full bg-[#080d19] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/[0.04] transition-all duration-300 group shrink-0 ${
+        title="Show guide"
+        aria-label="Show guide"
+        className={`w-full md:w-[48px] h-12 md:h-full bg-[#080d19] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-center gap-2.5 cursor-pointer hover:bg-blue-400/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-300 transition-all duration-300 group shrink-0 ${
           sidebarOpen ? 'pointer-events-none opacity-0 w-0 md:w-0 md:h-0 overflow-hidden border-none p-0 m-0' : 'opacity-100'
         }`}
         style={{ pointerEvents: sidebarOpen ? 'none' : 'auto' }}
       >
-        {/* Glow pill indicator */}
-        <span className="h-1 w-10 md:w-1 md:h-10 rounded-full bg-[#2563eb]/45 group-hover:bg-[#60a5fa] transition-colors shadow-[0_0_8px_rgba(59,130,246,0.45)]" />
-        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
-        <div className="flex md:flex-col items-center justify-center text-[9px] font-black text-slate-400 group-hover:text-white font-mono leading-none gap-0.5 md:gap-1.5 md:mt-2">
-          <span>G</span>
-          <span>U</span>
-          <span>I</span>
-          <span>D</span>
-          <span>E</span>
-        </div>
+        <span className="h-1 w-10 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.45)] transition group-hover:bg-blue-300 md:h-12 md:w-1" />
+        <ChevronRight className="h-4 w-4 text-blue-300 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+        <span className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400 transition group-hover:text-white md:[writing-mode:vertical-rl] md:rotate-180">Show guide</span>
       </button>
 
       {/* Main Sidebar Panel */}
       <div
-        className="w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0 transition-all duration-300"
+        className={`w-full md:w-[320px] bg-[#070b13] border-b md:border-b-0 md:border-r border-white/10 flex flex-col h-full overflow-hidden shrink-0 transition-all duration-300 ${sidebarOpen ? '' : 'hidden'}`}
+        aria-hidden={!sidebarOpen}
         style={{
           opacity: sidebarOpen ? 1 : 0,
           transform: sidebarOpen ? 'translateX(0)' : 'translateX(-20px)',
@@ -181,10 +259,12 @@ export const Sidebar: React.FC = () => {
               {/* Collapse sidebar button */}
               <button
                 onClick={toggleSidebar}
-                title="Collapse Sidebar"
-                className="p-1 rounded-md hover:bg-white/10 cursor-pointer text-slate-500 hover:text-white transition-all"
+                title="Hide guide"
+                aria-label="Hide guide"
+                className="flex h-7 items-center gap-1 rounded-md border border-white/[0.07] bg-white/[0.025] px-1.5 text-slate-400 hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
+                <span className="hidden text-[9px] font-bold uppercase tracking-wide lg:inline">Hide</span>
               </button>
             </div>
           </div>
@@ -259,6 +339,8 @@ export const Sidebar: React.FC = () => {
             <RotateCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
           </button>
         </div>
+
+        {level.id === 26 && <RocketMissionPanel />}
 
         {/* 3. Objectives / Goals */}
         <div className="p-3 border-b border-white/10 bg-white/[0.01] shrink-0">

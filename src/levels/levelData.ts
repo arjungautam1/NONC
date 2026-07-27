@@ -4,6 +4,7 @@ import { slidingGateOperatorLab } from './slidingGateOperatorLab';
 import { pullStationReleaseLab } from './pullStationReleaseLab';
 import { keySwitchActuatorLab } from './keySwitchActuatorLab';
 import { cx12DoorOperatorLab } from './cx12DoorOperatorLab';
+import { rocketRelayArcadeLab } from './rocketRelayArcadeLab';
 
 export const levels: Level[] = [
   {
@@ -2138,3 +2139,4 @@ levels.push(slidingGateOperatorLab);
 levels.push(pullStationReleaseLab);
 levels.push(keySwitchActuatorLab);
 levels.push(cx12DoorOperatorLab);
+levels.push(rocketRelayArcadeLab);

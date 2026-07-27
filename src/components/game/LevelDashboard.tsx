@@ -21,6 +21,9 @@ import {
   Wrench,
   X,
   Zap,
+  Rocket,
+  Gamepad2,
+  ShieldAlert,
 } from 'lucide-react';
 
 type ModuleTrack = 'all' | 'fundamentals' | 'control' | 'applied';
@@ -78,6 +81,7 @@ export const LevelDashboard: React.FC = () => {
   const percentComplete = Math.round((completedCount / totalLevels) * 100);
   const unlockedCount = achievements.filter(achievement => achievement.unlocked).length;
   const activeModule = levels[activeModuleIndex];
+  const rocketRelayIndex = levels.findIndex(level => level.id === 26);
 
   const visibleLevels = React.useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -293,6 +297,49 @@ export const LevelDashboard: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {rocketRelayIndex >= 0 && (
+            <section className="mt-10 overflow-hidden rounded-[22px] border border-violet-400/20 bg-[#0a0c1a]/90 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+              <div className="relative grid gap-7 overflow-hidden p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_310px] lg:items-center lg:p-8">
+                <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-violet-500/[0.16] blur-3xl" />
+                <div className="pointer-events-none absolute bottom-0 left-[38%] h-px w-64 bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+                <div className="relative">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/[0.09] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200">
+                    <Gamepad2 className="h-3.5 w-3.5" />
+                    New playable custom lab
+                  </div>
+                  <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">Rocket Relay: Launch Sequence</h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+                    Wire Mission Control, move a live relay from standby to launch, then hit E-STOP to score the safety save. It is a game, but every action follows the real circuit.
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-medium text-slate-400">
+                    <span className="inline-flex items-center gap-1.5"><Rocket className="h-3.5 w-3.5 text-violet-300" /> Relay contact transfer</span>
+                    <span className="inline-flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-cyan-300" /> Live launch loads</span>
+                    <span className="inline-flex items-center gap-1.5"><ShieldAlert className="h-3.5 w-3.5 text-rose-300" /> Emergency-stop test</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => initLevel(rocketRelayIndex)}
+                  className="group relative flex min-h-[166px] flex-col justify-between overflow-hidden rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500/[0.16] via-[#101226] to-cyan-500/[0.08] p-5 text-left transition hover:-translate-y-0.5 hover:border-violet-300/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+                >
+                  <div className="absolute -right-6 -top-7 h-32 w-32 rounded-full border border-cyan-300/20" />
+                  <div className="absolute -right-14 -top-15 h-48 w-48 rounded-full border border-violet-300/15" />
+                  <div className="relative flex items-start justify-between">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-300/[0.12] text-violet-200 shadow-[0_0_26px_rgba(167,139,250,0.2)]">
+                      <Rocket className="h-5 w-5 transition-transform duration-500 group-hover:-translate-y-1 group-hover:translate-x-1" />
+                    </span>
+                    <span className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.08] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.14em] text-emerald-200">3 states</span>
+                  </div>
+                  <div className="relative">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200">Mission 26</p>
+                    <p className="mt-1 text-sm font-semibold text-white">Start the game</p>
+                    <p className="mt-1 text-[10px] text-slate-400">Standby → Launch → E-Stop</p>
+                  </div>
+                </button>
+              </div>
+            </section>
+          )}
         </section>
 
         <section

@@ -11,18 +11,6 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
 
   return (
     <g className={sirenActive ? 'animate-vibrate' : ''} style={{ transformOrigin: '0px 0px' }}>
-      <style>{`
-        @keyframes strobe-double-flash {
-          0%, 6% { opacity: 1; }
-          12%, 18% { opacity: 0; }
-          24%, 30% { opacity: 1; }
-          36%, 100% { opacity: 0; }
-        }
-        .strobe-flashing {
-          animation: strobe-double-flash 1.0s infinite;
-        }
-      `}</style>
-
       {/* Sound waves emitted when siren is active */}
       {sirenActive && (
         <g stroke="#3b82f6" strokeWidth="2.5" fill="none" strokeLinecap="round" className="animate-pulse">
@@ -65,9 +53,11 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
 
       {/* Strobe active flashing glow and hotspot */}
       {strobeActive && (
-        <g className="strobe-flashing">
-          <circle cx="0" cy="0" r="31" fill="url(#strobeActiveGrad)" opacity="0.95" style={{ filter: 'drop-shadow(0 0 16px #60a5fa)' }} />
-          <circle cx="0" cy="0" r="14" fill="#ffffff" opacity="0.95" style={{ filter: 'drop-shadow(0 0 8px #ffffff)' }} />
+        <g className="sti-strobe-flashing" pointerEvents="none">
+          <circle cx="0" cy="0" r="39" fill="#60a5fa" opacity="0.2" style={{ filter: 'blur(4px)' }} />
+          <circle cx="0" cy="0" r="31" fill="url(#strobeActiveGrad)" style={{ filter: 'drop-shadow(0 0 18px #60a5fa)' }} />
+          <circle cx="0" cy="0" r="15" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 10px #ffffff)' }} />
+          <circle cx="-5" cy="-6" r="5" fill="#ffffff" />
         </g>
       )}
 
@@ -98,9 +88,9 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
       <defs>
         {/* Blue lens gradient */}
         <radialGradient id="blueLensGrad" cx="35%" cy="35%" r="70%">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="70%" stopColor="#1d4ed8" />
-          <stop offset="100%" stopColor="#1e3a8a" />
+          <stop offset="0%" stopColor="#31588f" />
+          <stop offset="70%" stopColor="#1e3a6f" />
+          <stop offset="100%" stopColor="#111f46" />
         </radialGradient>
 
         {/* Strobe active gradient */}
