@@ -2270,62 +2270,21 @@ export const Workspace: React.FC = () => {
               tabIndex={comp.type === 'timer_relay' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
-              {/* Selection border & 1-click '+' Make Bigger / Zoom Badge */}
+              {/* Clean selection border outline when selected (move/drag indicator) */}
               {selectedCompId === comp.id && (
-                <g>
-                  <rect
-                    x={getSelectionHighlightBounds(comp.type, compScale).x}
-                    y={getSelectionHighlightBounds(comp.type, compScale).y}
-                    width={getSelectionHighlightBounds(comp.type, compScale).w}
-                    height={getSelectionHighlightBounds(comp.type, compScale).h}
-                    rx="8"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="2.5"
-                    strokeDasharray="5,3"
-                    className="animate-pulse"
-                    style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
-                  />
-                  {/* 1-Click Blue '+' Zoom / Make Bigger Badge */}
-                  <g
-                    transform={`translate(${getSelectionHighlightBounds(comp.type, compScale).x + getSelectionHighlightBounds(comp.type, compScale).w + 4}, ${getSelectionHighlightBounds(comp.type, compScale).y - 4})`}
-                    className="cursor-pointer device-control group/resize"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onPointerUp={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      soundManager.playClick();
-                      const current = getComponentEffectiveScale(comp);
-                      let next = parseFloat((current + 0.35).toFixed(2));
-                      if (next > 2.1) next = 1.0;
-                      setComponentState(comp.id, 'scale', next);
-                    }}
-                  >
-                    <title>Click to make component bigger (+ zoom)</title>
-                    <circle
-                      cx="0"
-                      cy="0"
-                      r="13"
-                      fill="#2563eb"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                      filter="drop-shadow(0 2px 6px rgba(37,99,235,0.6))"
-                    />
-                    {/* Bold '+' Plus Sign */}
-                    <text
-                      x="0"
-                      y="4.5"
-                      fill="#ffffff"
-                      fontSize="17"
-                      fontWeight="900"
-                      textAnchor="middle"
-                      fontFamily="sans-serif"
-                      className="select-none pointer-events-none"
-                    >
-                      +
-                    </text>
-                  </g>
-                </g>
+                <rect
+                  x={getSelectionHighlightBounds(comp.type, compScale).x}
+                  y={getSelectionHighlightBounds(comp.type, compScale).y}
+                  width={getSelectionHighlightBounds(comp.type, compScale).w}
+                  height={getSelectionHighlightBounds(comp.type, compScale).h}
+                  rx="8"
+                  fill="none"
+                  stroke="#3b82f6"
+                  strokeWidth="2.5"
+                  strokeDasharray="5,3"
+                  className="animate-pulse pointer-events-none"
+                  style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+                />
               )}
 
               {/* Highlight bounding box if diagnostic fault is here */}
