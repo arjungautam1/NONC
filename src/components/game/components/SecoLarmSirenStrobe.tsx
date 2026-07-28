@@ -55,9 +55,18 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
         {/* Active Strobe Light Glow Gradient */}
         <radialGradient id={strobeGlowId} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-          <stop offset="35%" stopColor="#fca5a5" stopOpacity="0.9" />
-          <stop offset="70%" stopColor="#ef4444" stopOpacity="0.6" />
+          <stop offset="25%" stopColor="#ff4d4d" stopOpacity="0.95" />
+          <stop offset="60%" stopColor="#ef4444" stopOpacity="0.7" />
           <stop offset="100%" stopColor="#dc2626" stopOpacity="0" />
+        </radialGradient>
+
+        {/* Ultra-Wide Ambient Radial Flare Gradient */}
+        <radialGradient id={`secoWideGlow-${component.id}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="20%" stopColor="#ff3333" stopOpacity="0.9" />
+          <stop offset="50%" stopColor="#ef4444" stopOpacity="0.5" />
+          <stop offset="80%" stopColor="#dc2626" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#991b1b" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -131,27 +140,27 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
         <line x1="60" y1="80" x2="60" y2="118" stroke="#fca5a5" strokeWidth="0.6" opacity="0.3" />
       </g>
 
-      {/* Realistic 400 FPM (0.15s pulse) High-Speed Strobe & Siren CSS Animations */}
+      {/* Ultra-Brighter & Wide-Spread 400 FPM High-Speed Strobe CSS Animations */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes secoStrobeBurst {
           0% {
             opacity: 1;
-            filter: drop-shadow(0 0 35px #ef4444) drop-shadow(0 0 15px #ffffff);
-            transform: scale(1.06);
+            filter: drop-shadow(0 0 60px #ff0000) drop-shadow(0 0 25px #ffffff) brightness(3.0);
+            transform: scale(1.12);
           }
-          12% {
-            opacity: 0.95;
-            filter: drop-shadow(0 0 25px #ef4444);
-            transform: scale(1.03);
+          15% {
+            opacity: 0.9;
+            filter: drop-shadow(0 0 35px #ef4444);
+            transform: scale(1.05);
           }
-          25% {
-            opacity: 0.05;
-            filter: drop-shadow(0 0 2px #ef4444);
+          30% {
+            opacity: 0.03;
+            filter: none;
             transform: scale(1.0);
           }
           100% {
-            opacity: 0.05;
-            filter: drop-shadow(0 0 2px #ef4444);
+            opacity: 0.03;
+            filter: none;
             transform: scale(1.0);
           }
         }
@@ -159,30 +168,38 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
           0% {
             opacity: 1;
             fill: #ffffff;
-            filter: drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 20px #ef4444);
+            r: 13px;
+            filter: drop-shadow(0 0 20px #ffffff) drop-shadow(0 0 40px #ff0000);
           }
-          15% {
-            opacity: 0.15;
+          18% {
+            opacity: 0.1;
             fill: #fca5a5;
+            r: 5px;
             filter: none;
           }
           100% {
-            opacity: 0.15;
+            opacity: 0.1;
             fill: #fca5a5;
+            r: 5px;
             filter: none;
           }
         }
         @keyframes secoAmbientFlash {
           0% {
-            opacity: 0.85;
-            transform: scale(1.15);
+            opacity: 1;
+            transform: scale(1.6);
+            filter: drop-shadow(0 0 80px #ff0000);
           }
           20% {
-            opacity: 0.08;
+            opacity: 0.75;
+            transform: scale(1.3);
+          }
+          35% {
+            opacity: 0.02;
             transform: scale(1.0);
           }
           100% {
-            opacity: 0.08;
+            opacity: 0.02;
             transform: scale(1.0);
           }
         }
@@ -193,7 +210,7 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
           }
           50% {
             opacity: 1.0;
-            stroke-width: 3.8px;
+            stroke-width: 4.5px;
           }
           100% {
             opacity: 0.2;
@@ -219,15 +236,15 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
       {/* Strobe Active Flashing Light Effect */}
       {strobeActive && (
         <g pointerEvents="none">
-          {/* Ambient Room/Wall Strobe Flash Aura */}
-          <circle cx="45" cy="98" r="62" fill="url(#secoStrobeGlow)" className="seco-ambient-flash" />
-          {/* Intense Lens Strobe Burst */}
-          <circle cx="45" cy="98" r="48" fill={`url(#${strobeGlowId})`} className="seco-strobe-active" />
-          {/* Synchronized 4-LED Flash Hotspots */}
-          <circle cx="25" cy="89" r="8" className="seco-led-flash" />
-          <circle cx="65" cy="89" r="8" className="seco-led-flash" />
-          <circle cx="25" cy="111" r="8" className="seco-led-flash" />
-          <circle cx="65" cy="111" r="8" className="seco-led-flash" />
+          {/* Ultra-Wide Room/Wall Ambient Strobe Flash Flare (170px radius) */}
+          <circle cx="45" cy="98" r="170" fill={`url(#secoWideGlow-${component.id})`} className="seco-ambient-flash" />
+          {/* Intense Lens Strobe Burst Core (95px radius) */}
+          <circle cx="45" cy="98" r="95" fill={`url(#${strobeGlowId})`} className="seco-strobe-active" />
+          {/* Synchronized 4-LED Ultra-Bright Flash Hotspots */}
+          <circle cx="25" cy="89" r="13" className="seco-led-flash" />
+          <circle cx="65" cy="89" r="13" className="seco-led-flash" />
+          <circle cx="25" cy="111" r="13" className="seco-led-flash" />
+          <circle cx="65" cy="111" r="13" className="seco-led-flash" />
         </g>
       )}
 
