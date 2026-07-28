@@ -548,7 +548,7 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'sti_sa5500_b',
     category: 'output',
-    name: 'Blue Strobe (STI SA5500-B)',
+    name: 'Blue Strobe',
     description: 'Round, blue strobe light (flashing indicator). Operates on 12-24 VDC (+ / -).',
     terminalSummary: '+ · −',
     template: {
@@ -564,7 +564,7 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'sti_sa5500_r',
     category: 'output',
-    name: 'Red Strobe (STI SA5500-R)',
+    name: 'Red Strobe',
     description: 'Round, red strobe light (flashing indicator). Operates on 12-24 VDC (+ / -).',
     terminalSummary: '+ · −',
     template: {
