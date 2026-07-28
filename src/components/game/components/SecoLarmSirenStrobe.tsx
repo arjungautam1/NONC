@@ -131,22 +131,109 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
         <line x1="60" y1="80" x2="60" y2="118" stroke="#fca5a5" strokeWidth="0.6" opacity="0.3" />
       </g>
 
+      {/* Realistic 400 FPM (0.15s pulse) High-Speed Strobe & Siren CSS Animations */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes secoStrobeBurst {
+          0% {
+            opacity: 1;
+            filter: drop-shadow(0 0 35px #ef4444) drop-shadow(0 0 15px #ffffff);
+            transform: scale(1.06);
+          }
+          12% {
+            opacity: 0.95;
+            filter: drop-shadow(0 0 25px #ef4444);
+            transform: scale(1.03);
+          }
+          25% {
+            opacity: 0.05;
+            filter: drop-shadow(0 0 2px #ef4444);
+            transform: scale(1.0);
+          }
+          100% {
+            opacity: 0.05;
+            filter: drop-shadow(0 0 2px #ef4444);
+            transform: scale(1.0);
+          }
+        }
+        @keyframes secoLedFlash {
+          0% {
+            opacity: 1;
+            fill: #ffffff;
+            filter: drop-shadow(0 0 12px #ffffff) drop-shadow(0 0 20px #ef4444);
+          }
+          15% {
+            opacity: 0.15;
+            fill: #fca5a5;
+            filter: none;
+          }
+          100% {
+            opacity: 0.15;
+            fill: #fca5a5;
+            filter: none;
+          }
+        }
+        @keyframes secoAmbientFlash {
+          0% {
+            opacity: 0.85;
+            transform: scale(1.15);
+          }
+          20% {
+            opacity: 0.08;
+            transform: scale(1.0);
+          }
+          100% {
+            opacity: 0.08;
+            transform: scale(1.0);
+          }
+        }
+        @keyframes secoSirenWaves {
+          0% {
+            opacity: 0.2;
+            stroke-width: 1.8px;
+          }
+          50% {
+            opacity: 1.0;
+            stroke-width: 3.8px;
+          }
+          100% {
+            opacity: 0.2;
+            stroke-width: 1.8px;
+          }
+        }
+        .seco-strobe-active {
+          animation: secoStrobeBurst 0.15s infinite linear;
+          transform-origin: 45px 98px;
+        }
+        .seco-led-flash {
+          animation: secoLedFlash 0.15s infinite linear;
+        }
+        .seco-ambient-flash {
+          animation: secoAmbientFlash 0.15s infinite linear;
+          transform-origin: 45px 98px;
+        }
+        .seco-siren-wave {
+          animation: secoSirenWaves 0.25s infinite ease-in-out;
+        }
+      ` }} />
+
       {/* Strobe Active Flashing Light Effect */}
       {strobeActive && (
         <g pointerEvents="none">
-          {/* Intense Outer Red Strobe Halo */}
-          <circle cx="45" cy="98" r="48" fill={`url(#${strobeGlowId})`} className="animate-pulse" />
+          {/* Ambient Room/Wall Strobe Flash Aura */}
+          <circle cx="45" cy="98" r="62" fill="url(#secoStrobeGlow)" className="seco-ambient-flash" />
+          {/* Intense Lens Strobe Burst */}
+          <circle cx="45" cy="98" r="48" fill={`url(#${strobeGlowId})`} className="seco-strobe-active" />
           {/* Synchronized 4-LED Flash Hotspots */}
-          <circle cx="25" cy="89" r="8" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 8px #ffffff)' }} />
-          <circle cx="65" cy="89" r="8" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 8px #ffffff)' }} />
-          <circle cx="25" cy="111" r="8" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 8px #ffffff)' }} />
-          <circle cx="65" cy="111" r="8" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 8px #ffffff)' }} />
+          <circle cx="25" cy="89" r="8" className="seco-led-flash" />
+          <circle cx="65" cy="89" r="8" className="seco-led-flash" />
+          <circle cx="25" cy="111" r="8" className="seco-led-flash" />
+          <circle cx="65" cy="111" r="8" className="seco-led-flash" />
         </g>
       )}
 
       {/* Siren Sound Wave Pulses (when Red (+) energized) */}
       {sirenActive && (
-        <g className="animate-pulse" pointerEvents="none">
+        <g className="seco-siren-wave" pointerEvents="none">
           <path d="M 2 -5 A 50 50 0 0 0 2 135" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" opacity="0.9" />
           <path d="M -8 -15 A 65 65 0 0 0 -8 145" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
           <path d="M 88 -5 A 50 50 0 0 1 88 135" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" opacity="0.9" />
