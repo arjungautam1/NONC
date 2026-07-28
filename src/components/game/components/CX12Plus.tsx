@@ -31,14 +31,26 @@ const Pot: React.FC<{ x: number; y: number; label: string; value: number }> = ({
 
 /**
  * Camden CX-12 PLUS Door Interface Relay. Board power is 12/24V AC/DC on
- * terminals 1-2. The simulator models the core, mode-agnostic behavior
- * shared by every DIP setting: Wet1/Dry1 pulses Relay 1 (lock) for
- * D.O.R.RL1 seconds and, after D.O.O.RL2 seconds, auto-chains a Relay 2
- * (operator) pulse for D.O.R.RL2 seconds — the "Standard Timer Mode"
- * (Diagram 1); Wet2/Dry2 also pulses Relay 2 directly, covering the
- * Access-Control-style wiring (Diagram 2a). The DIP switch is fully
- * interactive and its mode readout is accurate, but all 8 modes share this
- * one timing engine rather than 8 distinct state machines.
+ * terminals 1-2. The DIP switch (SW1-SW3) selects one of the 8 factory
+ * operating modes from the installation manual, and the mode engine in
+ * useGameStore's runSimulation implements each as its own state machine:
+ *   1. Standard Timer / Momentary Apartment — Wet1/Dry1 pulses Relay1 then
+ *      auto-chains a Relay2 pulse after D.O.O.RL2; Wet2/Dry2 is a courtesy
+ *      switch that fires Relay2 immediately while Relay1 is energized.
+ *   2. Access Control (Maintained) — Wet1 mirrors Relay1 directly; Dry1/Wet2
+ *      always unlocks and opens; Dry2 opens only while the strike is on.
+ *   3. Smoke Evac. — Wet2/Dry1 pulses the strike then holds the operator on
+ *      as a maintained mirror until the input releases.
+ *   4. Latching/Ratchet — Wet1/Dry1 toggles a delayed Relay2 latch; Wet2/Dry2
+ *      toggles both relays latched together.
+ *   5/6. Bi-Directional Sequencer (Momentary/Maintained) — either side fires
+ *      its near relay and chains the far relay after D.O.O.RL2, fixed-pulse
+ *      in Mode 5 or switch-held in Mode 6.
+ *   7/8. Restroom Control (Normally Unlocked/Locked) — a small lock/unlock
+ *      state machine using Wet1 exterior/access, Dry1 push-to-lock, Wet2
+ *      interior, Dry2 magnetic door contact.
+ * All three potentiometers (D.O.R.RL1, D.O.O.RL2, D.O.R.RL2) are wired into
+ * every mode exactly as the manual specifies for that mode.
  */
 export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) => {
   const configureCX12Plus = useGameStore(state => state.configureCX12Plus);
