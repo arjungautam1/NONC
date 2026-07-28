@@ -27,10 +27,12 @@ export const DoorSensor: React.FC<ComponentProps> = ({ component }) => {
   };
 
   return (
-    <g transform="translate(-48, -32)" className="select-none cursor-pointer" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
+    <g transform="translate(-48, -32)" className="select-none">
       <rect x="0" y="6" width="96" height="48" rx="4" fill="#1e222b" stroke="#475569" strokeWidth="2" />
-      <rect x="8" y="12" width="34" height="34" rx="3" fill="#0f172a" stroke="#334155" strokeWidth="1.5" />
-      <rect x="54" y="12" width="34" height="34" rx="3" fill="#111827" stroke="#334155" strokeWidth="1.5" />
+      <g className="cursor-pointer device-control" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
+        <rect x="8" y="12" width="34" height="34" rx="3" fill="#0f172a" stroke="#334155" strokeWidth="1.5" />
+        <rect x="54" y="12" width="34" height="34" rx="3" fill="#111827" stroke="#334155" strokeWidth="1.5" />
+      </g>
 
       <text x="25" y="25" textAnchor="middle" fill="#cbd5e1" fontSize="7" fontWeight="bold">DOOR</text>
       <text x="25" y="36" textAnchor="middle" fill="#94a3b8" fontSize="6">MAG</text>

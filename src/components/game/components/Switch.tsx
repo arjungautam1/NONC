@@ -41,8 +41,7 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   return (
     <g 
       transform="translate(-40, -40)"
-      className="cursor-pointer select-none"
-      onPointerDown={handlePointerDown}
+      className="select-none"
     >
       {/* DIN Rail mounting plate */}
       <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
@@ -62,6 +61,8 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
         strokeWidth="2.5"
         filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
         style={{ transition: 'all 0.1s ease' }}
+        className="cursor-pointer device-control"
+        onPointerDown={handlePointerDown}
       />
 
       {hasCom ? (
@@ -173,8 +174,7 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
   return (
     <g 
       transform="translate(-40, -40)"
-      className="cursor-pointer select-none"
-      onPointerDown={handlePointerDown}
+      className="select-none"
     >
       {/* DIN Rail mounting plate */}
       <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
@@ -194,6 +194,8 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
         strokeWidth="2.5"
         filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
         style={{ transition: 'all 0.1s ease' }}
+        className="cursor-pointer device-control"
+        onPointerDown={handlePointerDown}
       />
 
       {/* Contact terminal internally schematic overlay - connects exactly to X=10 and X=70 */}
@@ -517,35 +519,36 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
   return (
     <g 
       transform="translate(-45, -45)" 
-      className="select-none cursor-pointer"
-      onPointerDown={handlePointerDown}
+      className="select-none"
     >
       {/* Outer Housing */}
       <rect x="5" y="5" width="80" height="80" rx="8" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
       <rect x="18" y="1" width="54" height="4" fill="#71717a" opacity="0.6" />
       <rect x="18" y="85" width="54" height="4" fill="#71717a" opacity="0.6" />
 
-      {/* Switch cavity bezel */}
-      <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
+      {/* Switch cavity bezel & interactive toggle */}
+      <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
+        <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
 
-      {/* Rocker Toggle Mechanism */}
-      {!isToggled ? (
-        // Position A - Left side raised, Right side sunken (NC active)
-        <g>
-          {/* Right sunken side */}
-          <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
-          {/* Left raised side */}
-          <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
-        </g>
-      ) : (
-        // Position B - Right side raised, Left side sunken (NO active)
-        <g>
-          {/* Left sunken side */}
-          <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
-          {/* Right raised side */}
-          <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
-        </g>
-      )}
+        {/* Rocker Toggle Mechanism */}
+        {!isToggled ? (
+          // Position A - Left side raised, Right side sunken (NC active)
+          <g>
+            {/* Right sunken side */}
+            <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
+            {/* Left raised side */}
+            <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
+          </g>
+        ) : (
+          // Position B - Right side raised, Left side sunken (NO active)
+          <g>
+            {/* Left sunken side */}
+            <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
+            {/* Right raised side */}
+            <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
+          </g>
+        )}
+      </g>
 
       {/* Schematic overlay inside (X=10 to X=80) */}
       <line x1="10" y1="45" x2="25" y2="45" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
