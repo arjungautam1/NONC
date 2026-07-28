@@ -82,18 +82,18 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
       <circle cx="45" cy="22" r="3.5" fill="#0f172a" />
       <line x1="43" y1="22" x2="47" y2="22" stroke="#475569" strokeWidth="1.2" />
 
-      {/* Brand Header */}
+      {/* Generic Device Header */}
       <text x="45" y="38" fill="#1e293b" fontSize="6.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle" letterSpacing="0.8">
-        SECO-LARM
+        SIREN / STROBE
       </text>
       <text x="45" y="45" fill="#64748b" fontSize="5" fontWeight="700" fontFamily="monospace" textAnchor="middle">
-        MINI STROBE SIREN
+        ALARM SIGNAL
       </text>
 
       {/* Model Spec Badge */}
       <rect x="18" y="50" width="54" height="14" rx="2" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
       <text x="45" y="59" fill="#0f172a" fontSize="5.5" fontWeight="800" fontFamily="monospace" textAnchor="middle">
-        SL-1312-SA/R
+        12VDC ALARM
       </text>
       <text x="45" y="68" fill="#64748b" fontSize="4.2" fontWeight="700" fontFamily="sans-serif" textAnchor="middle">
         12VDC · 60mA · 100dB
