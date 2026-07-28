@@ -578,6 +578,23 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'seco_larm_sl1312_r',
+    category: 'output',
+    name: 'Seco-Larm Mini Strobe/Siren (SL-1312-SA/R)',
+    description: 'Seco-Larm SL-1312-SA/R Mini Strobe/Siren. 12VDC, 60mA low current draw, 100dB piezo siren with 4-LED strobe. Red: Siren & Strobe (+), Green: Strobe Only (+), Black: Negative (-).',
+    terminalSummary: 'RED (Siren/Strobe) · GRN (Strobe Only) · BLK (−)',
+    template: {
+      type: 'seco_larm_strobe_siren',
+      label: 'Seco-Larm Strobe/Siren',
+      terminals: [
+        { id: 'red', name: 'RED', type: 'pos', x: -22, y: 62.5 },
+        { id: 'green', name: 'GRN', type: 'pos', x: 0, y: 62.5 },
+        { id: 'black', name: 'BLK', type: 'neg', x: 22, y: 62.5 }
+      ],
+      state: { lensColor: 'red' }
+    }
+  },
+  {
     id: 'dc_fan',
     category: 'output',
     name: 'DC cooling fan',

@@ -495,6 +495,9 @@ export function solveCircuit(
       } else if (c.type === 'sti_siren_strobe') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'seco_larm_strobe_siren') {
+        inKey = c.terminals.some(t => t.id === 'red') ? getTerminalKey(c.id, 'red') : getTerminalKey(c.id, 'pos');
+        outKey = c.terminals.some(t => t.id === 'black') ? getTerminalKey(c.id, 'black') : getTerminalKey(c.id, 'neg');
       }
 
       if (inKey && outKey) {
@@ -650,7 +653,7 @@ export function queryMultimeter(
       else if (c.type === 'motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'roland_fan' || c.type === 'dc_fan') resistance += 45.0;
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
-      else if (c.type === 'sti_siren_strobe') resistance += 60.0;
+      else if (c.type === 'sti_siren_strobe' || c.type === 'seco_larm_strobe_siren') resistance += 60.0;
       else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl' || c.type === 'timer_relay' || c.type === 'cube_power' || c.type === 'cx12plus') resistance += 80.0;
       else if (c.type === 'maglock' || c.type === 'door_strike' || c.type === 'sm500_maglock') resistance += 120.0;
       else if (c.type === 'card_reader' || c.type === 'wave_sensor') resistance += 100.0;
@@ -761,6 +764,15 @@ function checkPathBetween(
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'sti_siren_strobe' || c.type === 'dc_fan') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+    } else if (c.type === 'seco_larm_strobe_siren') {
+      if (c.terminals.some(t => t.id === 'red')) {
+        addConn(getTerminalKey(c.id, 'red'), getTerminalKey(c.id, 'black'));
+        if (c.terminals.some(t => t.id === 'green')) {
+          addConn(getTerminalKey(c.id, 'green'), getTerminalKey(c.id, 'black'));
+        }
+      } else {
+        addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      }
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {
@@ -914,6 +926,15 @@ function getComponentsInPath(
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
     } else if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate' || c.type === 'sti_siren_strobe' || c.type === 'dc_fan') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+    } else if (c.type === 'seco_larm_strobe_siren') {
+      if (c.terminals.some(t => t.id === 'red')) {
+        addConn(getTerminalKey(c.id, 'red'), getTerminalKey(c.id, 'black'));
+        if (c.terminals.some(t => t.id === 'green')) {
+          addConn(getTerminalKey(c.id, 'green'), getTerminalKey(c.id, 'black'));
+        }
+      } else {
+        addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
+      }
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {

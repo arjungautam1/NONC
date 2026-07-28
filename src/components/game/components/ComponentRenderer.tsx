@@ -28,6 +28,7 @@ import { WirelessTransmitter } from './WirelessTransmitter';
 import { SM500Maglock } from './SM500Maglock';
 import { CX12Plus } from './CX12Plus';
 import { STISirenStrobe } from './STISirenStrobe';
+import { SecoLarmSirenStrobe } from './SecoLarmSirenStrobe';
 import { DCCoolingFan } from './DCCoolingFan';
 
 const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
@@ -174,6 +175,8 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
       return <CX12Plus component={component} isEnergized={isEnergized} />;
     case 'sti_siren_strobe':
       return <STISirenStrobe component={component} />;
+    case 'seco_larm_strobe_siren':
+      return <SecoLarmSirenStrobe component={component} isEnergized={isEnergized} />;
     case 'dc_fan':
       return <DCCoolingFan component={component} isEnergized={isEnergized} />;
     default:

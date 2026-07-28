@@ -442,6 +442,7 @@ export const Workspace: React.FC = () => {
       case 'door_sensor':
       case 'surface_contact':
       case 'limit_switch':
+      case 'seco_larm_strobe_siren':
         return 1.35;
       default:
         return 1.0;
@@ -460,6 +461,9 @@ export const Workspace: React.FC = () => {
     switch (type) {
       case 'cx12plus':
         base = { x: -125, y: -65, w: 250, h: 130 };
+        break;
+      case 'seco_larm_strobe_siren':
+        base = { x: -50, y: -75, w: 100, h: 155 };
         break;
       case 'junction':
         base = { x: -45, y: -22, w: 90, h: 44 };

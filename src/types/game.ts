@@ -40,6 +40,7 @@ export type ComponentType =
   | 'sm500_maglock'
   | 'cx12plus'
   | 'sti_siren_strobe'
+  | 'seco_larm_strobe_siren'
   | 'dc_fan';
 
 export type TerminalType =

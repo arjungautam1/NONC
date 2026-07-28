@@ -20,7 +20,7 @@ import {
   type Timer6062Config,
   type Timer6062Phase
 } from '../simulation/timer6062';
-import { getCX12PlusConfig, type CX12PlusConfig } from '../components/game/components/cx12plusPinout';
+import { getCX12PlusConfig, getCX12PlusMode, type CX12PlusConfig } from '../components/game/components/cx12plusPinout';
 import { soundManager } from '../audio/soundManager';
 import {
   buildCustomLabComponents,
@@ -195,21 +195,44 @@ const clearAllTimer6062Runtimes = () => {
 };
 
 interface CX12PlusRuntime {
-  lastInput1: boolean;
-  lastInput2: boolean;
-  relay1Generation: number;
-  relay2Generation: number;
-  chainGeneration: number;
+  // Edge-detection memory for each of the 4 physical inputs.
+  lastWet1: boolean;
+  lastDry1: boolean;
+  lastWet2: boolean;
+  lastDry2: boolean;
+  // Generation counters keyed by action name, so a stale setTimeout from a
+  // superseded pulse/chain/reset can recognize it's been cancelled.
+  gen: Record<string, number>;
+  // Mode 2 (Access Control): interior switch's independent unlock pulse,
+  // held true for D.O.R.RL1 seconds regardless of the WET1 access signal.
+  interiorPulseActive: boolean;
+  // Mode 4 Latching: Relay2's latched-on state, toggled by WET1/DRY1.
+  latchRelay2: boolean;
+  // Mode 4 Ratchet: Relay1 & Relay2's shared latched-on state, toggled by WET2/DRY2.
+  ratchetOn: boolean;
+  // Mode 6 (Maintained Bi-Directional Sequencer): whether channel A's/B's
+  // delayed leg is currently holding the *other* relay on.
+  secondaryFromA: boolean;
+  secondaryFromB: boolean;
+  // Modes 7/8 (Restroom Control): true while the strike (Relay1) is
+  // securing the door against the exterior switch/access device.
+  washroomLocked: boolean;
 }
 
 const cx12PlusRuntimes = new Map<string, CX12PlusRuntime>();
 
-const createCX12PlusRuntime = (): CX12PlusRuntime => ({
-  lastInput1: false,
-  lastInput2: false,
-  relay1Generation: 0,
-  relay2Generation: 0,
-  chainGeneration: 0
+const createCX12PlusRuntime = (mode?: string): CX12PlusRuntime => ({
+  lastWet1: false,
+  lastDry1: false,
+  lastWet2: false,
+  lastDry2: false,
+  gen: {},
+  interiorPulseActive: false,
+  latchRelay2: false,
+  ratchetOn: false,
+  secondaryFromA: false,
+  secondaryFromB: false,
+  washroomLocked: mode === '8'
 });
 
 const clearCX12PlusRuntime = (componentId: string) => {
@@ -512,50 +535,54 @@ export const useGameStore = create<GameState>((set, get) => {
     };
   };
 
-  // Schedules the "turn back off" side of a CX-12 PLUS relay pulse. The
-  // caller sets the relay true in its own pass; this only owns the delayed
-  // flip back to false, generation-guarded so a reset or a fresh pulse
-  // can't have a stale timeout fire late.
-  const scheduleCX12PulseEnd = (
+  // Generic delayed action for the CX-12 PLUS mode engine, generation-guarded
+  // so a reset, a re-trigger, or a DIP/pot change can't leave a stale timer
+  // firing late. `key` names the specific pending action (e.g. 'relay1Pulse',
+  // 'chainA', 'latchOn') so unrelated timers on the same board don't cancel
+  // each other.
+  const scheduleCX12Action = (
+    componentId: string,
+    key: string,
+    delaySeconds: number,
+    action: (liveRuntime: CX12PlusRuntime) => void,
+    runtime: CX12PlusRuntime
+  ) => {
+    runtime.gen[key] = (runtime.gen[key] ?? 0) + 1;
+    const generation = runtime.gen[key];
+    setTimeout(() => {
+      const liveRuntime = cx12PlusRuntimes.get(componentId);
+      if (!liveRuntime || liveRuntime.gen[key] !== generation) return;
+      if (!get().simulation.energizedComponents.has(componentId)) return;
+      action(liveRuntime);
+    }, Math.max(0, delaySeconds) * 1000);
+  };
+
+  // Invalidates any pending scheduleCX12Action call registered under `key`.
+  const cancelCX12Action = (runtime: CX12PlusRuntime, key: string) => {
+    runtime.gen[key] = (runtime.gen[key] ?? 0) + 1;
+  };
+
+  // Applies an out-of-band relay change (from a fired setTimeout, outside the
+  // normal per-tick map pass) and re-solves the circuit.
+  const setCX12Relays = (
+    componentId: string,
+    patch: Partial<{ relay1Active: boolean; relay2Active: boolean }>
+  ) => {
+    const nextComponents = get().components.map(c =>
+      c.id === componentId ? { ...c, state: { ...c.state, ...patch } } : c
+    );
+    runSimulation(nextComponents, get().wires, get().isRunning);
+  };
+
+  // Schedules the "turn back off" side of a momentary CX-12 PLUS relay pulse.
+  const pulseCX12Relay = (
     componentId: string,
     key: 'relay1Active' | 'relay2Active',
     seconds: number,
     runtime: CX12PlusRuntime
   ) => {
-    const genKey = key === 'relay1Active' ? 'relay1Generation' : 'relay2Generation';
-    runtime[genKey] += 1;
-    const generation = runtime[genKey];
-    setTimeout(() => {
-      const liveRuntime = cx12PlusRuntimes.get(componentId);
-      if (!liveRuntime || liveRuntime[genKey] !== generation) return;
-      const offComponents = get().components.map(c =>
-        c.id === componentId ? { ...c, state: { ...c.state, [key]: false } } : c
-      );
-      runSimulation(offComponents, get().wires, get().isRunning);
-    }, Math.max(0, seconds) * 1000);
-  };
-
-  // Standard Timer Mode chaining: Relay 2 auto-fires D.O.O.RL2 seconds after
-  // Relay 1, as long as the board is still powered when the delay elapses.
-  const scheduleCX12Chain = (
-    componentId: string,
-    delaySeconds: number,
-    holdSeconds: number,
-    runtime: CX12PlusRuntime
-  ) => {
-    runtime.chainGeneration += 1;
-    const generation = runtime.chainGeneration;
-    setTimeout(() => {
-      const liveRuntime = cx12PlusRuntimes.get(componentId);
-      if (!liveRuntime || liveRuntime.chainGeneration !== generation) return;
-      if (!get().simulation.energizedComponents.has(componentId)) return;
-      soundManager.playClick();
-      scheduleCX12PulseEnd(componentId, 'relay2Active', holdSeconds, liveRuntime);
-      const onComponents = get().components.map(c =>
-        c.id === componentId ? { ...c, state: { ...c.state, relay2Active: true } } : c
-      );
-      runSimulation(onComponents, get().wires, get().isRunning);
-    }, Math.max(0, delaySeconds) * 1000);
+    const pulseKey = key === 'relay1Active' ? 'relay1Pulse' : 'relay2Pulse';
+    scheduleCX12Action(componentId, pulseKey, seconds, () => setCX12Relays(componentId, { [key]: false }), runtime);
   };
 
   const runSimulation = (currentComponents: CircuitComponent[], currentWires: Wire[], currentIsRunning: boolean) => {
@@ -743,14 +770,15 @@ export const useGameStore = create<GameState>((set, get) => {
       }
       if (c.type === 'cx12plus') {
         const config = getCX12PlusConfig(c);
+        const activeMode = getCX12PlusMode(config.sw).mode;
         const boardPowered = solverResult.energizedComponents.has(c.id);
         const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
-        const input1Voltage = Math.max(v('wet1_a'), v('wet1_b'), v('dry1_a'), v('dry1_b'));
-        const input2Voltage = Math.max(v('wet2_a'), v('wet2_b'), v('dry2_a'), v('dry2_b'));
-        const input1Active = boardPowered && input1Voltage > 2;
-        const input2Active = boardPowered && input2Voltage > 2;
+        const wet1Active = boardPowered && Math.max(v('wet1_a'), v('wet1_b')) > 2;
+        const dry1Active = boardPowered && Math.max(v('dry1_a'), v('dry1_b')) > 2;
+        const wet2Active = boardPowered && Math.max(v('wet2_a'), v('wet2_b')) > 2;
+        const dry2Active = boardPowered && Math.max(v('dry2_a'), v('dry2_b')) > 2;
 
-        const runtime = cx12PlusRuntimes.get(c.id) ?? createCX12PlusRuntime();
+        const runtime = cx12PlusRuntimes.get(c.id) ?? createCX12PlusRuntime(activeMode);
         cx12PlusRuntimes.set(c.id, runtime);
 
         const relay1WasActive = Boolean(c.state.relay1Active);
@@ -759,29 +787,276 @@ export const useGameStore = create<GameState>((set, get) => {
         let relay2Active = relay2WasActive;
 
         if (!boardPowered) {
-          runtime.relay1Generation += 1;
-          runtime.relay2Generation += 1;
-          runtime.chainGeneration += 1;
-          runtime.lastInput1 = false;
-          runtime.lastInput2 = false;
+          // No reserve power to hold a maintained or latched state — every
+          // pending timer is invalidated and both relays drop dead, and the
+          // board re-arms to its mode's power-up default next time it's fed.
+          Object.keys(runtime.gen).forEach(key => { runtime.gen[key] = (runtime.gen[key] ?? 0) + 1; });
+          runtime.lastWet1 = false;
+          runtime.lastDry1 = false;
+          runtime.lastWet2 = false;
+          runtime.lastDry2 = false;
+          runtime.interiorPulseActive = false;
+          runtime.latchRelay2 = false;
+          runtime.ratchetOn = false;
+          runtime.secondaryFromA = false;
+          runtime.secondaryFromB = false;
+          runtime.washroomLocked = activeMode === '8';
           relay1Active = false;
           relay2Active = false;
         } else {
-          const risingInput1 = !runtime.lastInput1 && input1Active;
-          const risingInput2 = !runtime.lastInput2 && input2Active;
-          runtime.lastInput1 = input1Active;
-          runtime.lastInput2 = input2Active;
+          const risingWet1 = !runtime.lastWet1 && wet1Active;
+          const risingDry1 = !runtime.lastDry1 && dry1Active;
+          const risingWet2 = !runtime.lastWet2 && wet2Active;
+          const risingDry2 = !runtime.lastDry2 && dry2Active;
+          const fallingDry2 = runtime.lastDry2 && !dry2Active;
+          runtime.lastWet1 = wet1Active;
+          runtime.lastDry1 = dry1Active;
+          runtime.lastWet2 = wet2Active;
+          runtime.lastDry2 = dry2Active;
 
-          if (risingInput1) {
-            soundManager.playClick();
-            relay1Active = true;
-            scheduleCX12PulseEnd(c.id, 'relay1Active', config.dorRl1, runtime);
-            scheduleCX12Chain(c.id, config.dooRl2, config.dorRl2, runtime);
-          }
-          if (risingInput2) {
-            soundManager.playClick();
-            relay2Active = true;
-            scheduleCX12PulseEnd(c.id, 'relay2Active', config.dorRl2, runtime);
+          switch (activeMode) {
+            case '1': {
+              // Standard Timer / Momentary Apartment (Diagram 1, 2b, 2c):
+              // WET1/DRY1 pulses the strike then auto-chains the operator
+              // after D.O.O.RL2. WET2/DRY2 is a courtesy/vestibule switch
+              // that only does anything while the strike is already
+              // energized, firing the operator immediately (skips the wait).
+              const primaryRising = risingWet1 || risingDry1;
+              const secondaryRising = risingWet2 || risingDry2;
+              if (primaryRising) {
+                soundManager.playClick();
+                relay1Active = true;
+                pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay2Active: true });
+                  pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
+                }, runtime);
+              }
+              if (secondaryRising && relay1Active) {
+                soundManager.playClick();
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+              }
+              break;
+            }
+            case '2': {
+              // Access Control (Maintained): WET1 is a maintained access
+              // signal that mirrors Relay1 directly. DRY2 (exterior) only
+              // fires the operator while the strike is energized. DRY1/WET2
+              // (interior) always unlocks and opens, regardless of WET1.
+              const interiorRising = risingDry1 || risingWet2;
+              if (interiorRising) {
+                soundManager.playClick();
+                runtime.interiorPulseActive = true;
+                scheduleCX12Action(c.id, 'relay1Pulse', config.dorRl1, (live) => {
+                  live.interiorPulseActive = false;
+                  setCX12Relays(c.id, { relay1Active: live.lastWet1 });
+                }, runtime);
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+              }
+              if (risingDry2 && (wet1Active || runtime.interiorPulseActive)) {
+                soundManager.playClick();
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+              }
+              relay1Active = wet1Active || runtime.interiorPulseActive;
+              break;
+            }
+            case '3': {
+              // Smoke Evac.: the fire panel (WET2) or a dry presence sensor
+              // (DRY1) fires the strike momentarily, then holds the operator
+              // relay in as a maintained mirror until the input releases.
+              const fireActive = wet2Active || dry1Active;
+              const fireRising = risingWet2 || risingDry1;
+              if (fireRising) {
+                soundManager.playClick();
+                relay1Active = true;
+                pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
+              }
+              relay2Active = fireActive;
+              break;
+            }
+            case '4': {
+              // Latching: WET1/DRY1 pulses Relay1, then D.O.O.RL2 later
+              // latches Relay2 on; a second activation releases Relay2.
+              const latchRising = risingWet1 || risingDry1;
+              if (latchRising) {
+                soundManager.playClick();
+                if (runtime.latchRelay2) {
+                  cancelCX12Action(runtime, 'latchOn');
+                  runtime.latchRelay2 = false;
+                  relay2Active = runtime.ratchetOn;
+                } else {
+                  relay1Active = true;
+                  scheduleCX12Action(c.id, 'relay1Pulse', config.dorRl1, (live) => {
+                    setCX12Relays(c.id, { relay1Active: live.ratchetOn });
+                  }, runtime);
+                  scheduleCX12Action(c.id, 'latchOn', config.dooRl2, (live) => {
+                    soundManager.playClick();
+                    live.latchRelay2 = true;
+                    setCX12Relays(c.id, { relay2Active: true });
+                  }, runtime);
+                }
+              }
+              // Ratchet: WET2/DRY2 latches Relay1 immediately, then
+              // D.O.O.RL2 later latches Relay2 too; a second activation
+              // releases both relays together.
+              const ratchetRising = risingWet2 || risingDry2;
+              if (ratchetRising) {
+                soundManager.playClick();
+                if (runtime.ratchetOn) {
+                  cancelCX12Action(runtime, 'ratchetOn');
+                  runtime.ratchetOn = false;
+                  relay1Active = false;
+                  relay2Active = runtime.latchRelay2;
+                } else {
+                  runtime.ratchetOn = true;
+                  relay1Active = true;
+                  scheduleCX12Action(c.id, 'ratchetOn', config.dooRl2, () => {
+                    soundManager.playClick();
+                    setCX12Relays(c.id, { relay2Active: true });
+                  }, runtime);
+                }
+              }
+              break;
+            }
+            case '5': {
+              // Bi-Directional Sequencer — Momentary: either side pulses its
+              // near relay immediately (fixed duration, ignores a stuck
+              // switch) and chains the far relay after D.O.O.RL2.
+              const aRising = risingWet1 || risingDry1;
+              const bRising = risingWet2 || risingDry2;
+              if (aRising) {
+                soundManager.playClick();
+                relay1Active = true;
+                pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay2Active: true });
+                  pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
+                }, runtime);
+              }
+              if (bRising) {
+                soundManager.playClick();
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+                scheduleCX12Action(c.id, 'chainB', config.dooRl2, (live) => {
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay1Active: true });
+                  pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, live);
+                }, runtime);
+              }
+              break;
+            }
+            case '6': {
+              // Bi-Directional Sequencer — Maintained: each side's relay
+              // mirrors its switch directly, and the far relay follows
+              // D.O.O.RL2 later as long as the switch is still held.
+              const aActive = wet1Active || dry1Active;
+              const bActive = wet2Active || dry2Active;
+              const aRising = risingWet1 || risingDry1;
+              const bRising = risingWet2 || risingDry2;
+
+              if (aRising) {
+                soundManager.playClick();
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  if (!live.lastWet1 && !live.lastDry1) return;
+                  soundManager.playClick();
+                  live.secondaryFromA = true;
+                  setCX12Relays(c.id, { relay2Active: true });
+                }, runtime);
+              }
+              if (!aActive) {
+                cancelCX12Action(runtime, 'chainA');
+                runtime.secondaryFromA = false;
+              }
+              if (bRising) {
+                soundManager.playClick();
+                scheduleCX12Action(c.id, 'chainB', config.dooRl2, (live) => {
+                  if (!live.lastWet2 && !live.lastDry2) return;
+                  soundManager.playClick();
+                  live.secondaryFromB = true;
+                  setCX12Relays(c.id, { relay1Active: true });
+                }, runtime);
+              }
+              if (!bActive) {
+                cancelCX12Action(runtime, 'chainB');
+                runtime.secondaryFromB = false;
+              }
+
+              relay1Active = aActive || runtime.secondaryFromB;
+              relay2Active = bActive || runtime.secondaryFromA;
+              break;
+            }
+            case '7': {
+              // Restroom Control — Normally Unlocked. Terminal assignment
+              // (per Diagram 6): WET1 exterior wall switch, DRY1 interior
+              // "Push to Lock" button, WET2 interior wall switch, DRY2
+              // magnetic door contact (N.C. — reads active while the door
+              // is closed, drops when it's manually pushed open).
+              if (risingWet1 && !runtime.washroomLocked) {
+                soundManager.playClick();
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+              }
+              if (risingDry1) {
+                soundManager.playClick();
+                runtime.washroomLocked = true;
+                relay1Active = true;
+              }
+              if (risingWet2) {
+                soundManager.playClick();
+                runtime.washroomLocked = false;
+                relay1Active = false;
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+              }
+              if (fallingDry2) {
+                // Manual exit via the lever handle — the door contact
+                // resets the relay for the next occupant.
+                runtime.washroomLocked = false;
+                relay1Active = false;
+              }
+              break;
+            }
+            case '8': {
+              // Restroom Control — Normally Locked. Same terminal mapping as
+              // Mode 7, except WET1 is the access-granted signal from a
+              // card/keypad reader rather than a plain wall switch, and the
+              // door starts (and re-arms) secured.
+              if (risingWet1 && runtime.washroomLocked) {
+                soundManager.playClick();
+                relay1Active = true;
+                runtime.washroomLocked = false;
+                pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay2Active: true });
+                  pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
+                }, runtime);
+              }
+              if (risingDry1 && !runtime.washroomLocked) {
+                // Push-to-Lock: a brief double-click of the strike, then secured.
+                soundManager.playClick();
+                relay1Active = true;
+                pulseCX12Relay(c.id, 'relay1Active', Math.min(1, config.dorRl1), runtime);
+                runtime.washroomLocked = true;
+              }
+              if (risingWet2) {
+                soundManager.playClick();
+                relay2Active = true;
+                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+              }
+              if (risingDry2) {
+                // Door re-closed after an exit — re-secure from the exterior.
+                runtime.washroomLocked = true;
+              }
+              break;
+            }
+            default:
+              break;
           }
         }
 
