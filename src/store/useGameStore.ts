@@ -594,12 +594,24 @@ export const useGameStore = create<GameState>((set, get) => {
     // Synchronize sounds (continuous hums)
     if (currentIsRunning && !solverResult.shortCircuit) {
       currentComponents.forEach(c => {
-        if (c.type === 'sti_siren_strobe') {
-          soundManager.stopHum(c.id);
+        const isEnergized = solverResult.energizedComponents.has(c.id);
+        if (c.type === 'seco_larm_strobe_siren' || c.type === 'sti_siren_strobe') {
+          const redKey = `${c.id}:red`;
+          const posKey = `${c.id}:pos`;
+          const blackKey = `${c.id}:black`;
+          const negKey = `${c.id}:neg`;
+          const redVolts = solverResult.nodeVoltages[redKey] ?? solverResult.nodeVoltages[posKey] ?? 0;
+          const blackVolts = solverResult.nodeVoltages[blackKey] ?? solverResult.nodeVoltages[negKey] ?? 0;
+          const isSirenPowered = isEnergized && (redVolts > 4) && (blackVolts === 0);
+
+          if (isSirenPowered || Boolean(c.state.sirenActive)) {
+            soundManager.startHum(c.id, 'siren');
+          } else {
+            soundManager.stopHum(c.id);
+          }
           return;
         }
 
-        const isEnergized = solverResult.energizedComponents.has(c.id);
         if (isEnergized) {
           if (c.type === 'motor' || c.type === 'roland_fan' || c.type === 'dc_fan') soundManager.startHum(c.id, 'motor');
           else if (c.type === 'buzzer') soundManager.startHum(c.id, 'buzzer');

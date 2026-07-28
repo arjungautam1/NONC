@@ -259,7 +259,7 @@ class SoundManager {
     }
   }
 
-  startHum(id: string, type: 'motor' | 'bulb' | 'buzzer' = 'bulb') {
+  startHum(id: string, type: 'motor' | 'bulb' | 'buzzer' | 'siren' = 'bulb') {
     if (this.muted) return;
     try {
       if (this.humOscillators.has(id)) return;
@@ -271,7 +271,49 @@ class SoundManager {
       const gain = ctx.createGain();
       const filter = ctx.createBiquadFilter();
 
-      if (type === 'motor') {
+      if (type === 'siren') {
+        const osc2 = ctx.createOscillator();
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+
+        // 100dB Piezo Siren Warble Tone
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(2600, now);
+
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(3200, now);
+
+        // 6 Hz pitch modulation (warbling alarm sound)
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(6, now);
+        lfoGain.gain.setValueAtTime(450, now);
+
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        lfoGain.connect(osc2.frequency);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2800, now);
+        filter.Q.setValueAtTime(1.5, now);
+
+        gain.gain.setValueAtTime(0.12, now);
+
+        osc.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        lfo.start(now);
+        osc.start(now);
+        osc2.start(now);
+
+        this.humOscillators.set(id, {
+          osc,
+          oscs: [osc, osc2, lfo],
+          gain
+        });
+        return;
+      } else if (type === 'motor') {
         const osc2 = ctx.createOscillator();
         
         // Low mechanical rumbling base tone (audible 80Hz)
