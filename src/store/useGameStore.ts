@@ -595,14 +595,27 @@ export const useGameStore = create<GameState>((set, get) => {
     if (currentIsRunning && !solverResult.shortCircuit) {
       currentComponents.forEach(c => {
         const isEnergized = solverResult.energizedComponents.has(c.id);
-        if (c.type === 'seco_larm_strobe_siren' || c.type === 'sti_siren_strobe') {
+        if (c.type === 'sti_siren_strobe') {
+          // Red/Blue Strobe are flashing indicators with no sounder inside —
+          // they light up when powered and stay silent.
+          soundManager.stopHum(c.id);
+          return;
+        }
+
+        if (c.type === 'seco_larm_strobe_siren') {
           const redKey = `${c.id}:red`;
           const posKey = `${c.id}:pos`;
           const blackKey = `${c.id}:black`;
           const negKey = `${c.id}:neg`;
           const redVolts = solverResult.nodeVoltages[redKey] ?? solverResult.nodeVoltages[posKey] ?? 0;
-          const blackVolts = solverResult.nodeVoltages[blackKey] ?? solverResult.nodeVoltages[negKey] ?? 0;
-          const isSirenPowered = isEnergized && (redVolts > 4) && (blackVolts === 0);
+          const hasNegativeReturn =
+            solverResult.groundedTerminals.has(blackKey) || solverResult.groundedTerminals.has(negKey);
+          // RED + BLK only drives the strobe. GRN is the siren-enable input, so
+          // it has to be positive as well before the horn sounds. A 2-wire unit
+          // has no GRN and sounds on RED alone.
+          const hasGreenTerminal = c.terminals.some(t => t.id === 'green');
+          const hasSirenEnable = !hasGreenTerminal || (solverResult.nodeVoltages[`${c.id}:green`] ?? 0) > 4;
+          const isSirenPowered = isEnergized && redVolts > 4 && hasNegativeReturn && hasSirenEnable;
 
           if (isSirenPowered || Boolean(c.state.sirenActive)) {
             soundManager.startHum(c.id, 'siren');
@@ -1218,6 +1231,7 @@ export const useGameStore = create<GameState>((set, get) => {
     isRunning: false,
     simulation: {
       nodeVoltages: {},
+      groundedTerminals: new Set(),
       energizedComponents: new Set(),
       shortCircuit: false,
       shortCircuitNodes: new Set(),

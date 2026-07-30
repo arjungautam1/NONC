@@ -149,6 +149,8 @@ export const Workspace: React.FC = () => {
   const [zoomScale, setZoomScale] = useState<number>(1.0);
   const [draggedCompId, setDraggedCompId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  // Figma-style smart guides: the axis a dragged device is currently lined up on.
+  const [alignGuides, setAlignGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
 
   // Custom Lab deletion selection and trash states
   const [selectedCompId, setSelectedCompId] = useState<string | null>(null);
@@ -554,7 +556,29 @@ export const Workspace: React.FC = () => {
       // and a tight clamp makes those components snap back instead of dragging.
       const clampedX = Math.max(-400, Math.min(2200, gridX));
       const clampedY = Math.max(-200, Math.min(1400, gridY));
-      updateComponentPosition(draggedCompId, clampedX, clampedY);
+
+      // Magnetic alignment: when the device comes within a few units of another
+      // device's centre line, pull it exactly onto that line and show the guide.
+      const SNAP_TOLERANCE = 9;
+      let snappedX = clampedX;
+      let snappedY = clampedY;
+      let guideX: number | null = null;
+      let guideY: number | null = null;
+      for (const other of components) {
+        if (other.id === draggedCompId) continue;
+        const otherPos = getComponentCanvasPosition(other);
+        if (guideX === null && Math.abs(otherPos.x - clampedX) <= SNAP_TOLERANCE) {
+          snappedX = otherPos.x;
+          guideX = otherPos.x;
+        }
+        if (guideY === null && Math.abs(otherPos.y - clampedY) <= SNAP_TOLERANCE) {
+          snappedY = otherPos.y;
+          guideY = otherPos.y;
+        }
+        if (guideX !== null && guideY !== null) break;
+      }
+      updateComponentPosition(draggedCompId, snappedX, snappedY);
+      setAlignGuides(prev => (prev.x === guideX && prev.y === guideY ? prev : { x: guideX, y: guideY }));
 
       // Check if dragged over trash zone (only in custom lab)
       if (isCustomLab) {
@@ -586,6 +610,7 @@ export const Workspace: React.FC = () => {
       }
       setDraggedCompId(null);
       setIsOverTrash(false);
+      setAlignGuides({ x: null, y: null });
     }
   };
 
@@ -2235,11 +2260,20 @@ export const Workspace: React.FC = () => {
           const connectorAtMinScale = connectorScale <= SPLICE_CONNECTOR_DEFAULT_SCALE;
           const compScale = getComponentEffectiveScale(comp);
           const graphicScaleTransform = comp.type !== 'junction' && compScale !== 1.0 ? `scale(${compScale})` : undefined;
+          const isDragging = draggedCompId === comp.id;
+          const dropBounds = getSelectionHighlightBounds(comp.type, compScale);
 
           return (
             <g
               key={comp.id}
               transform={`translate(${componentPosition.x}, ${componentPosition.y})`}
+              style={{
+                filter: isDragging
+                  ? `drop-shadow(0 16px 22px rgba(2, 6, 23, 0.7)) drop-shadow(0 2px 4px rgba(2, 6, 23, 0.5))`
+                  : undefined,
+                opacity: isDragging ? 0.94 : 1,
+                transition: 'opacity 120ms ease-out, filter 120ms ease-out'
+              }}
               onPointerDown={(e) => {
                 handleCompPointerDown(e, comp);
                 setSelectedCompId(comp.id);
@@ -2274,6 +2308,22 @@ export const Workspace: React.FC = () => {
               tabIndex={comp.type === 'timer_relay' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
+              {/* Landing pad: the slot the device drops into, drawn under it */}
+              {isDragging && (
+                <rect
+                  x={dropBounds.x - 4}
+                  y={dropBounds.y - 4}
+                  width={dropBounds.w + 8}
+                  height={dropBounds.h + 8}
+                  rx="12"
+                  fill="rgba(59, 130, 246, 0.10)"
+                  stroke="rgba(96, 165, 250, 0.85)"
+                  strokeWidth="1.5"
+                  strokeDasharray="7,5"
+                  className="pointer-events-none"
+                />
+              )}
+
               {/* Clean selection border outline when selected (move/drag indicator) */}
               {selectedCompId === comp.id && (
                 <rect
@@ -3090,6 +3140,37 @@ export const Workspace: React.FC = () => {
               </g>
             );
           })}
+
+        {/* 4.4. Smart alignment guides while dragging a device */}
+        {draggedCompId && (alignGuides.x !== null || alignGuides.y !== null) && (
+          <g pointerEvents="none">
+            {alignGuides.x !== null && (
+              <line
+                x1={alignGuides.x}
+                y1={-400}
+                x2={alignGuides.x}
+                y2={1600}
+                stroke="#22d3ee"
+                strokeWidth="1"
+                strokeDasharray="6,6"
+                opacity="0.8"
+              />
+            )}
+            {alignGuides.y !== null && (
+              <line
+                x1={-600}
+                y1={alignGuides.y}
+                x2={2400}
+                y2={alignGuides.y}
+                stroke="#22d3ee"
+                strokeWidth="1"
+                strokeDasharray="6,6"
+                opacity="0.8"
+              />
+            )}
+          </g>
+        )}
+
         {/* 4.5. Funny Electrical POP & Smoke Sizzle Animation Overlay */}
         {shortCircuitSmoke?.active && (
           <g transform={`translate(${shortCircuitSmoke.x}, ${shortCircuitSmoke.y})`} pointerEvents="none" className="select-none z-40">

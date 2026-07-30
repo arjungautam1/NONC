@@ -3,6 +3,10 @@ import { getTimer6062TerminalIds, isTimer6062RelayActive } from './timer6062';
 
 export interface SolverResult {
   nodeVoltages: Record<string, number>; // terminalKey -> voltage (0, 12, or 24)
+  // Terminals with a real conductive path back to a source negative. A floating
+  // terminal also reads 0 V in nodeVoltages, so this is the only way to tell
+  // "wired to ground" apart from "not wired at all".
+  groundedTerminals: Set<string>;
   energizedComponents: Set<string>; // component IDs
   shortCircuit: boolean;
   shortCircuitNodes: Set<string>; // terminal keys in short
@@ -50,6 +54,7 @@ export function solveCircuit(
   });
 
   let nodeVoltages: Record<string, number> = {};
+  let groundedTerminals = new Set<string>();
 
   while (statesChanged && iterations < 10) {
     iterations++;
@@ -400,6 +405,8 @@ export function solveCircuit(
       });
     }
 
+    groundedTerminals = new Set(connectedToNeg);
+
     // 5. Check for short circuits (direct connection from a Pos source to a Neg source)
     shortCircuit = false;
     shortCircuitNodes.clear();
@@ -601,6 +608,7 @@ export function solveCircuit(
 
   return {
     nodeVoltages,
+    groundedTerminals,
     energizedComponents,
     shortCircuit,
     shortCircuitNodes,

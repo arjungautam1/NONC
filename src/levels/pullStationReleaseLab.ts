@@ -12,14 +12,14 @@ export const pullStationReleaseLab: Level = {
   instructions: [
     'In the normal state, the pull station N/C circuit keeps the relay, green indicator, and fail-safe maglock energized.',
     'Board input: Transformer (+) → Altronix AC1; Transformer (-) → Altronix AC2.',
-    'Control loop: Altronix (+) → Pull Station 1; Pull Station 2 → Release Relay A1; Relay A2 → Altronix (-). Screws 1-2 are the N/C circuit; leave the N/O circuit (3-4) unused.',
+    'Control loop: Altronix (+) → Pull Station NC; Pull Station C (screw 2) → Release Relay A1; Relay A2 → Altronix (-). Screws 1-2 are the N/C circuit; leave the N/O circuit (screws 3-4) unused.',
     'Output pole: Altronix (+) → Release Relay COM. Connect Relay NO to green NORMAL (+) and Maglock (+). Connect Relay NC to red RELEASED (+).',
     'Return green (-), red (-), and Maglock (-) to Altronix (-).',
     'Test: verify green/locked, pull the station for red/released, then reset it and confirm green/locked returns.'
   ],
   goals: [
     'Energize the Altronix board',
-    'Hold the relay through the pull station N/C circuit (screws 1-2)',
+    'Hold the relay through the pull station N/C circuit (NC-C, screws 1-2)',
     'Verify green and maglock power in the normal state',
     'Pull for red indication and lock release',
     'Reset and restore the normal state'

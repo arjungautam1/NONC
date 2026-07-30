@@ -103,7 +103,7 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
 
       {/* ---- Four-screw terminal block (CM-702 wiring diagram) ---- */}
       <rect x="-42" y="68" width="84" height="20" rx="2" fill="#111827" stroke="#334155" strokeWidth="1" />
-      {PULL_STATION_PINS.map(({ pin, circuit, x, y }) => (
+      {PULL_STATION_PINS.map(({ pin, circuit, label, x, y }) => (
         <g key={pin}>
           <circle cx={x} cy={y} r="4.6" fill="#9aa3b2" stroke="#5b6373" strokeWidth="0.7" />
           <path d={`M ${x - 3} ${y - 1.8} L ${x + 3} ${y + 1.8}`} stroke="#3f4653" strokeWidth="1.5" strokeLinecap="round" />
@@ -119,7 +119,7 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
             fontFamily="monospace"
             textAnchor="middle"
           >
-            {circuit}
+            {label}
           </text>
         </g>
       ))}

@@ -20,7 +20,7 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
         ringStroke: '#f87171',
         ribStroke: '#b91c1c',
         glowColor: '#ef4444',
-        dropShadow: 'drop-shadow(0 0 18px #ef4444)',
+        dropShadow: 'drop-shadow(0 0 26px #ef4444) drop-shadow(0 0 10px #ffffff)',
         lensGrad: {
           stop1: '#8f2d2d',
           stop2: '#6f1b1b',
@@ -37,7 +37,7 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
         ringStroke: '#60a5fa',
         ribStroke: '#1d4ed8',
         glowColor: '#60a5fa',
-        dropShadow: 'drop-shadow(0 0 18px #3b82f6)',
+        dropShadow: 'drop-shadow(0 0 26px #3b82f6) drop-shadow(0 0 10px #ffffff)',
         lensGrad: {
           stop1: '#31588f',
           stop2: '#1e3a6f',
@@ -88,10 +88,11 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
       {/* Strobe active flashing glow and hotspot */}
       {strobeActive && (
         <g className="sti-strobe-flashing" pointerEvents="none">
-          <circle cx="0" cy="0" r="39" fill={theme.glowColor} opacity="0.25" style={{ filter: 'blur(4px)' }} />
+          <circle cx="0" cy="0" r="48" fill={theme.glowColor} opacity="0.4" style={{ filter: 'blur(6px)' }} />
+          <circle cx="0" cy="0" r="39" fill={theme.glowColor} opacity="0.3" style={{ filter: 'blur(4px)' }} />
           <circle cx="0" cy="0" r="31" fill={`url(#${strobeGradId})`} style={{ filter: theme.dropShadow }} />
-          <circle cx="0" cy="0" r="15" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 10px #ffffff)' }} />
-          <circle cx="-5" cy="-6" r="5" fill="#ffffff" />
+          <circle cx="0" cy="0" r="18" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 16px #ffffff)' }} />
+          <circle cx="-5" cy="-6" r="6" fill="#ffffff" />
         </g>
       )}
 
@@ -130,7 +131,7 @@ export const STISirenStrobe: React.FC<ComponentProps> = ({ component }) => {
         {/* Strobe active gradient */}
         <radialGradient id={strobeGradId} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="25%" stopColor={theme.strobeGrad.stop2} stopOpacity="0.85" />
+          <stop offset="35%" stopColor={theme.strobeGrad.stop2} stopOpacity="1" />
           <stop offset="100%" stopColor={theme.strobeGrad.stop3} stopOpacity="0" />
         </radialGradient>
 

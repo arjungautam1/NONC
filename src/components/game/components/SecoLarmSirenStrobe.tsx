@@ -9,6 +9,7 @@ interface ComponentProps {
 
 export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEnergized }) => {
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const groundedTerminals = useGameStore(state => state.simulation.groundedTerminals);
   const isRunning = useGameStore(state => state.isRunning);
 
   // Check terminal keys for individual mode activation (Red = Siren+Strobe, Green = Strobe Only, Black = Neg)
@@ -22,15 +23,22 @@ export const SecoLarmSirenStrobe: React.FC<ComponentProps> = ({ component, isEne
 
   const redVoltage = nodeVoltages[redKey] ?? nodeVoltages[posKey] ?? 0;
   const greenVoltage = nodeVoltages[greenKey] ?? 0;
-  const blackVoltage = nodeVoltages[blackKey] ?? nodeVoltages[negKey] ?? 0;
 
-  // Active state evaluation
-  const hasRedPower = isRunning && redVoltage > 4 && blackVoltage === 0;
-  const hasGreenPower = isRunning && greenVoltage > 4 && blackVoltage === 0;
+  // The negative return must actually be wired back to the supply. A floating
+  // BLK reads 0 V exactly like a grounded one, so ask the solver for the real
+  // connection instead of trusting the voltage.
+  const hasNegativeReturn = groundedTerminals.has(blackKey) || groundedTerminals.has(negKey);
 
-  // Siren sounds on Red terminal (+), Strobe flashes on Red or Green (+)
-  const sirenActive = hasRedPower || Boolean(component.state.sirenActive);
-  const strobeActive = hasRedPower || hasGreenPower || Boolean(component.state.strobeActive) || Boolean(isEnergized);
+  // RED (+) and BLK (−) run the unit: that alone gives the strobe. GRN is the
+  // separate siren-enable input — no sound until it is driven positive too.
+  // A 2-wire unit has no GRN, so there RED alone sounds the siren.
+  const hasStrobePower = isRunning && redVoltage > 4 && hasNegativeReturn;
+  const hasSirenEnable = component.terminals.some(t => t.id === 'green')
+    ? greenVoltage > 4
+    : true;
+
+  const sirenActive = (hasStrobePower && hasSirenEnable) || Boolean(component.state.sirenActive);
+  const strobeActive = hasStrobePower || Boolean(component.state.strobeActive) || Boolean(isEnergized);
 
   const lensGradId = `secoLensGrad-${component.id}`;
   const strobeGlowId = `secoStrobeGlow-${component.id}`;

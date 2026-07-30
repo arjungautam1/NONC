@@ -54,8 +54,8 @@ export const customLabOptions: CustomLabOption[] = [
     id: 'emergency_pull_station',
     category: 'input',
     name: 'Camden CM-700 pull station',
-    description: 'Latching door-release pull station, 12-24VDC. Two isolated circuits: 1-2 opens when pulled, 3-4 closes. Reset through the plate hole.',
-    terminalSummary: '1-2 N/C · 3-4 N/O (isolated)',
+    description: 'Latching door-release pull station, 12-24VDC. Two isolated circuits, each with its own common: NC-C opens when pulled, NO-C closes. The two C screws are not tied together inside the station. Reset through the plate hole.',
+    terminalSummary: 'NC · C · NO · C (two isolated circuits)',
     template: {
       type: 'pull_station',
       label: 'Camden CM-702',
@@ -126,23 +126,6 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
         { id: 'out_a', name: 'A', type: 'out_a', x: 30, y: -20 },
         { id: 'out_b', name: 'B', type: 'out_b', x: 30, y: 20 }
-      ],
-      state: {}
-    }
-  },
-  {
-    id: 'card_reader',
-    category: 'input',
-    name: 'Access-card reader',
-    description: 'Powered access input that produces a trigger when a card is scanned.',
-    terminalSummary: '12V · GND · TRIG',
-    template: {
-      type: 'card_reader',
-      label: 'Card Reader',
-      terminals: [
-        { id: 'pos', name: '12V', type: 'pos', x: -18, y: 35 },
-        { id: 'neg', name: 'GND', type: 'neg', x: 18, y: 35 },
-        { id: 'out', name: 'TRIG', type: 'out', x: 0, y: -35 }
       ],
       state: {}
     }
@@ -581,8 +564,8 @@ export const customLabOptions: CustomLabOption[] = [
     id: 'seco_larm_sl1312_r',
     category: 'output',
     name: 'Siren/ Strobe',
-    description: 'Compact mini strobe/siren alarm unit. 12VDC, 60mA low current draw, 100dB piezo siren with 4-LED strobe. Red: Siren & Strobe (+), Green: Strobe Only (+), Black: Negative (-).',
-    terminalSummary: 'RED (Siren/Strobe) · GRN (Strobe Only) · BLK (−)',
+    description: 'Compact mini strobe/siren alarm unit. 12VDC, 60mA low current draw, 100dB piezo siren with 4-LED strobe. Red: Strobe (+), Green: Siren enable (+), Black: Negative (-). Red and Black run the strobe; the siren stays silent until Green is driven positive too.',
+    terminalSummary: 'RED (Strobe +) · GRN (Siren enable +) · BLK (−)',
     template: {
       type: 'seco_larm_strobe_siren',
       label: 'Siren/ Strobe',
