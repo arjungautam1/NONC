@@ -60,6 +60,8 @@ interface GameState {
   // Actions
   initLevel: (index: number, skipViewTransition?: boolean) => void;
   resetLevel: () => void;
+  /** Custom lab only: strip the bench back to the transformer and power supply. */
+  clearCustomLabBench: () => void;
   nextLevel: () => void;
   
   addComponent: (component: CircuitComponent) => void;
@@ -610,12 +612,9 @@ export const useGameStore = create<GameState>((set, get) => {
           const redVolts = solverResult.nodeVoltages[redKey] ?? solverResult.nodeVoltages[posKey] ?? 0;
           const hasNegativeReturn =
             solverResult.groundedTerminals.has(blackKey) || solverResult.groundedTerminals.has(negKey);
-          // RED + BLK only drives the strobe. GRN is the siren-enable input, so
-          // it has to be positive as well before the horn sounds. A 2-wire unit
-          // has no GRN and sounds on RED alone.
-          const hasGreenTerminal = c.terminals.some(t => t.id === 'green');
-          const hasSirenEnable = !hasGreenTerminal || (solverResult.nodeVoltages[`${c.id}:green`] ?? 0) > 4;
-          const isSirenPowered = isEnergized && redVolts > 4 && hasNegativeReturn && hasSirenEnable;
+          // The horn is RED's alone: GRN-only powering is the strobe-only input
+          // and must stay silent, so the siren keys off RED against BLK.
+          const isSirenPowered = isEnergized && redVolts > 4 && hasNegativeReturn;
 
           if (isSirenPowered || Boolean(c.state.sirenActive)) {
             soundManager.startHum(c.id, 'siren');
@@ -1421,6 +1420,15 @@ export const useGameStore = create<GameState>((set, get) => {
       soundManager.playButton();
     },
 
+    clearCustomLabBench: () => {
+      const { isCustomLab, startCustomLab } = get();
+      if (!isCustomLab) return;
+      // An empty selection rebuilds the bench from the fixed power stack alone,
+      // so the transformer and power supply survive and everything else goes.
+      startCustomLab([]);
+      soundManager.playButton();
+    },
+
     nextLevel: () => {
       const { currentLevelIndex, initLevel } = get();
       if (currentLevelIndex < levels.length - 1) {
@@ -1509,7 +1517,9 @@ export const useGameStore = create<GameState>((set, get) => {
 
     configureCX12Plus: (id, patch) => {
       const current = get();
-      if (current.isRunning) return;
+      // The DIP bank and the three trimpots are field-adjustable on a live
+      // board — an installer sets the timers with the door running — so this
+      // stays available while the bench is powered.
       const device = current.components.find(component => component.id === id && component.type === 'cx12plus');
       if (!device) return;
 
@@ -1528,10 +1538,12 @@ export const useGameStore = create<GameState>((set, get) => {
         : component
       );
 
+      // Pending pulse/chain timers belong to the old settings — drop them so a
+      // stale callback can't fire against the new mode.
       clearCX12PlusRuntime(id);
       saveToHistory(current.components, current.wires);
       soundManager.playClick();
-      runSimulation(components, current.wires, false);
+      runSimulation(components, current.wires, current.isRunning);
     },
 
     pressButton: (id, pressed) => {

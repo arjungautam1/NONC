@@ -5,6 +5,7 @@ import {
   Undo2,
   Redo2,
   RotateCcw,
+  Eraser,
   Award,
   Zap,
   VolumeX,
@@ -28,7 +29,8 @@ export const ControlPanel: React.FC = () => {
     isRunning,
     toggleSimulation,
     stopTimer,
-    resetLevel
+    resetLevel,
+    clearCustomLabBench
   } = useGameStore();
 
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
@@ -102,6 +104,19 @@ export const ControlPanel: React.FC = () => {
           >
             <RotateCcw className="w-4 h-4" />
           </button>
+          {isCustomLab && (
+            <>
+              <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
+              <button
+                onClick={clearCustomLabBench}
+                disabled={customLabSelection.length === 0}
+                className="p-1.5 rounded text-slate-400 hover:text-amber-300 hover:bg-amber-400/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer transition-colors"
+                title="Clear bench — remove every device and wire, keeping only the transformer and power supply"
+              >
+                <Eraser className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Audio controls */}

@@ -515,6 +515,15 @@ export function solveCircuit(
 
         let isPowered = (inPos && outNeg) || (outPos && inNeg);
 
+        // Seco-Larm 3-wire: RED and GRN are two independent positive inputs and
+        // either one runs the unit — but only against BLK, so both still need
+        // the negative return.
+        if (!isPowered && c.type === 'seco_larm_strobe_siren' && c.terminals.some(t => t.id === 'green')) {
+          const grnKey = getTerminalKey(c.id, 'green');
+          isPowered =
+            (connectedToPos.has(grnKey) && outNeg) || (connectedToNeg.has(grnKey) && outPos);
+        }
+
         // RB1224: SW1 selects the coil rail — OFF is 24VDC, ON is 12VDC. Feed it
         // the wrong rail and the module simply will not pull in.
         // RBSNTTL: board power alone is not enough — the opto-isolated trigger

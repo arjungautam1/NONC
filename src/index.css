@@ -209,6 +209,95 @@ body {
   will-change: opacity;
 }
 
+/* ---- Drop / release feedback when a device is set down on the canvas ---- */
+
+/* The landing pad settles into the device: overshoot, then close on it. */
+@keyframes drop-settle {
+  0% { opacity: 0.95; transform: scale(1.07); }
+  55% { opacity: 0.4; transform: scale(0.985); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* A single ring pushing outward from where the device landed. */
+@keyframes drop-ring {
+  0% { opacity: 0.7; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+/* Alignment guides flash out rather than blinking off. */
+@keyframes drop-guide-fade {
+  0% { opacity: 0.95; }
+  35% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+.drop-settle,
+.drop-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.drop-settle {
+  animation: drop-settle 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.drop-ring {
+  animation: drop-ring 460ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.drop-guide-fade {
+  animation: drop-guide-fade 380ms ease-out forwards;
+}
+
+/* ---- Drag-to-delete drop zone ---- */
+
+/* The zone rises into place when a drag starts. */
+@keyframes trash-rise {
+  0% { opacity: 0; transform: translateY(18px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Rings breathe outward while a device is held over the zone. */
+@keyframes trash-ring-pulse {
+  0% { opacity: 0.5; transform: scale(0.82); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* Lid tips open on approach, like a real bin. */
+@keyframes trash-lid-open {
+  0% { transform: rotate(0deg) translate(0, 0); }
+  100% { transform: rotate(-22deg) translate(-0.5px, -0.5px); }
+}
+
+/* One-shot burst when the device is actually released and removed. */
+@keyframes trash-burst {
+  0% { opacity: 0.85; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(2.1); }
+}
+
+.trash-rise {
+  animation: trash-rise 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.trash-ring {
+  animation: trash-ring-pulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.trash-lid {
+  transform-box: fill-box;
+  transform-origin: 12% 100%;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trash-lid-open {
+  animation: trash-lid-open 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.trash-burst {
+  animation: trash-burst 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

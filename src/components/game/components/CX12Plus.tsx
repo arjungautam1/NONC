@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { useGameStore } from '../../../store/useGameStore';
 import { CX12PLUS_PINS, getCX12PlusConfig, getCX12PlusMode } from './cx12plusPinout';
@@ -8,26 +8,95 @@ interface CX12PlusProps {
   isEnergized: boolean;
 }
 
-const potAngle = (value: number) => -135 + Math.min(1, Math.max(0, (value - 1) / 29)) * 270;
+/** Datasheet: every time delay is adjustable 1-30 seconds. */
+const POT_MIN = 1;
+const POT_MAX = 30;
 
-const Pot: React.FC<{ x: number; y: number; label: string; value: number }> = ({ x, y, label, value }) => (
-  <g transform={`translate(${x}, ${y})`}>
-    <circle r="9" fill="#1c1c1f" stroke="#3f3f46" strokeWidth="1" />
-    <circle r="7" fill="#2b2b30" />
-    <line
-      x1="0"
-      y1="0"
-      x2={Math.sin((potAngle(value) * Math.PI) / 180) * 6}
-      y2={-Math.cos((potAngle(value) * Math.PI) / 180) * 6}
-      stroke="#d4d4d8"
-      strokeWidth="1.3"
-      strokeLinecap="round"
-    />
-    <text x="0" y="16" fill="#3f3f46" fontSize="3.6" fontWeight="800" fontFamily="sans-serif" textAnchor="middle">
-      {label}
-    </text>
-  </g>
-);
+const potAngle = (value: number) =>
+  -135 + Math.min(1, Math.max(0, (value - POT_MIN) / (POT_MAX - POT_MIN))) * 270;
+
+const clampPot = (value: number) => Math.min(POT_MAX, Math.max(POT_MIN, Math.round(value)));
+
+/**
+ * A trimpot screw. Drag it up/down to run the delay across its 1-30s range;
+ * the knob tracks live while dragging and the new value is committed once on
+ * release, so a single adjustment is a single undo step.
+ */
+const Pot: React.FC<{
+  x: number;
+  y: number;
+  label: string;
+  value: number;
+  onCommit: (next: number) => void;
+}> = ({ x, y, label, value, onCommit }) => {
+  const drag = useRef<{ startY: number; startValue: number } | null>(null);
+  const [preview, setPreview] = useState<number | null>(null);
+  const shown = preview ?? value;
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    drag.current = { startY: e.clientY, startValue: value };
+    setPreview(value);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    e.stopPropagation();
+    // Up increases. 4px per second gives the full sweep in ~120px of travel.
+    const delta = (drag.current.startY - e.clientY) / 4;
+    setPreview(clampPot(drag.current.startValue + delta));
+  };
+
+  const endDrag = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    e.stopPropagation();
+    const next = preview ?? value;
+    drag.current = null;
+    setPreview(null);
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+    if (next !== value) onCommit(next);
+  };
+
+  return (
+    <g
+      transform={`translate(${x}, ${y})`}
+      className="device-control cursor-ns-resize"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+    >
+      {/* Generous invisible grab area — the knob itself is only 9px across */}
+      <circle r="15" fill="transparent" />
+      <circle r="9" fill="#1c1c1f" stroke={preview !== null ? '#60a5fa' : '#3f3f46'} strokeWidth={preview !== null ? 1.4 : 1} />
+      <circle r="7" fill="#2b2b30" />
+      <line
+        x1="0"
+        y1="0"
+        x2={Math.sin((potAngle(shown) * Math.PI) / 180) * 6}
+        y2={-Math.cos((potAngle(shown) * Math.PI) / 180) * 6}
+        stroke={preview !== null ? '#93c5fd' : '#d4d4d8'}
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <text x="0" y="16" fill="#3f3f46" fontSize="3.6" fontWeight="800" fontFamily="sans-serif" textAnchor="middle">
+        {label}
+      </text>
+      <text
+        x="0"
+        y="21.5"
+        fill={preview !== null ? '#2563eb' : '#57534e'}
+        fontSize="4.4"
+        fontWeight="900"
+        fontFamily="monospace"
+        textAnchor="middle"
+      >
+        {shown}s
+      </text>
+    </g>
+  );
+};
 
 /**
  * Camden CX-12 PLUS Door Interface Relay. Board power is 12/24V AC/DC on
@@ -54,7 +123,6 @@ const Pot: React.FC<{ x: number; y: number; label: string; value: number }> = ({
  */
 export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) => {
   const configureCX12Plus = useGameStore(state => state.configureCX12Plus);
-  const isRunning = useGameStore(state => state.isRunning);
   const config = getCX12PlusConfig(component);
   const activeMode = getCX12PlusMode(config.sw);
   const relay1Active = Boolean(component.state.relay1Active);
@@ -62,7 +130,6 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
 
   const toggleSwitch = (index: 0 | 1 | 2) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isRunning) return;
     const sw: [boolean, boolean, boolean] = [...config.sw];
     sw[index] = !sw[index];
     configureCX12Plus(component.id, { sw });
@@ -102,10 +169,28 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
       <circle cx="-86" cy="-34" r="4" fill="#141414" />
       <circle cx="-86" cy="-34" r="2.6" fill={relay2Active ? '#f59e0b' : '#3a3a3a'} style={{ filter: relay2Active ? 'drop-shadow(0 0 3px #f59e0b)' : 'none' }} />
 
-      {/* Potentiometers */}
-      <Pot x={-55} y={-34} label="DOR RL1" value={config.dorRl1} />
-      <Pot x={-22} y={-34} label="DOO RL2" value={config.dooRl2} />
-      <Pot x={11} y={-34} label="DOR RL2" value={config.dorRl2} />
+      {/* Potentiometers — drag vertically to set each delay (1-30s) */}
+      <Pot
+        x={-55}
+        y={-34}
+        label="DOR RL1"
+        value={config.dorRl1}
+        onCommit={next => configureCX12Plus(component.id, { dorRl1: next })}
+      />
+      <Pot
+        x={-22}
+        y={-34}
+        label="DOO RL2"
+        value={config.dooRl2}
+        onCommit={next => configureCX12Plus(component.id, { dooRl2: next })}
+      />
+      <Pot
+        x={11}
+        y={-34}
+        label="DOR RL2"
+        value={config.dorRl2}
+        onCommit={next => configureCX12Plus(component.id, { dorRl2: next })}
+      />
 
       {/* DIP switch SW1/SW2/SW3 */}
       <g transform="translate(48, -50)">
@@ -114,9 +199,12 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
         {[0, 1, 2].map(i => (
           <g
             key={i}
-            className={isRunning ? 'cursor-not-allowed' : 'cursor-pointer'}
+            className="device-control cursor-pointer"
+            onPointerDown={e => e.stopPropagation()}
             onClick={toggleSwitch(i as 0 | 1 | 2)}
           >
+            {/* Full-width hit strip so the whole rocker row is clickable */}
+            <rect x="2" y={3 + i * 10} width="32" height="9" fill="transparent" />
             <rect x="4" y={4 + i * 10} width="28" height="7" rx="1" fill="#050505" stroke="#3f3f46" strokeWidth="0.4" />
             <rect
               x={config.sw[i] ? 20 : 6}

@@ -564,8 +564,8 @@ export const customLabOptions: CustomLabOption[] = [
     id: 'seco_larm_sl1312_r',
     category: 'output',
     name: 'Siren/ Strobe',
-    description: 'Compact mini strobe/siren alarm unit. 12VDC, 60mA low current draw, 100dB piezo siren with 4-LED strobe. Red: Strobe (+), Green: Siren enable (+), Black: Negative (-). Red and Black run the strobe; the siren stays silent until Green is driven positive too.',
-    terminalSummary: 'RED (Strobe +) · GRN (Siren enable +) · BLK (−)',
+    description: 'Compact mini strobe/siren alarm unit. 12VDC, 60mA low current draw, 100dB piezo siren with 4-LED strobe. Red: Siren only (+), Green: Strobe only (+), Black: Negative (-). Each input works on its own and both need Black back to the supply — wire Red and Green together for sound and light at once.',
+    terminalSummary: 'RED (Siren) · GRN (Strobe) · BLK (−)',
     template: {
       type: 'seco_larm_strobe_siren',
       label: 'Siren/ Strobe',

@@ -151,6 +151,19 @@ export const Workspace: React.FC = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   // Figma-style smart guides: the axis a dragged device is currently lined up on.
   const [alignGuides, setAlignGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
+  // Short-lived release animation played where a device was just set down.
+  const [dropFx, setDropFx] = useState<{
+    key: number;
+    x: number;
+    y: number;
+    bounds: { x: number; y: number; w: number; h: number };
+    guideX: number | null;
+    guideY: number | null;
+  } | null>(null);
+  const dropFxTimer = useRef<number | null>(null);
+  // One-shot burst played at the trash zone when a device is dropped into it.
+  const [deleteBurst, setDeleteBurst] = useState<number | null>(null);
+  const deleteBurstTimer = useRef<number | null>(null);
 
   // Custom Lab deletion selection and trash states
   const [selectedCompId, setSelectedCompId] = useState<string | null>(null);
@@ -606,6 +619,26 @@ export const Workspace: React.FC = () => {
         removeCustomLabComponent(optionId);
         if (selectedCompId === draggedCompId) {
           setSelectedCompId(null);
+        }
+        if (deleteBurstTimer.current) window.clearTimeout(deleteBurstTimer.current);
+        setDeleteBurst(Date.now());
+        deleteBurstTimer.current = window.setTimeout(() => setDeleteBurst(null), 560);
+      } else {
+        // Set-down feedback: the landing pad closes onto the device, a ring
+        // pushes out from it, and any guide it locked onto flashes away.
+        const dropped = components.find(c => c.id === draggedCompId);
+        if (dropped) {
+          const droppedPosition = getComponentCanvasPosition(dropped);
+          if (dropFxTimer.current) window.clearTimeout(dropFxTimer.current);
+          setDropFx({
+            key: Date.now(),
+            x: droppedPosition.x,
+            y: droppedPosition.y,
+            bounds: getSelectionHighlightBounds(dropped.type, getComponentEffectiveScale(dropped)),
+            guideX: alignGuides.x,
+            guideY: alignGuides.y
+          });
+          dropFxTimer.current = window.setTimeout(() => setDropFx(null), 480);
         }
       }
       setDraggedCompId(null);
@@ -3171,6 +3204,60 @@ export const Workspace: React.FC = () => {
           </g>
         )}
 
+        {/* 4.45. Release feedback, played once where the device was set down */}
+        {dropFx && (
+          <g key={dropFx.key} pointerEvents="none">
+            {dropFx.guideX !== null && (
+              <line
+                x1={dropFx.guideX}
+                y1={-400}
+                x2={dropFx.guideX}
+                y2={1600}
+                stroke="#22d3ee"
+                strokeWidth="1"
+                strokeDasharray="6,6"
+                className="drop-guide-fade"
+              />
+            )}
+            {dropFx.guideY !== null && (
+              <line
+                x1={-600}
+                y1={dropFx.guideY}
+                x2={2400}
+                y2={dropFx.guideY}
+                stroke="#22d3ee"
+                strokeWidth="1"
+                strokeDasharray="6,6"
+                className="drop-guide-fade"
+              />
+            )}
+            <g transform={`translate(${dropFx.x}, ${dropFx.y})`}>
+              <rect
+                x={dropFx.bounds.x - 4}
+                y={dropFx.bounds.y - 4}
+                width={dropFx.bounds.w + 8}
+                height={dropFx.bounds.h + 8}
+                rx="12"
+                fill="rgba(59, 130, 246, 0.10)"
+                stroke="rgba(96, 165, 250, 0.9)"
+                strokeWidth="1.5"
+                className="drop-settle"
+              />
+              <rect
+                x={dropFx.bounds.x - 4}
+                y={dropFx.bounds.y - 4}
+                width={dropFx.bounds.w + 8}
+                height={dropFx.bounds.h + 8}
+                rx="14"
+                fill="none"
+                stroke="#60a5fa"
+                strokeWidth="2"
+                className="drop-ring"
+              />
+            </g>
+          </g>
+        )}
+
         {/* 4.5. Funny Electrical POP & Smoke Sizzle Animation Overlay */}
         {shortCircuitSmoke?.active && (
           <g transform={`translate(${shortCircuitSmoke.x}, ${shortCircuitSmoke.y})`} pointerEvents="none" className="select-none z-40">
@@ -3331,34 +3418,69 @@ export const Workspace: React.FC = () => {
       {isCustomLab && draggedCompId && (
         <div
           id="workspace-trash-zone"
-          className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-center gap-1.5 p-3 rounded-full border shadow-2xl transition-all duration-300 pointer-events-none ${
-            isOverTrash
-              ? 'bg-red-500/20 border-red-500 text-red-400 scale-110 shadow-red-950/40 ring-4 ring-red-500/20'
-              : 'bg-[#0f172a]/95 border-slate-700 text-slate-400 scale-100 shadow-black/40'
-          }`}
-          style={{ width: '120px', height: '120px', borderRadius: '50%' }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          style={{ width: '128px', height: '128px' }}
         >
-          {/* Animated Lucide Trash Icon */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`transition-all duration-300 ${isOverTrash ? 'animate-bounce text-red-500' : 'text-slate-400'}`}
-          >
-            <path d="M3 6h18" />
-            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-          </svg>
-          <span className={`text-[9px] font-black tracking-widest uppercase transition-all ${isOverTrash ? 'text-red-400' : 'text-slate-400'}`}>
-            {isOverTrash ? 'Release' : 'Drop Here'}
-          </span>
-          <span className="text-[8px] font-bold text-slate-500 tracking-wide">to delete</span>
+          <div className="trash-rise relative w-full h-full">
+            {/* Rings breathing outward once the device is over the zone */}
+            {isOverTrash && (
+              <>
+                <span className="trash-ring absolute inset-0 rounded-full border border-red-400/70" />
+                <span
+                  className="trash-ring absolute inset-0 rounded-full border border-red-400/50"
+                  style={{ animationDelay: '0.5s' }}
+                />
+              </>
+            )}
+
+            <div
+              className={`relative w-full h-full flex flex-col items-center justify-center gap-1.5 rounded-full border backdrop-blur-xl transition-all duration-300 ease-out ${
+                isOverTrash
+                  ? 'bg-red-500/15 border-red-400/80 scale-110 shadow-[0_0_36px_-4px_rgba(239,68,68,0.65)]'
+                  : 'bg-slate-950/70 border-white/10 scale-100 shadow-[0_10px_30px_-8px_rgba(2,6,23,0.9)]'
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="27"
+                height="27"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`transition-colors duration-300 ${isOverTrash ? 'text-red-400' : 'text-slate-300'}`}
+              >
+                {/* Can body stays put; the lid tips open on approach */}
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                <g className={`trash-lid ${isOverTrash ? 'trash-lid-open' : ''}`}>
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </g>
+              </svg>
+
+              <span
+                className={`text-[9px] font-black tracking-[0.15em] uppercase transition-colors duration-300 ${
+                  isOverTrash ? 'text-red-300' : 'text-slate-300'
+                }`}
+              >
+                {isOverTrash ? 'Release' : 'Drop here'}
+              </span>
+              <span className="text-[8px] font-semibold text-slate-500 tracking-wide">to delete</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Burst confirming the device was dropped in and removed */}
+      {deleteBurst !== null && (
+        <div
+          key={deleteBurst}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          style={{ width: '128px', height: '128px' }}
+        >
+          <span className="trash-burst absolute inset-0 rounded-full border-2 border-red-400/80 bg-red-500/10" />
         </div>
       )}
 
