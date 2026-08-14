@@ -593,58 +593,9 @@ export const useGameStore = create<GameState>((set, get) => {
 
 
 
-    // Synchronize sounds (continuous hums)
-    if (currentIsRunning && !solverResult.shortCircuit) {
-      currentComponents.forEach(c => {
-        const isEnergized = solverResult.energizedComponents.has(c.id);
-        if (c.type === 'sti_siren_strobe') {
-          // Red/Blue Strobe are flashing indicators with no sounder inside —
-          // they light up when powered and stay silent.
-          soundManager.stopHum(c.id);
-          return;
-        }
-
-        if (c.type === 'seco_larm_strobe_siren') {
-          const redKey = `${c.id}:red`;
-          const posKey = `${c.id}:pos`;
-          const blackKey = `${c.id}:black`;
-          const negKey = `${c.id}:neg`;
-          const redVolts = solverResult.nodeVoltages[redKey] ?? solverResult.nodeVoltages[posKey] ?? 0;
-          const hasNegativeReturn =
-            solverResult.groundedTerminals.has(blackKey) || solverResult.groundedTerminals.has(negKey);
-          // The horn is RED's alone: GRN-only powering is the strobe-only input
-          // and must stay silent, so the siren keys off RED against BLK.
-          const isSirenPowered = isEnergized && redVolts > 4 && hasNegativeReturn;
-
-          if (isSirenPowered || Boolean(c.state.sirenActive)) {
-            soundManager.startHum(c.id, 'siren');
-          } else {
-            soundManager.stopHum(c.id);
-          }
-          return;
-        }
-
-        if (isEnergized) {
-          if (c.type === 'motor' || c.type === 'roland_fan' || c.type === 'dc_fan') soundManager.startHum(c.id, 'motor');
-          else if (c.type === 'buzzer') soundManager.startHum(c.id, 'buzzer');
-          else if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator' || c.type === 'led_strip') {
-            soundManager.startHum(c.id, 'bulb');
-          }
-        } else {
-          soundManager.stopHum(c.id);
-        }
-      });
-      // Handle fuses blowing sound if newly blown
-      if (solverResult.fuseBlownIds.length > 0) {
-        soundManager.playSpark();
-      }
-    } else {
-      // Stop all hums if simulator is off or in short circuit
-      soundManager.stopAllHums();
-      if (solverResult.shortCircuit) {
-        soundManager.playSpark();
-      }
-    }
+    // Continuous hums are synchronized further down, against the FINAL solve.
+    // Doing it here would read the pre-relay-update circuit, so a load fed
+    // through a relay contact that opens in this same pass would keep humming.
 
     // Update relay mechanics and advance each 6062 from real terminal voltages,
     // trigger edges, DIP selections, jumper cuts, and trimpot setting.
@@ -1102,6 +1053,61 @@ export const useGameStore = create<GameState>((set, get) => {
         return component?.type !== 'timer_relay' || component.state.boardPowered;
       })
     );
+
+    // Synchronize sounds (continuous hums) against the same result that gets
+    // stored, so what you hear always matches what the circuit is actually
+    // doing — including loads switched by a relay contact that moved above.
+    if (currentIsRunning && !effectiveSolverResult.shortCircuit) {
+      updatedComponents.forEach(c => {
+        const isEnergized = effectiveSolverResult.energizedComponents.has(c.id);
+        if (c.type === 'sti_siren_strobe') {
+          // Red/Blue Strobe are flashing indicators with no sounder inside —
+          // they light up when powered and stay silent.
+          soundManager.stopHum(c.id);
+          return;
+        }
+
+        if (c.type === 'seco_larm_strobe_siren') {
+          const redKey = `${c.id}:red`;
+          const posKey = `${c.id}:pos`;
+          const blackKey = `${c.id}:black`;
+          const negKey = `${c.id}:neg`;
+          const redVolts = effectiveSolverResult.nodeVoltages[redKey] ?? effectiveSolverResult.nodeVoltages[posKey] ?? 0;
+          const hasNegativeReturn =
+            effectiveSolverResult.groundedTerminals.has(blackKey) || effectiveSolverResult.groundedTerminals.has(negKey);
+          // The horn is RED's alone: GRN-only powering is the strobe-only input
+          // and must stay silent, so the siren keys off RED against BLK.
+          const isSirenPowered = isEnergized && redVolts > 4 && hasNegativeReturn;
+
+          if (isSirenPowered || Boolean(c.state.sirenActive)) {
+            soundManager.startHum(c.id, 'siren');
+          } else {
+            soundManager.stopHum(c.id);
+          }
+          return;
+        }
+
+        if (isEnergized) {
+          if (c.type === 'motor' || c.type === 'roland_fan' || c.type === 'dc_fan') soundManager.startHum(c.id, 'motor');
+          else if (c.type === 'buzzer') soundManager.startHum(c.id, 'buzzer');
+          else if (c.type === 'bulb' || c.type === 'led' || c.type === 'lamp_indicator' || c.type === 'led_strip') {
+            soundManager.startHum(c.id, 'bulb');
+          }
+        } else {
+          soundManager.stopHum(c.id);
+        }
+      });
+      // A fuse can blow on either pass; the first solve is the one that trips it.
+      if (solverResult.fuseBlownIds.length > 0 || effectiveSolverResult.fuseBlownIds.length > 0) {
+        soundManager.playSpark();
+      }
+    } else {
+      // Stop all hums if simulator is off or in short circuit
+      soundManager.stopAllHums();
+      if (effectiveSolverResult.shortCircuit) {
+        soundManager.playSpark();
+      }
+    }
 
     // Update multimeter reading if active
     let multimeterReading = '---';

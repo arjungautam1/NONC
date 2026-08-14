@@ -5,7 +5,6 @@ import { rb1224Terminals } from '../components/game/components/rb1224Pinout';
 import { rbsnttlTerminals } from '../components/game/components/rbsnttlPinout';
 import { cubePowerTerminals } from '../components/game/components/cubePowerPinout';
 import { sm500Terminals } from '../components/game/components/sm500Pinout';
-import { cx12plusTerminals, DEFAULT_CX12PLUS_CONFIG } from '../components/game/components/cx12plusPinout';
 
 export type CustomLabCategory = 'input' | 'control' | 'output';
 
@@ -291,19 +290,6 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
       ],
       state: { timer6062Config: { ...DEFAULT_6062_CONFIG } }
-    }
-  },
-  {
-    id: 'cx12plus',
-    category: 'control',
-    name: 'Camden CX-12 PLUS',
-    description: '12/24V AC/DC door interface relay with 2 Form C outputs and 4 isolated inputs (Wet1/Dry1/Wet2/Dry2). Wet1 or Dry1 pulses Relay 1 (lock) then auto-chains Relay 2 (operator) after a delay; Wet2/Dry2 also pulses Relay 2 directly. 8 modes selectable on the DIP switch.',
-    terminalSummary: 'Power · 2× Form C relay · Wet1/Dry1/Wet2/Dry2 inputs',
-    template: {
-      type: 'cx12plus',
-      label: 'CX-12 PLUS',
-      terminals: cx12plusTerminals(),
-      state: { cx12Config: { ...DEFAULT_CX12PLUS_CONFIG } }
     }
   },
   {

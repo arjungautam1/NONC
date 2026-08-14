@@ -6,6 +6,7 @@ import { Workspace } from './components/game/Workspace';
 import { HelpOverlay } from './components/game/HelpOverlay';
 import { LevelDashboard } from './components/game/LevelDashboard';
 import { CustomLabSidebar } from './components/game/CustomLabSidebar';
+import { BetaBanner } from './components/game/BetaBanner';
 
 function App() {
   const initLevel = useGameStore(state => state.initLevel);
@@ -41,11 +42,18 @@ function App() {
   }, [revealHint]);
 
   if (viewMode === 'levels') {
-    return <LevelDashboard />;
+    return (
+      <>
+        <BetaBanner />
+        <LevelDashboard />
+      </>
+    );
   }
 
   return (
     <div className="h-screen flex flex-col bg-[#080b12] text-slate-200 overflow-hidden font-sans select-none">
+      <BetaBanner />
+
       {/* Top Engineering Control Bar */}
       <ControlPanel />
 

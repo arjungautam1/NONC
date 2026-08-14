@@ -48,22 +48,55 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
       <rect x="15" y="1" width="50" height="4" fill="#78829a" opacity="0.6" />
       <rect x="15" y="75" width="50" height="4" fill="#78829a" opacity="0.6" />
 
-      {/* Button collar */}
-      <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
+      {/* Whole button assembly is the hit target, not just the small cap */}
+      <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
+        {/* Collar and the well the plunger sinks into */}
+        <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
+        <circle cx="40" cy="40" r="19.5" fill="#080a0e" />
 
-      {/* The actual button plunger */}
-      <circle
-        cx="40"
-        cy="40"
-        r={isPressed ? 15 : 18}
-        fill={hasCom ? 'url(#btnCharcoalGrad)' : 'url(#btnNOGrad)'}
-        stroke={isPressed ? '#166534' : '#22c55e'}
-        strokeWidth="2.5"
-        filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
-        style={{ transition: 'all 0.1s ease' }}
-        className="cursor-pointer device-control"
-        onPointerDown={handlePointerDown}
-      />
+        {/* Return spring: compresses under the cap while held */}
+        <circle
+          cx="40"
+          cy="40"
+          r={isPressed ? 16.5 : 19}
+          fill="none"
+          stroke="#2b313d"
+          strokeWidth={isPressed ? 3.4 : 1.2}
+          style={{ transition: 'all 90ms ease-out' }}
+        />
+
+        {/* The cap actually travels down into the collar */}
+        <g
+          style={{
+            transform: isPressed ? 'translateY(2.5px)' : 'translateY(0)',
+            transition: 'transform 90ms cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          <circle
+            cx="40"
+            cy="40"
+            r={isPressed ? 15.5 : 18}
+            fill={hasCom ? 'url(#btnCharcoalGrad)' : 'url(#btnNOGrad)'}
+            stroke={isPressed ? '#166534' : '#22c55e'}
+            strokeWidth="2.5"
+            filter={isPressed ? 'none' : 'drop-shadow(0 5px 7px rgba(0,0,0,0.45))'}
+            style={{ transition: 'all 90ms ease-out' }}
+          />
+          {/* Gloss flattens as the cap goes down */}
+          <ellipse
+            cx="34"
+            cy="34"
+            rx={isPressed ? 4.5 : 6.5}
+            ry={isPressed ? 2.4 : 4}
+            fill="#ffffff"
+            opacity={isPressed ? 0.09 : 0.2}
+            style={{ transition: 'all 90ms ease-out' }}
+          />
+        </g>
+
+        {/* Generous invisible grab ring over the whole collar */}
+        <circle cx="40" cy="40" r="24" fill="transparent" />
+      </g>
 
       {hasCom ? (
         <g>
@@ -125,6 +158,33 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
         {component.label}
       </text>
 
+      {/* Says out loud what kind of switch this is and how it behaves */}
+      <g style={{ pointerEvents: 'none' }}>
+        <rect
+          x="2"
+          y={98}
+          width="76"
+          height="13"
+          rx="3"
+          fill={isPressed ? '#14532d' : '#12151c'}
+          stroke={isPressed ? '#22c55e' : '#3c4252'}
+          strokeWidth="1"
+          style={{ transition: 'all 120ms ease-out' }}
+        />
+        <text
+          x="40"
+          y="107"
+          fill={isPressed ? '#86efac' : '#94a3b8'}
+          fontSize="6.4"
+          fontWeight="900"
+          fontFamily="monospace"
+          textAnchor="middle"
+          letterSpacing="0.3"
+        >
+          {isPressed ? 'HELD — LET GO TO OPEN' : 'MOMENTARY · HOLD'}
+        </text>
+      </g>
+
       <defs>
         <radialGradient id="btnNOGrad" cx="30%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#4ade80" />
@@ -181,22 +241,47 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
       <rect x="15" y="1" width="50" height="4" fill="#78829a" opacity="0.6" />
       <rect x="15" y="75" width="50" height="4" fill="#78829a" opacity="0.6" />
 
-      {/* Button collar */}
-      <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
-
-      {/* The actual button plunger */}
-      <circle
-        cx="40"
-        cy="40"
-        r={isPressed ? 15 : 18}
-        fill="url(#btnNCGrad)"
-        stroke={isPressed ? '#991b1b' : '#ef4444'}
-        strokeWidth="2.5"
-        filter={isPressed ? 'none' : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))'}
-        style={{ transition: 'all 0.1s ease' }}
-        className="cursor-pointer device-control"
-        onPointerDown={handlePointerDown}
-      />
+      {/* Same physical plunger treatment as the N/O button */}
+      <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
+        <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
+        <circle cx="40" cy="40" r="19.5" fill="#080a0e" />
+        <circle
+          cx="40"
+          cy="40"
+          r={isPressed ? 16.5 : 19}
+          fill="none"
+          stroke="#2b313d"
+          strokeWidth={isPressed ? 3.4 : 1.2}
+          style={{ transition: 'all 90ms ease-out' }}
+        />
+        <g
+          style={{
+            transform: isPressed ? 'translateY(2.5px)' : 'translateY(0)',
+            transition: 'transform 90ms cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          <circle
+            cx="40"
+            cy="40"
+            r={isPressed ? 15.5 : 18}
+            fill="url(#btnNCGrad)"
+            stroke={isPressed ? '#991b1b' : '#ef4444'}
+            strokeWidth="2.5"
+            filter={isPressed ? 'none' : 'drop-shadow(0 5px 7px rgba(0,0,0,0.45))'}
+            style={{ transition: 'all 90ms ease-out' }}
+          />
+          <ellipse
+            cx="34"
+            cy="34"
+            rx={isPressed ? 4.5 : 6.5}
+            ry={isPressed ? 2.4 : 4}
+            fill="#ffffff"
+            opacity={isPressed ? 0.09 : 0.2}
+            style={{ transition: 'all 90ms ease-out' }}
+          />
+        </g>
+        <circle cx="40" cy="40" r="24" fill="transparent" />
+      </g>
 
       {/* Contact terminal internally schematic overlay - connects exactly to X=10 and X=70 */}
       <path d="M10 40 L25 40 M55 40 L70 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
@@ -232,6 +317,32 @@ export const SwitchNC: React.FC<ComponentProps> = ({ component }) => {
       <text x="40" y="93" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
         {component.label}
       </text>
+
+      <g style={{ pointerEvents: 'none' }}>
+        <rect
+          x="2"
+          y="98"
+          width="76"
+          height="13"
+          rx="3"
+          fill={isPressed ? '#450a0a' : '#12151c'}
+          stroke={isPressed ? '#ef4444' : '#3c4252'}
+          strokeWidth="1"
+          style={{ transition: 'all 120ms ease-out' }}
+        />
+        <text
+          x="40"
+          y="107"
+          fill={isPressed ? '#fca5a5' : '#94a3b8'}
+          fontSize="6.4"
+          fontWeight="900"
+          fontFamily="monospace"
+          textAnchor="middle"
+          letterSpacing="0.3"
+        >
+          {isPressed ? 'HELD — LET GO TO CLOSE' : 'MOMENTARY · HOLD'}
+        </text>
+      </g>
 
       <defs>
         <radialGradient id="btnNCGrad" cx="30%" cy="30%" r="70%">
@@ -530,24 +641,45 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
         <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
 
-        {/* Rocker Toggle Mechanism */}
-        {!isToggled ? (
-          // Position A - Left side raised, Right side sunken (NC active)
-          <g>
-            {/* Right sunken side */}
-            <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
-            {/* Left raised side */}
-            <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
-          </g>
-        ) : (
-          // Position B - Right side raised, Left side sunken (NO active)
-          <g>
-            {/* Left sunken side */}
-            <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
-            {/* Right raised side */}
-            <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
-          </g>
-        )}
+        {/* Cavity floor: whichever end the paddle is NOT resting on stays lit */}
+        <rect x="18" y="18" width="54" height="54" rx="3" fill="#050506" />
+        <text x="45" y="27" fill={isToggled ? '#3f3f46' : '#71717a'} fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="middle">
+          O
+        </text>
+        <text x="45" y="70" fill={isToggled ? '#22c55e' : '#3f3f46'} fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="middle">
+          I
+        </text>
+
+        {/* One physical paddle pivoting on its centre bar — it tips to the
+            position you click and stays there, which is the whole point of a
+            maintained switch. */}
+        <g
+          style={{
+            transform: isToggled ? 'rotate(11deg)' : 'rotate(-11deg)',
+            transformOrigin: '45px 45px',
+            transformBox: 'fill-box',
+            transition: 'transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}
+        >
+          <rect
+            x="20"
+            y="30"
+            width="50"
+            height="30"
+            rx="3"
+            fill="url(#rockerPaddleGrad)"
+            stroke="#52525b"
+            strokeWidth="1"
+            style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.65))' }}
+          />
+          {/* Ribbed thumb grip across the paddle face */}
+          {[38, 43, 48, 53].map(y => (
+            <line key={y} x1="30" y1={y} x2="60" y2={y} stroke="#27272a" strokeWidth="0.9" opacity="0.55" />
+          ))}
+        </g>
+
+        {/* Pivot bar the paddle rocks on */}
+        <rect x="14" y="43.5" width="62" height="3" rx="1.5" fill="#18181b" stroke="#27272a" strokeWidth="0.6" />
       </g>
 
       {/* Schematic overlay inside (X=10 to X=80) */}
@@ -600,9 +732,41 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       <text x="45" y="105" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
         {component.label}
       </text>
-      <text x="45" y="117" fill={isToggled ? '#86efac' : '#a1a1aa'} fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-        {stateLabel}
-      </text>
+
+      {/* Counterpart to the momentary caption, so the pair reads as a contrast */}
+      <g style={{ pointerEvents: 'none' }}>
+        <rect
+          x="7"
+          y="110"
+          width="76"
+          height="13"
+          rx="3"
+          fill={isToggled ? '#14532d' : '#12151c'}
+          stroke={isToggled ? '#22c55e' : '#3f3f46'}
+          strokeWidth="1"
+          style={{ transition: 'all 120ms ease-out' }}
+        />
+        <text
+          x="45"
+          y="119"
+          fill={isToggled ? '#86efac' : '#94a3b8'}
+          fontSize="6.4"
+          fontWeight="900"
+          fontFamily="monospace"
+          textAnchor="middle"
+          letterSpacing="0.3"
+        >
+          {isToggled ? 'MAINTAINED · STAYS ON' : 'MAINTAINED · CLICK'}
+        </text>
+      </g>
+
+      <defs>
+        <linearGradient id="rockerPaddleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#52525b" />
+          <stop offset="55%" stopColor="#3f3f46" />
+          <stop offset="100%" stopColor="#27272a" />
+        </linearGradient>
+      </defs>
     </g>
   );
 };
