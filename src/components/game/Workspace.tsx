@@ -480,6 +480,11 @@ export const Workspace: React.FC = () => {
       case 'seco_larm_strobe_siren':
         base = { x: -50, y: -75, w: 100, h: 155 };
         break;
+      // Split-panel switches: device on top, schematic boxed below.
+      case 'button_no':
+      case 'rocker_switch_2pos':
+        base = { x: -48, y: -56, w: 96, h: 130 };
+        break;
       case 'junction':
         base = { x: -45, y: -22, w: 90, h: 44 };
         break;

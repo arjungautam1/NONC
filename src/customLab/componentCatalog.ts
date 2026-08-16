@@ -72,9 +72,9 @@ export const customLabOptions: CustomLabOption[] = [
       type: 'button_no',
       label: 'Momentary Switch',
       terminals: [
-        { id: 'com', name: 'C', type: 'com', x: -30, y: 15 },
-        { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -25 },
-        { id: 'no', name: 'NO', type: 'no', x: 30, y: 15 }
+        { id: 'com', name: 'C', type: 'com', x: -42, y: 25 },
+        { id: 'nc', name: 'NC', type: 'nc', x: 42, y: 14 },
+        { id: 'no', name: 'NO', type: 'no', x: 42, y: 38 }
       ],
       state: {}
     }
@@ -105,9 +105,9 @@ export const customLabOptions: CustomLabOption[] = [
       type: 'rocker_switch_2pos',
       label: 'Maintained Switch',
       terminals: [
-        { id: 'com', name: 'C', type: 'in', x: -30, y: 0 },
-        { id: 'nc', name: 'NC', type: 'out_a', x: 30, y: -20 },
-        { id: 'no', name: 'NO', type: 'out_b', x: 30, y: 20 }
+        { id: 'com', name: 'C', type: 'in', x: -42, y: 25 },
+        { id: 'nc', name: 'NC', type: 'out_a', x: 42, y: 14 },
+        { id: 'no', name: 'NO', type: 'out_b', x: 42, y: 38 }
       ],
       state: {}
     }

@@ -38,152 +38,161 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   const outKey = hasCom ? getTerminalKey(component.id, 'no') : getTerminalKey(component.id, 'out');
   const hasVoltage = isRunning && (nodeVoltages[inKey] > 0 || nodeVoltages[outKey] > 0 || (hasCom && nodeVoltages[getTerminalKey(component.id, 'nc')] > 0));
 
+  // Schematic node positions inside the boxed inset (local coords)
+  const comNode = { x: 18, y: 85 };
+  const ncNode = { x: 66, y: 74 };
+  const noNode = { x: 66, y: 96 };
+  const spstOut = { x: 66, y: 85 };
+
   return (
-    <g 
-      transform="translate(-40, -40)"
-      className="select-none"
-    >
-      {/* DIN Rail mounting plate */}
-      <rect x="5" y="5" width="70" height="70" rx="4" fill="#2d303a" stroke="#1f2028" strokeWidth="2" />
-      <rect x="15" y="1" width="50" height="4" fill="#78829a" opacity="0.6" />
-      <rect x="15" y="75" width="50" height="4" fill="#78829a" opacity="0.6" />
+    <g transform="translate(-42, -50)" className="select-none">
+      {/* ---------- Housing ---------- */}
+      <rect x="2" y="4" width="80" height="116" rx="7" fill="#20242e" stroke="#0f1116" strokeWidth="2" />
+      <rect x="18" y="0" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
+      <rect x="18" y="119" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
-      {/* Whole button assembly is the hit target, not just the small cap */}
+      {/* ================= 1. THE PART — nothing is drawn across it ================= */}
+      <text x="42" y="17" fill="#7b8496" fontSize="5.4" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.9">
+        MOMENTARY
+      </text>
+
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
-        {/* Collar and the well the plunger sinks into */}
-        <circle cx="40" cy="40" r="22" fill="#1b1e25" stroke="#3c4252" strokeWidth="2" />
-        <circle cx="40" cy="40" r="19.5" fill="#080a0e" />
-
-        {/* Return spring: compresses under the cap while held */}
+        {/* Chrome mounting ring */}
+        <circle cx="42" cy="37" r="21" fill="url(#btnRingGrad)" stroke="#0d0f13" strokeWidth="1.3" />
+        {/* Barrel the cap sinks into */}
+        <circle cx="42" cy="37" r="17.5" fill="#06080b" />
+        {/* Return spring — visibly compresses while held */}
         <circle
-          cx="40"
-          cy="40"
-          r={isPressed ? 16.5 : 19}
+          cx="42"
+          cy="37"
+          r={isPressed ? 15 : 17}
           fill="none"
           stroke="#2b313d"
-          strokeWidth={isPressed ? 3.4 : 1.2}
+          strokeWidth={isPressed ? 3.6 : 1.2}
           style={{ transition: 'all 90ms ease-out' }}
         />
-
-        {/* The cap actually travels down into the collar */}
+        {/* Cap, with real travel into the barrel */}
         <g
           style={{
-            transform: isPressed ? 'translateY(2.5px)' : 'translateY(0)',
+            transform: isPressed ? 'translateY(3px)' : 'translateY(0)',
             transition: 'transform 90ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           <circle
-            cx="40"
-            cy="40"
-            r={isPressed ? 15.5 : 18}
+            cx="42"
+            cy="37"
+            r={isPressed ? 13.5 : 15.5}
             fill={hasCom ? 'url(#btnCharcoalGrad)' : 'url(#btnNOGrad)'}
-            stroke={isPressed ? '#166534' : '#22c55e'}
-            strokeWidth="2.5"
-            filter={isPressed ? 'none' : 'drop-shadow(0 5px 7px rgba(0,0,0,0.45))'}
+            stroke={isPressed ? '#14532d' : '#16a34a'}
+            strokeWidth="2"
+            filter={isPressed ? 'none' : 'drop-shadow(0 5px 7px rgba(0,0,0,0.5))'}
             style={{ transition: 'all 90ms ease-out' }}
           />
-          {/* Gloss flattens as the cap goes down */}
           <ellipse
-            cx="34"
-            cy="34"
-            rx={isPressed ? 4.5 : 6.5}
-            ry={isPressed ? 2.4 : 4}
+            cx="37"
+            cy="32"
+            rx={isPressed ? 4 : 5.6}
+            ry={isPressed ? 2.2 : 3.4}
             fill="#ffffff"
-            opacity={isPressed ? 0.09 : 0.2}
+            opacity={isPressed ? 0.1 : 0.22}
             style={{ transition: 'all 90ms ease-out' }}
           />
         </g>
-
-        {/* Generous invisible grab ring over the whole collar */}
-        <circle cx="40" cy="40" r="24" fill="transparent" />
+        {/* Generous grab area over the whole button */}
+        <circle cx="42" cy="37" r="23" fill="transparent" />
       </g>
+
+      {/* ================= 2. THE SCHEMATIC — its own boxed panel ================= */}
+      <rect x="8" y="64" width="68" height="42" rx="4" fill="#080b11" stroke="#28313f" strokeWidth="1" />
+      <text x="12" y="70.5" fill="#4b5563" fontSize="4" fontWeight="800" fontFamily="monospace">CONTACTS</text>
 
       {hasCom ? (
         <g>
-          {/* C (COM) lead */}
-          <path d="M10 40 L25 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
-          {/* NC lead */}
-          <path d="M55 25 L70 25" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
-          {/* NO lead */}
-          <path d="M55 55 L70 55" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+          {/* Leads from the screw terminals into the panel */}
+          <path d={`M0 75 H10 V${comNode.y} H${comNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+          <path d={`M84 64 H72 V${ncNode.y} H${ncNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+          <path d={`M84 88 H72 V${noNode.y} H${noNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
 
-          {/* Contact points */}
-          <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-          <circle cx="55" cy="25" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-          <circle cx="55" cy="55" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+          {/* The blade transfers from NC to NO while held */}
+          <line
+            x1={comNode.x}
+            y1={comNode.y}
+            x2={isPressed ? noNode.x : ncNode.x}
+            y2={isPressed ? noNode.y : ncNode.y}
+            stroke={hasVoltage ? '#fbbf24' : '#22c55e'}
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            style={{ transition: 'all 90ms ease-out' }}
+          />
+          <line
+            x1={comNode.x}
+            y1={comNode.y}
+            x2={isPressed ? ncNode.x : noNode.x}
+            y2={isPressed ? ncNode.y : noNode.y}
+            stroke="#3f4653"
+            strokeWidth="1.2"
+            strokeDasharray="2,2"
+            opacity="0.7"
+          />
 
-          {isPressed ? (
-            // Connected to NO
-            <g>
-              <line x1="25" y1="40" x2="55" y2="55" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
-              <line x1="25" y1="40" x2="55" y2="25" stroke="#4b5563" strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
-            </g>
-          ) : (
-            // Connected to NC
-            <g>
-              <line x1="25" y1="40" x2="55" y2="25" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
-              <line x1="25" y1="40" x2="55" y2="55" stroke={hasVoltage ? "#fbbf24" : "#4b5563"} strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
-            </g>
-          )}
+          <circle cx={comNode.x} cy={comNode.y} r="2.6" fill="#e2e8f0" stroke="#334155" strokeWidth="0.8" />
+          <circle cx={ncNode.x} cy={ncNode.y} r="2.6" fill={isPressed ? '#334155' : '#86efac'} stroke="#334155" strokeWidth="0.8" />
+          <circle cx={noNode.x} cy={noNode.y} r="2.6" fill={isPressed ? '#86efac' : '#334155'} stroke="#334155" strokeWidth="0.8" />
+
+          <text x={comNode.x - 5} y={comNode.y + 2} fill="#94a3b8" fontSize="5" fontWeight="900" fontFamily="monospace" textAnchor="end">C</text>
+          <text x={ncNode.x + 5} y={ncNode.y + 2} fill={isPressed ? '#64748b' : '#86efac'} fontSize="5" fontWeight="900" fontFamily="monospace">NC</text>
+          <text x={noNode.x + 5} y={noNode.y + 2} fill={isPressed ? '#86efac' : '#64748b'} fontSize="5" fontWeight="900" fontFamily="monospace">NO</text>
         </g>
       ) : (
         <g>
-          {/* Original SPST NO Button visuals */}
-          <path d="M10 40 L25 40 M55 40 L70 40" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
+          {/* Two-wire form: leads drop from the side terminals into the panel */}
+          <path d={`M12 50 V${comNode.y} H${comNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+          <path d={`M72 50 V${spstOut.y} H${spstOut.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+
           {isPressed ? (
-            <path d="M25 40 L55 40" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
+            <line x1={comNode.x} y1={comNode.y} x2={spstOut.x} y2={spstOut.y} stroke={hasVoltage ? '#fbbf24' : '#22c55e'} strokeWidth="2.6" strokeLinecap="round" />
           ) : (
-            <g>
-              <line x1="25" y1="40" x2="52" y2="28" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
-              <line 
-                x1="25" 
-                y1="40" 
-                x2="55" 
-                y2="40" 
-                stroke={hasVoltage ? "#fbbf24" : "#4b5563"} 
-                strokeWidth={hasVoltage ? 2.5 : 1.5}
-                strokeDasharray="2,3" 
-                filter={hasVoltage ? "url(#yellow-glow)" : "none"}
-                opacity={hasVoltage ? 0.95 : 0.4} 
-              />
-            </g>
+            <line x1={comNode.x} y1={comNode.y} x2={spstOut.x - 4} y2={spstOut.y - 11} stroke="#94a3b8" strokeWidth="2.4" strokeLinecap="round" />
           )}
-          <circle cx="25" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-          <circle cx="55" cy="40" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+
+          <circle cx={comNode.x} cy={comNode.y} r="2.6" fill="#e2e8f0" stroke="#334155" strokeWidth="0.8" />
+          <circle cx={spstOut.x} cy={spstOut.y} r="2.6" fill={isPressed ? '#86efac' : '#334155'} stroke="#334155" strokeWidth="0.8" />
+          <text x={42} y={100} fill={isPressed ? '#86efac' : '#64748b'} fontSize="5" fontWeight="900" fontFamily="monospace" textAnchor="middle">
+            {isPressed ? 'CLOSED' : 'OPEN'}
+          </text>
         </g>
       )}
 
-      {/* Text label */}
-      <text x="40" y="93" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
-        {component.label}
+      {/* ================= 3. Behaviour caption ================= */}
+      <rect
+        x="8"
+        y="108"
+        width="68"
+        height="10"
+        rx="2.5"
+        fill={isPressed ? '#14532d' : '#12151c'}
+        stroke={isPressed ? '#22c55e' : '#2b313d'}
+        strokeWidth="0.9"
+        style={{ transition: 'all 120ms ease-out' }}
+      />
+      <text
+        x="42"
+        y="115"
+        fill={isPressed ? '#86efac' : '#8b94a4'}
+        fontSize="5.4"
+        fontWeight="900"
+        fontFamily="monospace"
+        textAnchor="middle"
+        letterSpacing="0.2"
+        style={{ pointerEvents: 'none' }}
+      >
+        {isPressed ? 'HELD — LET GO' : 'HOLD TO CLOSE'}
       </text>
 
-      {/* Says out loud what kind of switch this is and how it behaves */}
-      <g style={{ pointerEvents: 'none' }}>
-        <rect
-          x="2"
-          y={98}
-          width="76"
-          height="13"
-          rx="3"
-          fill={isPressed ? '#14532d' : '#12151c'}
-          stroke={isPressed ? '#22c55e' : '#3c4252'}
-          strokeWidth="1"
-          style={{ transition: 'all 120ms ease-out' }}
-        />
-        <text
-          x="40"
-          y="107"
-          fill={isPressed ? '#86efac' : '#94a3b8'}
-          fontSize="6.4"
-          fontWeight="900"
-          fontFamily="monospace"
-          textAnchor="middle"
-          letterSpacing="0.3"
-        >
-          {isPressed ? 'HELD — LET GO TO OPEN' : 'MOMENTARY · HOLD'}
-        </text>
-      </g>
+      {/* Device name under the housing */}
+      <text x="42" y="134" fill="#cbd5e1" fontSize="9.5" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
 
       <defs>
         <radialGradient id="btnNOGrad" cx="30%" cy="30%" r="70%">
@@ -196,6 +205,11 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
           <stop offset="60%" stopColor="#1f2937" />
           <stop offset="100%" stopColor="#111827" />
         </radialGradient>
+        <linearGradient id="btnRingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#8f97a6" />
+          <stop offset="45%" stopColor="#5b6473" />
+          <stop offset="100%" stopColor="#343b47" />
+        </linearGradient>
       </defs>
     </g>
   );
@@ -613,9 +627,8 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
   const toggleSwitch = useGameStore(state => state.toggleSwitch);
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
   const isRunning = useGameStore(state => state.isRunning);
-  
+
   const isToggled = component.state.toggled || false;
-  const stateLabel = isToggled ? 'ON' : 'OFF';
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
@@ -623,148 +636,148 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
     soundManager.playClick();
   };
 
-  // Determine voltage presence at switch input
   const inKey = getTerminalKey(component.id, 'com');
   const hasVoltage = isRunning && nodeVoltages[inKey] > 0;
 
+  // Schematic node positions inside the boxed inset (local coords)
+  const comNode = { x: 18, y: 85 };
+  const ncNode = { x: 66, y: 74 };
+  const noNode = { x: 66, y: 96 };
+
   return (
-    <g 
-      transform="translate(-45, -45)" 
-      className="select-none"
-    >
-      {/* Outer Housing */}
-      <rect x="5" y="5" width="80" height="80" rx="8" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
-      <rect x="18" y="1" width="54" height="4" fill="#71717a" opacity="0.6" />
-      <rect x="18" y="85" width="54" height="4" fill="#71717a" opacity="0.6" />
+    <g transform="translate(-42, -50)" className="select-none">
+      {/* ---------- Housing ---------- */}
+      <rect x="2" y="4" width="80" height="116" rx="7" fill="#20242e" stroke="#0f1116" strokeWidth="2" />
+      <rect x="18" y="0" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
+      <rect x="18" y="119" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
-      {/* Switch cavity bezel & interactive toggle */}
+      {/* ================= 1. THE PART — a real rocker, nothing drawn over it ========= */}
+      <text x="42" y="17" fill="#7b8496" fontSize="5.4" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.9">
+        MAINTAINED
+      </text>
+
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
-        <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
+        {/* Panel bezel the rocker is mounted through */}
+        <rect x="16" y="19" width="52" height="38" rx="4" fill="url(#rockerBezelGrad)" stroke="#0d0f13" strokeWidth="1.3" />
+        {/* Cavity */}
+        <rect x="19" y="22" width="46" height="32" rx="3" fill="#05070a" />
+        {/* Position marks — the end that is DOWN is the live one */}
+        <text x="42" y="29" fill={isToggled ? '#3f4653' : '#94a3b8'} fontSize="6" fontWeight="900" fontFamily="monospace" textAnchor="middle">O</text>
+        <text x="42" y="53" fill={isToggled ? '#22c55e' : '#3f4653'} fontSize="6" fontWeight="900" fontFamily="monospace" textAnchor="middle">I</text>
 
-        {/* Cavity floor: whichever end the paddle is NOT resting on stays lit */}
-        <rect x="18" y="18" width="54" height="54" rx="3" fill="#050506" />
-        <text x="45" y="27" fill={isToggled ? '#3f3f46' : '#71717a'} fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="middle">
-          O
-        </text>
-        <text x="45" y="70" fill={isToggled ? '#22c55e' : '#3f3f46'} fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="middle">
-          I
-        </text>
-
-        {/* One physical paddle pivoting on its centre bar — it tips to the
-            position you click and stays there, which is the whole point of a
-            maintained switch. */}
+        {/* One paddle pivoting on its centre bar — it stays where you put it */}
         <g
           style={{
-            transform: isToggled ? 'rotate(11deg)' : 'rotate(-11deg)',
-            transformOrigin: '45px 45px',
-            transformBox: 'fill-box',
+            transform: isToggled ? 'rotate(12deg)' : 'rotate(-12deg)',
+            transformOrigin: '42px 38px',
+            transformBox: 'view-box',
             transition: 'transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
         >
           <rect
-            x="20"
-            y="30"
-            width="50"
-            height="30"
-            rx="3"
+            x="21"
+            y="27"
+            width="42"
+            height="22"
+            rx="2.5"
             fill="url(#rockerPaddleGrad)"
-            stroke="#52525b"
-            strokeWidth="1"
-            style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.65))' }}
+            stroke="#5b6473"
+            strokeWidth="0.9"
+            style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.7))' }}
           />
-          {/* Ribbed thumb grip across the paddle face */}
-          {[38, 43, 48, 53].map(y => (
-            <line key={y} x1="30" y1={y} x2="60" y2={y} stroke="#27272a" strokeWidth="0.9" opacity="0.55" />
+          {[33, 38, 43].map(y => (
+            <line key={y} x1="29" y1={y} x2="55" y2={y} stroke="#22262e" strokeWidth="0.9" opacity="0.6" />
           ))}
         </g>
 
-        {/* Pivot bar the paddle rocks on */}
-        <rect x="14" y="43.5" width="62" height="3" rx="1.5" fill="#18181b" stroke="#27272a" strokeWidth="0.6" />
-      </g>
+        {/* Pivot bar */}
+        <rect x="15" y="36.5" width="54" height="3" rx="1.5" fill="#16191f" stroke="#2b313d" strokeWidth="0.5" />
 
-      {/* Schematic overlay inside (X=10 to X=80) */}
-      <line x1="10" y1="45" x2="25" y2="45" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
-      <line x1="55" y1="30" x2="80" y2="30" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
-      <line x1="55" y1="60" x2="80" y2="60" stroke="#78829a" strokeWidth="2.5" strokeLinecap="round" />
-
-      {/* Toggle contact line */}
-      {!isToggled ? (
-        <g>
-          <line x1="25" y1="45" x2="55" y2="30" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="25" y1="45" x2="55" y2="60" stroke={hasVoltage ? "#fbbf24" : "#4b5563"} strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
-        </g>
-      ) : (
-        <g>
-          <line x1="25" y1="45" x2="55" y2="60" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="25" y1="45" x2="55" y2="30" stroke={hasVoltage ? "#fbbf24" : "#4b5563"} strokeWidth="1.5" strokeDasharray="2,2" opacity="0.4" />
-        </g>
-      )}
-
-      <circle cx="25" cy="45" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-      <circle cx="55" cy="30" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-      <circle cx="55" cy="60" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-
-      {/* State readout */}
-      <rect
-        x="31"
-        y="76"
-        width="28"
-        height="14"
-        rx="3"
-        fill={isToggled ? '#14532d' : '#3f3f46'}
-        stroke={isToggled ? '#22c55e' : '#71717a'}
-        strokeWidth="1"
-      />
-      <text
-        x="45"
-        y="86"
-        fill={isToggled ? '#dcfce7' : '#e4e4e7'}
-        fontSize="9"
-        fontWeight="bold"
-        textAnchor="middle"
-        fontFamily="monospace"
-        style={{ pointerEvents: 'none' }}
-      >
-        {stateLabel}
-      </text>
-
-      {/* Label */}
-      <text x="45" y="105" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
-        {component.label}
-      </text>
-
-      {/* Counterpart to the momentary caption, so the pair reads as a contrast */}
-      <g style={{ pointerEvents: 'none' }}>
-        <rect
-          x="7"
-          y="110"
-          width="76"
-          height="13"
-          rx="3"
-          fill={isToggled ? '#14532d' : '#12151c'}
-          stroke={isToggled ? '#22c55e' : '#3f3f46'}
-          strokeWidth="1"
-          style={{ transition: 'all 120ms ease-out' }}
-        />
-        <text
-          x="45"
-          y="119"
-          fill={isToggled ? '#86efac' : '#94a3b8'}
-          fontSize="6.4"
-          fontWeight="900"
-          fontFamily="monospace"
-          textAnchor="middle"
-          letterSpacing="0.3"
-        >
-          {isToggled ? 'MAINTAINED · STAYS ON' : 'MAINTAINED · CLICK'}
+        {/* State chip on the bezel */}
+        <rect x="30" y="58" width="24" height="9" rx="2" fill={isToggled ? '#14532d' : '#2b313d'} stroke={isToggled ? '#22c55e' : '#4b5563'} strokeWidth="0.8" />
+        <text x="42" y="64.6" fill={isToggled ? '#dcfce7' : '#cbd5e1'} fontSize="5.6" fontWeight="900" fontFamily="monospace" textAnchor="middle" style={{ pointerEvents: 'none' }}>
+          {isToggled ? 'ON' : 'OFF'}
         </text>
       </g>
 
+      {/* ================= 2. THE SCHEMATIC — its own boxed panel ================= */}
+      <rect x="8" y="70" width="68" height="36" rx="4" fill="#080b11" stroke="#28313f" strokeWidth="1" />
+      <text x="12" y="76.5" fill="#4b5563" fontSize="4" fontWeight="800" fontFamily="monospace">CONTACTS</text>
+
+      {/* Leads from the screw terminals into the panel */}
+      <path d={`M0 75 H10 V${comNode.y} H${comNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+      <path d={`M84 64 H72 V${ncNode.y} H${ncNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+      <path d={`M84 88 H72 V${noNode.y} H${noNode.x}`} fill="none" stroke="#5b6473" strokeWidth="1.6" />
+
+      {/* Blade sits on whichever contact the paddle selected — and stays there */}
+      <line
+        x1={comNode.x}
+        y1={comNode.y}
+        x2={isToggled ? noNode.x : ncNode.x}
+        y2={isToggled ? noNode.y : ncNode.y}
+        stroke={hasVoltage ? '#fbbf24' : '#22c55e'}
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        style={{ transition: 'all 150ms ease-out' }}
+      />
+      <line
+        x1={comNode.x}
+        y1={comNode.y}
+        x2={isToggled ? ncNode.x : noNode.x}
+        y2={isToggled ? ncNode.y : noNode.y}
+        stroke="#3f4653"
+        strokeWidth="1.2"
+        strokeDasharray="2,2"
+        opacity="0.7"
+      />
+
+      <circle cx={comNode.x} cy={comNode.y} r="2.6" fill="#e2e8f0" stroke="#334155" strokeWidth="0.8" />
+      <circle cx={ncNode.x} cy={ncNode.y} r="2.6" fill={isToggled ? '#334155' : '#86efac'} stroke="#334155" strokeWidth="0.8" />
+      <circle cx={noNode.x} cy={noNode.y} r="2.6" fill={isToggled ? '#86efac' : '#334155'} stroke="#334155" strokeWidth="0.8" />
+
+      <text x={comNode.x - 5} y={comNode.y + 2} fill="#94a3b8" fontSize="5" fontWeight="900" fontFamily="monospace" textAnchor="end">C</text>
+      <text x={ncNode.x + 5} y={ncNode.y + 2} fill={isToggled ? '#64748b' : '#86efac'} fontSize="5" fontWeight="900" fontFamily="monospace">NC</text>
+      <text x={noNode.x + 5} y={noNode.y + 2} fill={isToggled ? '#86efac' : '#64748b'} fontSize="5" fontWeight="900" fontFamily="monospace">NO</text>
+
+      {/* ================= 3. Behaviour caption ================= */}
+      <rect
+        x="8"
+        y="108"
+        width="68"
+        height="10"
+        rx="2.5"
+        fill={isToggled ? '#14532d' : '#12151c'}
+        stroke={isToggled ? '#22c55e' : '#2b313d'}
+        strokeWidth="0.9"
+        style={{ transition: 'all 120ms ease-out' }}
+      />
+      <text
+        x="42"
+        y="115"
+        fill={isToggled ? '#86efac' : '#8b94a4'}
+        fontSize="5.4"
+        fontWeight="900"
+        fontFamily="monospace"
+        textAnchor="middle"
+        letterSpacing="0.2"
+        style={{ pointerEvents: 'none' }}
+      >
+        {isToggled ? 'LATCHED ON' : 'CLICK TO LATCH'}
+      </text>
+
+      <text x="42" y="134" fill="#cbd5e1" fontSize="9.5" fontWeight="bold" textAnchor="middle">
+        {component.label}
+      </text>
+
       <defs>
         <linearGradient id="rockerPaddleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#52525b" />
-          <stop offset="55%" stopColor="#3f3f46" />
-          <stop offset="100%" stopColor="#27272a" />
+          <stop offset="0%" stopColor="#5b6473" />
+          <stop offset="55%" stopColor="#434a57" />
+          <stop offset="100%" stopColor="#2b313d" />
+        </linearGradient>
+        <linearGradient id="rockerBezelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#3a414e" />
+          <stop offset="100%" stopColor="#1d222b" />
         </linearGradient>
       </defs>
     </g>
