@@ -12,7 +12,6 @@ import {
   CircuitBoard,
   Clock3,
   Gauge,
-  LayoutGrid,
   Play,
   Search,
   ShieldCheck,
@@ -126,18 +125,18 @@ export const LevelDashboard: React.FC = () => {
           <nav className="flex shrink-0 items-center rounded-xl border border-white/[0.08] bg-white/[0.035] p-1" aria-label="Lab sections">
             <button
               type="button"
-              className="rounded-lg border border-blue-400/20 bg-blue-500/15 px-2.5 py-2 text-[10px] font-semibold text-blue-200 shadow-sm sm:px-4 sm:text-[11px]"
-              aria-current="page"
-            >
-              Training <span className="hidden lg:inline">modules</span>
-            </button>
-            <button
-              type="button"
               onClick={openCustomLab}
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-semibold text-slate-500 transition hover:bg-white/[0.05] hover:text-slate-200 sm:px-4 sm:text-[11px]"
             >
               <Wrench className="h-3.5 w-3.5" />
               Custom <span className="hidden sm:inline">lab</span>
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-blue-400/20 bg-blue-500/15 px-2.5 py-2 text-[10px] font-semibold text-blue-200 shadow-sm sm:px-4 sm:text-[11px]"
+              aria-current="page"
+            >
+              Training <span className="hidden lg:inline">modules</span>
             </button>
           </nav>
 
@@ -181,20 +180,20 @@ export const LevelDashboard: React.FC = () => {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  onClick={() => initLevel(activeModuleIndex)}
+                  onClick={openCustomLab}
                   className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_12px_35px_rgba(37,99,235,0.28)] transition-all hover:-translate-y-0.5 hover:bg-blue-500 hover:shadow-[0_16px_42px_rgba(37,99,235,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 >
-                  <Play className="h-4 w-4 fill-current" />
-                  {activeModuleIndex === 0 ? 'Start training' : 'Continue training'}
+                  <Wrench className="h-4 w-4" />
+                  Open custom lab
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button
                   type="button"
-                  onClick={openCustomLab}
+                  onClick={() => initLevel(activeModuleIndex)}
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-5 text-sm font-semibold text-slate-200 transition-all hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 >
-                  <LayoutGrid className="h-4 w-4 text-slate-400" />
-                  Custom labs
+                  <Play className="h-4 w-4 fill-current text-slate-400" />
+                  {activeModuleIndex === 0 ? 'Start training' : 'Continue training'}
                 </button>
               </div>
 
