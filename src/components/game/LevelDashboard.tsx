@@ -8,11 +8,11 @@ import {
   BarChart3,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircuitBoard,
   Clock3,
   Gauge,
-  Play,
   Search,
   ShieldCheck,
   Sparkles,
@@ -79,7 +79,6 @@ export const LevelDashboard: React.FC = () => {
   const completedCount = Math.min(activeModuleIndex, totalLevels);
   const percentComplete = Math.round((completedCount / totalLevels) * 100);
   const unlockedCount = achievements.filter(achievement => achievement.unlocked).length;
-  const activeModule = levels[activeModuleIndex];
   const rocketRelayIndex = levels.findIndex(level => level.id === 26);
 
   const visibleLevels = React.useMemo(() => {
@@ -126,17 +125,11 @@ export const LevelDashboard: React.FC = () => {
             <button
               type="button"
               onClick={openCustomLab}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-semibold text-slate-500 transition hover:bg-white/[0.05] hover:text-slate-200 sm:px-4 sm:text-[11px]"
+              className="flex items-center gap-1.5 rounded-lg border border-blue-400/20 bg-blue-500/15 px-2.5 py-2 text-[10px] font-semibold text-blue-200 shadow-sm transition hover:bg-blue-500/25 sm:px-4 sm:text-[11px]"
+              aria-current="page"
             >
               <Wrench className="h-3.5 w-3.5" />
               Custom <span className="hidden sm:inline">lab</span>
-            </button>
-            <button
-              type="button"
-              className="rounded-lg border border-blue-400/20 bg-blue-500/15 px-2.5 py-2 text-[10px] font-semibold text-blue-200 shadow-sm sm:px-4 sm:text-[11px]"
-              aria-current="page"
-            >
-              Training <span className="hidden lg:inline">modules</span>
             </button>
           </nav>
 
@@ -189,11 +182,11 @@ export const LevelDashboard: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => initLevel(activeModuleIndex)}
+                  onClick={() => moduleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-5 text-sm font-semibold text-slate-200 transition-all hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 >
-                  <Play className="h-4 w-4 fill-current text-slate-400" />
-                  {activeModuleIndex === 0 ? 'Start training' : 'Continue training'}
+                  Training modules
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
                 </button>
               </div>
 
@@ -213,7 +206,7 @@ export const LevelDashboard: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => initLevel(activeModuleIndex)}
+              onClick={openCustomLab}
               className="group dashboard-rise dashboard-rise-delay relative overflow-hidden rounded-[26px] border border-white/10 bg-[#0b111d]/90 p-2 text-left shadow-[0_35px_80px_rgba(0,0,0,0.35)] transition-all hover:-translate-y-1 hover:border-blue-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
             >
               <div className="absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/80 to-transparent" />
@@ -221,50 +214,47 @@ export const LevelDashboard: React.FC = () => {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shadow-[0_0_10px_#60a5fa]" />
-                    Up next
+                    Custom wiring lab
                   </span>
                   <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 font-mono text-[10px] font-semibold text-slate-400">
-                    {String(activeModule.id).padStart(2, '0')} / {totalLevels}
+                    FREE BUILD
                   </span>
                 </div>
 
                 <div className="flex min-h-[150px] items-center gap-5">
-                  <div className="relative flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-[#060a12]/70 p-5 shadow-inner sm:h-36 sm:w-36">
+                  <div className="relative flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-[#060a12]/70 shadow-inner sm:h-36 sm:w-36">
                     <div className="absolute inset-3 rounded-xl border border-blue-400/[0.08]" />
-                    <div className="relative h-full w-full transition-transform duration-500 group-hover:scale-105">
-                      <RealWorldVisual levelId={activeModule.id} isActive />
-                    </div>
+                    <Wrench className="relative h-14 w-14 text-blue-300/80 transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="min-w-0 py-2">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      {getModuleTrackLabel(activeModule.id)}
+                      Your own bench
                     </p>
                     <h2 className="mt-2 text-lg font-semibold leading-snug tracking-tight text-white sm:text-xl">
-                      {activeModule.title}
+                      Build any circuit you want
                     </h2>
-                    <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-400">
-                      {activeModule.description}
+                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                      Start with a transformer and power supply, drop in the devices you need, wire
+                      them your way, and power it up to see what happens.
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-6 border-t border-white/[0.07] pt-5">
-                  <div className="mb-2.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em]">
-                    <span className="text-slate-500">Course progress</span>
-                    <span className="text-slate-300">{percentComplete}%</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-1000"
-                      style={{ width: `${Math.max(percentComplete, 3)}%` }}
-                    />
+                  <div className="flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-slate-400">
+                    {['Relays & timers', 'Locks & strikes', 'Sirens & strobes', 'Live multimeter'].map(item => (
+                      <span key={item} className="inline-flex items-center gap-1.5">
+                        <Check className="h-3 w-3 text-blue-400" />
+                        {item}
+                      </span>
+                    ))}
                   </div>
                   <div className="mt-5 flex items-center justify-between">
                     <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                      <Clock3 className="h-3.5 w-3.5" /> Guided simulation
+                      <Zap className="h-3.5 w-3.5" /> No lesson, no scoring
                     </span>
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-300">
-                      Open module
+                      Open the lab
                       <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </span>
                   </div>
