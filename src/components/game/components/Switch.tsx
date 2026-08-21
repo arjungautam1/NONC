@@ -505,120 +505,194 @@ export const SelectorSwitch: React.FC<ComponentProps> = ({ component }) => {
 
 export const RockerSwitch3Pos: React.FC<ComponentProps> = ({ component }) => {
   const setComponentState = useGameStore(state => state.setComponentState);
-  
+
   const toggled = (component.state.toggled as any) || 'off';
+  const isLeft = toggled === 'left';
+  const isRight = toggled === 'right';
 
-  const handleLeftDown = (e: React.PointerEvent) => {
+  const press = (side: 'left' | 'right') => (e: React.PointerEvent) => {
     e.stopPropagation();
-    // @ts-ignore
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setComponentState(component.id, 'toggled', 'left');
+    // Throw the contact first: capture is only there to keep the release
+    // event, and a capture failure must never swallow the actuation.
+    setComponentState(component.id, 'toggled', side);
     soundManager.playClick();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* pointer already gone */
+    }
   };
 
-  const handleRightDown = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    // @ts-ignore
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setComponentState(component.id, 'toggled', 'right');
-    soundManager.playClick();
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const release = (e: React.PointerEvent) => {
     e.stopPropagation();
     setComponentState(component.id, 'toggled', 'off');
     soundManager.playClick();
   };
 
+  // Two poles, each drawn as a pivot with an upper (L) and lower (R) contact.
+  const poles = [
+    { com: { x: 18, y: 66 }, l: { x: 60, y: 60 }, r: { x: 60, y: 72 }, rest: { x: 56, y: 66 }, labels: ['L1', 'R1'] },
+    { com: { x: 18, y: 90 }, l: { x: 60, y: 84 }, r: { x: 60, y: 96 }, rest: { x: 56, y: 90 }, labels: ['L2', 'R2'] }
+  ];
+
   return (
-    <g 
-      transform="translate(-45, -45)" 
-      className="select-none"
-    >
-      {/* Outer Housing */}
-      <rect x="5" y="5" width="80" height="80" rx="8" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
-      <rect x="18" y="1" width="54" height="4" fill="#71717a" opacity="0.6" />
-      <rect x="18" y="85" width="54" height="4" fill="#71717a" opacity="0.6" />
+    <g transform="translate(-42, -50)" className="select-none">
+      {/* ---------- Housing ---------- */}
+      <rect x="2" y="4" width="80" height="118" rx="7" fill="#20242e" stroke="#0f1116" strokeWidth="2" />
+      <rect x="18" y="0" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
+      <rect x="18" y="121" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
-      {/* Switch cavity bezel */}
-      <rect x="15" y="15" width="60" height="60" rx="4" fill="#09090b" stroke="#27272a" strokeWidth="1.5" />
+      {/* ================= 1. THE PART — nothing drawn across it ================= */}
+      <text x="42" y="16" fill="#7b8496" fontSize="5.2" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.8">
+        3-POSITION
+      </text>
 
-      {/* Rocker Toggle Mechanism */}
-      {toggled === 'left' ? (
-        // Pressed Left (Left side is sunken/darker, Right side is raised/lighter casting shadow)
-        <g>
-          {/* Left sunken side */}
-          <rect x="18" y="18" width="27" height="54" fill="#18181b" rx="2" />
-          {/* Right raised side */}
-          <rect x="45" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(-3px 0px 4px rgba(0,0,0,0.6))' }} />
+      <g className="device-control">
+        {/* Panel bezel */}
+        <rect x="12" y="20" width="60" height="30" rx="4" fill="url(#rocker3BezelGrad)" stroke="#0d0f13" strokeWidth="1.3" />
+        <rect x="15" y="23" width="54" height="24" rx="3" fill="#05070a" />
+
+        {/* Position marks on the bezel floor */}
+        <polygon points="21,35 27,31 27,39" fill={isLeft ? '#22c55e' : '#4b5563'} style={{ pointerEvents: 'none' }} />
+        <circle cx="42" cy="35" r="3.4" fill="none" stroke={toggled === 'off' ? '#e2e8f0' : '#4b5563'} strokeWidth="1.6" style={{ pointerEvents: 'none' }} />
+        <polygon points="63,35 57,31 57,39" fill={isRight ? '#22c55e' : '#4b5563'} style={{ pointerEvents: 'none' }} />
+
+        {/* One paddle that tips to the side being held and springs back to centre */}
+        <g
+          style={{
+            transform: isLeft ? 'rotate(-13deg)' : isRight ? 'rotate(13deg)' : 'rotate(0deg)',
+            transformOrigin: '42px 35px',
+            transformBox: 'view-box',
+            transition: 'transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            pointerEvents: 'none'
+          }}
+        >
+          <rect
+            x="18"
+            y="26"
+            width="48"
+            height="18"
+            rx="2.5"
+            fill="url(#rocker3PaddleGrad)"
+            stroke="#5b6473"
+            strokeWidth="0.9"
+            style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.7))' }}
+          />
+          {[31, 35, 39].map(y => (
+            <line key={y} x1="28" y1={y} x2="56" y2={y} stroke="#22262e" strokeWidth="0.8" opacity="0.6" />
+          ))}
         </g>
-      ) : toggled === 'right' ? (
-        // Pressed Right (Right side is sunken/darker, Left side is raised/lighter casting shadow)
-        <g>
-          {/* Right sunken side */}
-          <rect x="45" y="18" width="27" height="54" fill="#18181b" rx="2" />
-          {/* Left raised side */}
-          <rect x="18" y="16" width="27" height="58" fill="#3f3f46" rx="2" style={{ filter: 'drop-shadow(3px 0px 4px rgba(0,0,0,0.6))' }} />
-        </g>
-      ) : (
-        // Balanced (Center OFF - Flat level switch)
-        <rect x="18" y="17" width="54" height="56" fill="#27272a" rx="2" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }} />
-      )}
 
-      {/* Triangle Arrow Markings */}
-      {/* Left Arrow */}
-      <polygon 
-        points="26,45 34,40 34,50" 
-        fill={toggled === 'left' ? '#ffffff' : '#a1a1aa'} 
-        style={{ pointerEvents: 'none', transition: 'fill 0.1s' }} 
-      />
-      {/* Center OFF circle */}
-      <circle 
-        cx="45" 
-        cy="45" 
-        r="4.5" 
-        fill="none" 
-        stroke={toggled === 'off' ? '#ffffff' : '#a1a1aa'} 
-        strokeWidth="2" 
-        style={{ pointerEvents: 'none', transition: 'stroke 0.1s' }} 
-      />
-      {/* Right Arrow */}
-      <polygon 
-        points="64,45 56,40 56,50" 
-        fill={toggled === 'right' ? '#ffffff' : '#a1a1aa'} 
-        style={{ pointerEvents: 'none', transition: 'fill 0.1s' }} 
-      />
+        {/* Hit targets — device-control keeps the canvas drag handler off them */}
+        <rect
+          x="12"
+          y="20"
+          width="30"
+          height="30"
+          fill="transparent"
+          className="cursor-pointer device-control"
+          onPointerDown={press('left')}
+          onPointerUp={release}
+          onPointerLeave={release}
+          onPointerCancel={release}
+        />
+        <rect
+          x="42"
+          y="20"
+          width="30"
+          height="30"
+          fill="transparent"
+          className="cursor-pointer device-control"
+          onPointerDown={press('right')}
+          onPointerUp={release}
+          onPointerLeave={release}
+          onPointerCancel={release}
+        />
+      </g>
 
-      {/* Interactive Transparent Hitboxes for pointer clicks */}
-      {/* Left side click target */}
-      <rect 
-        x="15" 
-        y="15" 
-        width="30" 
-        height="60" 
-        fill="transparent" 
-        className="cursor-pointer" 
-        onPointerDown={handleLeftDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-      />
-      {/* Right side click target */}
-      <rect 
-        x="45" 
-        y="15" 
-        width="30" 
-        height="60" 
-        fill="transparent" 
-        className="cursor-pointer" 
-        onPointerDown={handleRightDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-      />
+      {/* ================= 2. THE SCHEMATIC — its own boxed panel ================= */}
+      <rect x="8" y="54" width="68" height="48" rx="4" fill="#080b11" stroke="#28313f" strokeWidth="1" />
+      <text x="12" y="59.5" fill="#4b5563" fontSize="3.8" fontWeight="800" fontFamily="monospace">CONTACTS · 2 POLE</text>
 
-      {/* Text label underneath */}
-      <text x="45" y="102" fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+      {poles.map((pole, idx) => {
+        const target = isLeft ? pole.l : isRight ? pole.r : pole.rest;
+        return (
+          <g key={idx}>
+            {/* Leads out to the screw terminals on each edge */}
+            <path d={`M0 ${pole.com.y} H${pole.com.x}`} fill="none" stroke="#5b6473" strokeWidth="1.5" />
+            <path d={`M84 ${pole.l.y} H${pole.l.x}`} fill="none" stroke="#5b6473" strokeWidth="1.5" />
+            <path d={`M84 ${pole.r.y} H${pole.r.x}`} fill="none" stroke="#5b6473" strokeWidth="1.5" />
+
+            {/* Blade: rests between both contacts at centre-off, touching neither */}
+            <line
+              x1={pole.com.x}
+              y1={pole.com.y}
+              x2={target.x}
+              y2={target.y}
+              stroke={toggled === 'off' ? '#64748b' : '#22c55e'}
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              style={{ transition: 'all 120ms ease-out' }}
+            />
+
+            <circle cx={pole.com.x} cy={pole.com.y} r="2.4" fill="#e2e8f0" stroke="#334155" strokeWidth="0.7" />
+            <circle cx={pole.l.x} cy={pole.l.y} r="2.4" fill={isLeft ? '#86efac' : '#334155'} stroke="#334155" strokeWidth="0.7" />
+            <circle cx={pole.r.x} cy={pole.r.y} r="2.4" fill={isRight ? '#86efac' : '#334155'} stroke="#334155" strokeWidth="0.7" />
+
+            <text x={pole.com.x - 4} y={pole.com.y + 1.8} fill="#94a3b8" fontSize="4.4" fontWeight="900" fontFamily="monospace" textAnchor="end">
+              C{idx + 1}
+            </text>
+            <text x={pole.l.x + 4} y={pole.l.y + 1.8} fill={isLeft ? '#86efac' : '#64748b'} fontSize="4.4" fontWeight="900" fontFamily="monospace">
+              {pole.labels[0]}
+            </text>
+            <text x={pole.r.x + 4} y={pole.r.y + 1.8} fill={isRight ? '#86efac' : '#64748b'} fontSize="4.4" fontWeight="900" fontFamily="monospace">
+              {pole.labels[1]}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* ================= 3. Behaviour caption ================= */}
+      <rect
+        x="8"
+        y="106"
+        width="68"
+        height="10"
+        rx="2.5"
+        fill={toggled === 'off' ? '#12151c' : '#14532d'}
+        stroke={toggled === 'off' ? '#2b313d' : '#22c55e'}
+        strokeWidth="0.9"
+        style={{ transition: 'all 120ms ease-out' }}
+      />
+      <text
+        x="42"
+        y="113"
+        fill={toggled === 'off' ? '#8b94a4' : '#86efac'}
+        fontSize="5.2"
+        fontWeight="900"
+        fontFamily="monospace"
+        textAnchor="middle"
+        letterSpacing="0.2"
+        style={{ pointerEvents: 'none' }}
+      >
+        {isLeft ? 'HELD LEFT' : isRight ? 'HELD RIGHT' : 'HOLD L OR R'}
+      </text>
+
+      <text x="42" y="136" fill="#cbd5e1" fontSize="9.5" fontWeight="bold" textAnchor="middle">
         {component.label}
       </text>
+
+      <defs>
+        <linearGradient id="rocker3PaddleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#5b6473" />
+          <stop offset="55%" stopColor="#434a57" />
+          <stop offset="100%" stopColor="#2b313d" />
+        </linearGradient>
+        <linearGradient id="rocker3BezelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#3a414e" />
+          <stop offset="100%" stopColor="#1d222b" />
+        </linearGradient>
+      </defs>
     </g>
   );
 };

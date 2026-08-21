@@ -483,7 +483,8 @@ export const Workspace: React.FC = () => {
       // Split-panel switches: device on top, schematic boxed below.
       case 'button_no':
       case 'rocker_switch_2pos':
-        base = { x: -48, y: -56, w: 96, h: 130 };
+      case 'rocker_switch_3pos':
+        base = { x: -48, y: -56, w: 96, h: 132 };
         break;
       case 'junction':
         base = { x: -45, y: -22, w: 90, h: 44 };

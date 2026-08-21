@@ -793,12 +793,12 @@ export const levels: Level[] = [
         y: 180,
         label: '3-Pos Rocker',
         terminals: [
-          { id: 'com1', name: 'COM1', type: 'com1', x: -40, y: 0 },
-          { id: 'l1', name: 'L1', type: 'l1', x: -40, y: -25 },
-          { id: 'r1', name: 'R1', type: 'r1', x: -40, y: 25 },
-          { id: 'com2', name: 'COM2', type: 'com2', x: 40, y: 0 },
-          { id: 'l2', name: 'L2', type: 'l2', x: 40, y: -25 },
-          { id: 'r2', name: 'R2', type: 'r2', x: 40, y: 25 }
+          { id: 'com1', name: 'C1', type: 'com1', x: -42, y: 16 },
+          { id: 'l1', name: 'L1', type: 'l1', x: 42, y: 10 },
+          { id: 'r1', name: 'R1', type: 'r1', x: 42, y: 22 },
+          { id: 'com2', name: 'C2', type: 'com2', x: -42, y: 40 },
+          { id: 'l2', name: 'L2', type: 'l2', x: 42, y: 34 },
+          { id: 'r2', name: 'R2', type: 'r2', x: 42, y: 46 }
         ],
         state: {}
       },
