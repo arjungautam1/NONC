@@ -8,6 +8,113 @@ interface ComponentProps {
   component: CircuitComponent;
 }
 
+/**
+ * Surface-mount request-to-exit button, drawn as the real part: a cream
+ * moulded faceplate on a shallow back box seen slightly from the left, two
+ * Phillips screws above and below the button, and a big square plunger
+ * carrying the key symbol. `pressed` seats the plunger into the plate.
+ */
+const ExitButtonPlate: React.FC<{
+  id: string;
+  pressed: boolean;
+  pilot?: boolean;
+}> = ({ id, pressed, pilot = false }) => {
+  const faceGrad = `plateFace-${id}`;
+  const capGrad = `plateCap-${id}`;
+  const screwGrad = `plateScrew-${id}`;
+  // Travel of the plunger into the plate, in local units.
+  const drop = pressed ? 2.2 : 0;
+
+  return (
+    <g>
+      <defs>
+        <linearGradient id={faceGrad} x1="12%" y1="0%" x2="88%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="42%" stopColor="#f6f4ee" />
+          <stop offset="100%" stopColor="#dedbd1" />
+        </linearGradient>
+        <linearGradient id={capGrad} x1="18%" y1="0%" x2="82%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="55%" stopColor="#f3f1ea" />
+          <stop offset="100%" stopColor="#dcd9cf" />
+        </linearGradient>
+        <radialGradient id={screwGrad} cx="34%" cy="28%" r="78%">
+          <stop offset="0%" stopColor="#fbfaf7" />
+          <stop offset="55%" stopColor="#d3d0c7" />
+          <stop offset="100%" stopColor="#9d9a91" />
+        </radialGradient>
+      </defs>
+
+      {/* Contact shadow on the wall */}
+      <ellipse cx="44" cy="60" rx="30" ry="4" fill="#000000" opacity="0.32" style={{ filter: 'blur(2px)' }} />
+
+      {/* Back box: right and bottom faces give the plate its depth */}
+      <path d="M 68 6 L 73 11 L 73 55 L 68 50 Z" fill="#c8c5ba" />
+      <path d="M 13 50 L 68 50 L 73 55 L 18 55 Z" fill="#b3b0a5" />
+
+      {/* Faceplate */}
+      <rect x="13" y="4" width="55" height="46" rx="3" fill={`url(#${faceGrad})`} stroke="#bcb9ae" strokeWidth="0.7" />
+      {/* Moulded step around the plunger opening */}
+      <rect x="19" y="9" width="43" height="36" rx="1.6" fill="none" stroke="#cbc8bd" strokeWidth="0.9" />
+      <rect x="19" y="9" width="43" height="36" rx="1.6" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.6" transform="translate(0.6, 0.6)" />
+
+      {/* Phillips screws, directly above and below the plunger */}
+      {[11.5, 42.5].map(cy => (
+        <g key={cy}>
+          <circle cx="40.5" cy={cy} r="3.1" fill={`url(#${screwGrad})`} stroke="#939087" strokeWidth="0.45" />
+          <path
+            d={`M 38.5 ${cy - 0.6} L 42.5 ${cy + 0.6} M 39.6 ${cy + 1.9} L 41.4 ${cy - 1.9}`}
+            stroke="#6f6d66"
+            strokeWidth="0.85"
+            strokeLinecap="round"
+          />
+        </g>
+      ))}
+
+      {/* Opening the plunger sits in — the dark line under its lower edge */}
+      <rect x="21" y="15" width="39" height="24" rx="1.2" fill="#a8a59b" />
+
+      <g style={{ transform: `translateY(${drop}px)`, transition: 'transform 90ms cubic-bezier(0.16, 1, 0.3, 1)' }}>
+        {/* Plunger: top face proud of the plate, lower edge dropping into it */}
+        <path
+          d="M 21.5 16 L 59.5 16 L 57.5 37.5 L 23.5 37.5 Z"
+          fill={`url(#${capGrad})`}
+          stroke="#c2bfb4"
+          strokeWidth="0.7"
+          style={{ filter: pressed ? 'none' : 'drop-shadow(0 2.5px 2.5px rgba(0,0,0,0.4))' }}
+        />
+        {/* Lit top edge and shaded lower lip, the cue that it stands proud */}
+        <path d="M 22 17.1 L 59 17.1" stroke="#ffffff" strokeWidth="1.1" opacity={pressed ? 0.3 : 0.95} strokeLinecap="round" />
+        <path d="M 23.8 36.6 L 57.2 36.6" stroke="#a6a39a" strokeWidth="0.9" opacity="0.75" strokeLinecap="round" />
+
+        {/* Key symbol */}
+        <g stroke="#101216" fill="none" strokeLinecap="round">
+          <circle cx="32" cy="26.5" r="4.2" strokeWidth="2.5" />
+          <path d="M 36.2 26.5 H 50" strokeWidth="2.5" />
+          <path d="M 45.4 26.5 V 31.2" strokeWidth="2.2" />
+          <path d="M 49.4 26.5 V 30.2" strokeWidth="2.2" />
+        </g>
+
+        {/* Pilot lamp, only on the latching version */}
+        {pilot !== undefined && (
+          <circle
+            cx="25.6"
+            cy="19.8"
+            r="1.5"
+            fill={pilot ? '#22c55e' : '#d7d4ca'}
+            stroke={pilot ? '#15803d' : '#b7b4aa'}
+            strokeWidth="0.4"
+            style={{ filter: pilot ? 'drop-shadow(0 0 2.5px #22c55e)' : 'none' }}
+          />
+        )}
+      </g>
+
+      {/* Whole plate is the hit target */}
+      <rect x="13" y="4" width="55" height="46" fill="transparent" />
+    </g>
+  );
+};
+
 export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   const pressButton = useGameStore(state => state.pressButton);
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
@@ -52,70 +159,8 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
       <rect x="18" y="119" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
       {/* ================= 1. THE PART — surface-mount exit button ================= */}
-      <text x="42" y="15" fill="#7b8496" fontSize="5.2" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.8">
-        MOMENTARY
-      </text>
-
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
-        {/* Surface-mount back box, showing as depth down the right and bottom */}
-        <rect x="17" y="20" width="52" height="40" rx="3" fill="#b9b6ab" />
-        <rect x="16" y="19" width="52" height="40" rx="3" fill="#cbc8bd" />
-
-        {/* White faceplate */}
-        <rect x="15" y="18" width="52" height="40" rx="3.5" fill="url(#platePlastic)" stroke="#c2bfb4" strokeWidth="0.8" />
-        {/* Moulded lip around the plate edge */}
-        <rect x="17.5" y="20.5" width="47" height="35" rx="2.5" fill="none" stroke="#ffffff" strokeWidth="0.7" opacity="0.75" />
-
-        {/* Phillips mounting screws, top and bottom centre */}
-        {[23.5, 54.5].map(cy => (
-          <g key={cy}>
-            <circle cx="41" cy={cy} r="2.9" fill="url(#screwHead)" stroke="#9a978d" strokeWidth="0.5" />
-            <path d={`M 39.3 ${cy} H 42.7 M 41 ${cy - 1.7} V ${cy + 1.7}`} stroke="#7d7a72" strokeWidth="0.7" strokeLinecap="round" />
-          </g>
-        ))}
-
-        {/* Recessed well the button sits in */}
-        <rect x="25" y="27.5" width="32" height="23" rx="2" fill="#c0bdb2" />
-
-        {/* The button itself: a wide plate that tips into the well when pressed */}
-        <g
-          style={{
-            transform: isPressed ? 'translateY(1.6px)' : 'translateY(0)',
-            transition: 'transform 80ms cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-        >
-          <rect
-            x="25"
-            y="27"
-            width="32"
-            height="22"
-            rx="2"
-            fill={isPressed ? 'url(#buttonFacePressed)' : 'url(#buttonFace)'}
-            stroke="#bcb9ae"
-            strokeWidth="0.7"
-            style={{ filter: isPressed ? 'none' : 'drop-shadow(0 2px 2.5px rgba(0,0,0,0.35))' }}
-          />
-          {/* Top bevel catches the light until the button goes in */}
-          <path
-            d="M 26 28.6 H 56"
-            stroke="#ffffff"
-            strokeWidth="1"
-            opacity={isPressed ? 0.25 : 0.85}
-            strokeLinecap="round"
-          />
-          <path d="M 26 47.6 H 56" stroke="#9d9a90" strokeWidth="0.8" opacity="0.6" strokeLinecap="round" />
-
-          {/* Key symbol, as printed on the real button */}
-          <g stroke="#16181c" fill="none" strokeLinecap="round">
-            <circle cx="35.5" cy="38" r="3.4" strokeWidth="2.1" />
-            <path d="M 38.9 38 H 48.6" strokeWidth="2.1" />
-            <path d="M 44.6 38 V 41.4" strokeWidth="1.9" />
-            <path d="M 48 38 V 40.6" strokeWidth="1.9" />
-          </g>
-        </g>
-
-        {/* Whole plate is the hit target */}
-        <rect x="15" y="18" width="52" height="40" fill="transparent" />
+        <ExitButtonPlate id={`mom-${component.id}`} pressed={isPressed} />
       </g>
 
       {/* ================= 2. THE SCHEMATIC — its own boxed panel ================= */}
@@ -220,26 +265,6 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
           <stop offset="0%" stopColor="#4b5563" />
           <stop offset="60%" stopColor="#1f2937" />
           <stop offset="100%" stopColor="#111827" />
-        </radialGradient>
-        <linearGradient id="platePlastic" x1="10%" y1="0%" x2="90%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor="#f4f2ec" />
-          <stop offset="100%" stopColor="#e2dfd6" />
-        </linearGradient>
-        <linearGradient id="buttonFace" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="60%" stopColor="#f2f0ea" />
-          <stop offset="100%" stopColor="#dbd8cf" />
-        </linearGradient>
-        <linearGradient id="buttonFacePressed" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#dddad1" />
-          <stop offset="55%" stopColor="#eae7e0" />
-          <stop offset="100%" stopColor="#f3f1eb" />
-        </linearGradient>
-        <radialGradient id="screwHead" cx="35%" cy="30%" r="75%">
-          <stop offset="0%" stopColor="#f0eee8" />
-          <stop offset="60%" stopColor="#cfccc3" />
-          <stop offset="100%" stopColor="#a5a29a" />
         </radialGradient>
       </defs>
     </g>
@@ -757,78 +782,8 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       <rect x="18" y="119" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
       {/* ================= 1. THE PART — surface-mount exit button ================= */}
-      <text x="42" y="15" fill="#7b8496" fontSize="5.2" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.8">
-        MAINTAINED
-      </text>
-
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
-        {/* Surface-mount back box depth */}
-        <rect x="17" y="20" width="52" height="40" rx="3" fill="#b9b6ab" />
-        <rect x="16" y="19" width="52" height="40" rx="3" fill="#cbc8bd" />
-
-        {/* White faceplate */}
-        <rect x="15" y="18" width="52" height="40" rx="3.5" fill="url(#platePlasticM)" stroke="#c2bfb4" strokeWidth="0.8" />
-        <rect x="17.5" y="20.5" width="47" height="35" rx="2.5" fill="none" stroke="#ffffff" strokeWidth="0.7" opacity="0.75" />
-
-        {/* Phillips mounting screws */}
-        {[23.5, 54.5].map(cy => (
-          <g key={cy}>
-            <circle cx="41" cy={cy} r="2.9" fill="url(#screwHeadM)" stroke="#9a978d" strokeWidth="0.5" />
-            <path d={`M 39.3 ${cy} H 42.7 M 41 ${cy - 1.7} V ${cy + 1.7}`} stroke="#7d7a72" strokeWidth="0.7" strokeLinecap="round" />
-          </g>
-        ))}
-
-        {/* Recessed well */}
-        <rect x="25" y="27.5" width="32" height="23" rx="2" fill="#c0bdb2" />
-
-        {/* Latching button: it stays seated in the well until clicked again */}
-        <g
-          style={{
-            transform: isToggled ? 'translateY(1.8px)' : 'translateY(0)',
-            transition: 'transform 130ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }}
-        >
-          <rect
-            x="25"
-            y="27"
-            width="32"
-            height="22"
-            rx="2"
-            fill={isToggled ? 'url(#buttonFacePressedM)' : 'url(#buttonFaceM)'}
-            stroke={isToggled ? '#a9a69c' : '#bcb9ae'}
-            strokeWidth="0.7"
-            style={{ filter: isToggled ? 'none' : 'drop-shadow(0 2px 2.5px rgba(0,0,0,0.35))' }}
-          />
-          <path
-            d="M 26 28.6 H 56"
-            stroke="#ffffff"
-            strokeWidth="1"
-            opacity={isToggled ? 0.25 : 0.85}
-            strokeLinecap="round"
-          />
-          <path d="M 26 47.6 H 56" stroke="#9d9a90" strokeWidth="0.8" opacity="0.6" strokeLinecap="round" />
-
-          {/* Key symbol, printed on the button */}
-          <g stroke="#16181c" fill="none" strokeLinecap="round">
-            <circle cx="35.5" cy="38" r="3.4" strokeWidth="2.1" />
-            <path d="M 38.9 38 H 48.6" strokeWidth="2.1" />
-            <path d="M 44.6 38 V 41.4" strokeWidth="1.9" />
-            <path d="M 48 38 V 40.6" strokeWidth="1.9" />
-          </g>
-
-          {/* Held-in indicator, so a latched button is obvious at a glance */}
-          <circle
-            cx="29.5"
-            cy="31.5"
-            r="1.5"
-            fill={isToggled ? '#22c55e' : '#cbc8bd'}
-            stroke={isToggled ? '#15803d' : '#b0ada3'}
-            strokeWidth="0.4"
-            style={{ filter: isToggled ? 'drop-shadow(0 0 2.5px #22c55e)' : 'none' }}
-          />
-        </g>
-
-        <rect x="15" y="18" width="52" height="40" fill="transparent" />
+        <ExitButtonPlate id={`main-${component.id}`} pressed={Boolean(isToggled)} pilot={Boolean(isToggled)} />
 
         {/* State chip below the plate */}
         <rect x="30" y="60" width="24" height="8.5" rx="2" fill={isToggled ? '#14532d' : '#2b313d'} stroke={isToggled ? '#22c55e' : '#4b5563'} strokeWidth="0.8" />
@@ -907,26 +862,6 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       </text>
 
       <defs>
-        <linearGradient id="platePlasticM" x1="10%" y1="0%" x2="90%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor="#f4f2ec" />
-          <stop offset="100%" stopColor="#e2dfd6" />
-        </linearGradient>
-        <linearGradient id="buttonFaceM" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="60%" stopColor="#f2f0ea" />
-          <stop offset="100%" stopColor="#dbd8cf" />
-        </linearGradient>
-        <linearGradient id="buttonFacePressedM" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#dddad1" />
-          <stop offset="55%" stopColor="#eae7e0" />
-          <stop offset="100%" stopColor="#f3f1eb" />
-        </linearGradient>
-        <radialGradient id="screwHeadM" cx="35%" cy="30%" r="75%">
-          <stop offset="0%" stopColor="#f0eee8" />
-          <stop offset="60%" stopColor="#cfccc3" />
-          <stop offset="100%" stopColor="#a5a29a" />
-        </radialGradient>
       </defs>
     </g>
   );
