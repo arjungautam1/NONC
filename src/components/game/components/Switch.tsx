@@ -51,55 +51,71 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
       <rect x="18" y="0" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
       <rect x="18" y="119" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
-      {/* ================= 1. THE PART — nothing is drawn across it ================= */}
-      <text x="42" y="17" fill="#7b8496" fontSize="5.4" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.9">
+      {/* ================= 1. THE PART — surface-mount exit button ================= */}
+      <text x="42" y="15" fill="#7b8496" fontSize="5.2" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.8">
         MOMENTARY
       </text>
 
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
-        {/* Chrome mounting ring */}
-        <circle cx="42" cy="37" r="21" fill="url(#btnRingGrad)" stroke="#0d0f13" strokeWidth="1.3" />
-        {/* Barrel the cap sinks into */}
-        <circle cx="42" cy="37" r="17.5" fill="#06080b" />
-        {/* Return spring — visibly compresses while held */}
-        <circle
-          cx="42"
-          cy="37"
-          r={isPressed ? 15 : 17}
-          fill="none"
-          stroke="#2b313d"
-          strokeWidth={isPressed ? 3.6 : 1.2}
-          style={{ transition: 'all 90ms ease-out' }}
-        />
-        {/* Cap, with real travel into the barrel */}
+        {/* Surface-mount back box, showing as depth down the right and bottom */}
+        <rect x="17" y="20" width="52" height="40" rx="3" fill="#b9b6ab" />
+        <rect x="16" y="19" width="52" height="40" rx="3" fill="#cbc8bd" />
+
+        {/* White faceplate */}
+        <rect x="15" y="18" width="52" height="40" rx="3.5" fill="url(#platePlastic)" stroke="#c2bfb4" strokeWidth="0.8" />
+        {/* Moulded lip around the plate edge */}
+        <rect x="17.5" y="20.5" width="47" height="35" rx="2.5" fill="none" stroke="#ffffff" strokeWidth="0.7" opacity="0.75" />
+
+        {/* Phillips mounting screws, top and bottom centre */}
+        {[23.5, 54.5].map(cy => (
+          <g key={cy}>
+            <circle cx="41" cy={cy} r="2.9" fill="url(#screwHead)" stroke="#9a978d" strokeWidth="0.5" />
+            <path d={`M 39.3 ${cy} H 42.7 M 41 ${cy - 1.7} V ${cy + 1.7}`} stroke="#7d7a72" strokeWidth="0.7" strokeLinecap="round" />
+          </g>
+        ))}
+
+        {/* Recessed well the button sits in */}
+        <rect x="25" y="27.5" width="32" height="23" rx="2" fill="#c0bdb2" />
+
+        {/* The button itself: a wide plate that tips into the well when pressed */}
         <g
           style={{
-            transform: isPressed ? 'translateY(3px)' : 'translateY(0)',
-            transition: 'transform 90ms cubic-bezier(0.16, 1, 0.3, 1)'
+            transform: isPressed ? 'translateY(1.6px)' : 'translateY(0)',
+            transition: 'transform 80ms cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <circle
-            cx="42"
-            cy="37"
-            r={isPressed ? 13.5 : 15.5}
-            fill={hasCom ? 'url(#btnCharcoalGrad)' : 'url(#btnNOGrad)'}
-            stroke={isPressed ? '#14532d' : '#16a34a'}
-            strokeWidth="2"
-            filter={isPressed ? 'none' : 'drop-shadow(0 5px 7px rgba(0,0,0,0.5))'}
-            style={{ transition: 'all 90ms ease-out' }}
+          <rect
+            x="25"
+            y="27"
+            width="32"
+            height="22"
+            rx="2"
+            fill={isPressed ? 'url(#buttonFacePressed)' : 'url(#buttonFace)'}
+            stroke="#bcb9ae"
+            strokeWidth="0.7"
+            style={{ filter: isPressed ? 'none' : 'drop-shadow(0 2px 2.5px rgba(0,0,0,0.35))' }}
           />
-          <ellipse
-            cx="37"
-            cy="32"
-            rx={isPressed ? 4 : 5.6}
-            ry={isPressed ? 2.2 : 3.4}
-            fill="#ffffff"
-            opacity={isPressed ? 0.1 : 0.22}
-            style={{ transition: 'all 90ms ease-out' }}
+          {/* Top bevel catches the light until the button goes in */}
+          <path
+            d="M 26 28.6 H 56"
+            stroke="#ffffff"
+            strokeWidth="1"
+            opacity={isPressed ? 0.25 : 0.85}
+            strokeLinecap="round"
           />
+          <path d="M 26 47.6 H 56" stroke="#9d9a90" strokeWidth="0.8" opacity="0.6" strokeLinecap="round" />
+
+          {/* Key symbol, as printed on the real button */}
+          <g stroke="#16181c" fill="none" strokeLinecap="round">
+            <circle cx="35.5" cy="38" r="3.4" strokeWidth="2.1" />
+            <path d="M 38.9 38 H 48.6" strokeWidth="2.1" />
+            <path d="M 44.6 38 V 41.4" strokeWidth="1.9" />
+            <path d="M 48 38 V 40.6" strokeWidth="1.9" />
+          </g>
         </g>
-        {/* Generous grab area over the whole button */}
-        <circle cx="42" cy="37" r="23" fill="transparent" />
+
+        {/* Whole plate is the hit target */}
+        <rect x="15" y="18" width="52" height="40" fill="transparent" />
       </g>
 
       {/* ================= 2. THE SCHEMATIC — its own boxed panel ================= */}
@@ -205,11 +221,26 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
           <stop offset="60%" stopColor="#1f2937" />
           <stop offset="100%" stopColor="#111827" />
         </radialGradient>
-        <linearGradient id="btnRingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#8f97a6" />
-          <stop offset="45%" stopColor="#5b6473" />
-          <stop offset="100%" stopColor="#343b47" />
+        <linearGradient id="platePlastic" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="55%" stopColor="#f4f2ec" />
+          <stop offset="100%" stopColor="#e2dfd6" />
         </linearGradient>
+        <linearGradient id="buttonFace" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="60%" stopColor="#f2f0ea" />
+          <stop offset="100%" stopColor="#dbd8cf" />
+        </linearGradient>
+        <linearGradient id="buttonFacePressed" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#dddad1" />
+          <stop offset="55%" stopColor="#eae7e0" />
+          <stop offset="100%" stopColor="#f3f1eb" />
+        </linearGradient>
+        <radialGradient id="screwHead" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#f0eee8" />
+          <stop offset="60%" stopColor="#cfccc3" />
+          <stop offset="100%" stopColor="#a5a29a" />
+        </radialGradient>
       </defs>
     </g>
   );
@@ -725,51 +756,83 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       <rect x="18" y="0" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
       <rect x="18" y="119" width="48" height="5" rx="1.5" fill="#78829a" opacity="0.5" />
 
-      {/* ================= 1. THE PART — a real rocker, nothing drawn over it ========= */}
-      <text x="42" y="17" fill="#7b8496" fontSize="5.4" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.9">
+      {/* ================= 1. THE PART — surface-mount exit button ================= */}
+      <text x="42" y="15" fill="#7b8496" fontSize="5.2" fontWeight="900" fontFamily="monospace" textAnchor="middle" letterSpacing="0.8">
         MAINTAINED
       </text>
 
       <g className="cursor-pointer device-control" onPointerDown={handlePointerDown}>
-        {/* Panel bezel the rocker is mounted through */}
-        <rect x="16" y="19" width="52" height="38" rx="4" fill="url(#rockerBezelGrad)" stroke="#0d0f13" strokeWidth="1.3" />
-        {/* Cavity */}
-        <rect x="19" y="22" width="46" height="32" rx="3" fill="#05070a" />
-        {/* Position marks — the end that is DOWN is the live one */}
-        <text x="42" y="29" fill={isToggled ? '#3f4653' : '#94a3b8'} fontSize="6" fontWeight="900" fontFamily="monospace" textAnchor="middle">O</text>
-        <text x="42" y="53" fill={isToggled ? '#22c55e' : '#3f4653'} fontSize="6" fontWeight="900" fontFamily="monospace" textAnchor="middle">I</text>
+        {/* Surface-mount back box depth */}
+        <rect x="17" y="20" width="52" height="40" rx="3" fill="#b9b6ab" />
+        <rect x="16" y="19" width="52" height="40" rx="3" fill="#cbc8bd" />
 
-        {/* One paddle pivoting on its centre bar — it stays where you put it */}
+        {/* White faceplate */}
+        <rect x="15" y="18" width="52" height="40" rx="3.5" fill="url(#platePlasticM)" stroke="#c2bfb4" strokeWidth="0.8" />
+        <rect x="17.5" y="20.5" width="47" height="35" rx="2.5" fill="none" stroke="#ffffff" strokeWidth="0.7" opacity="0.75" />
+
+        {/* Phillips mounting screws */}
+        {[23.5, 54.5].map(cy => (
+          <g key={cy}>
+            <circle cx="41" cy={cy} r="2.9" fill="url(#screwHeadM)" stroke="#9a978d" strokeWidth="0.5" />
+            <path d={`M 39.3 ${cy} H 42.7 M 41 ${cy - 1.7} V ${cy + 1.7}`} stroke="#7d7a72" strokeWidth="0.7" strokeLinecap="round" />
+          </g>
+        ))}
+
+        {/* Recessed well */}
+        <rect x="25" y="27.5" width="32" height="23" rx="2" fill="#c0bdb2" />
+
+        {/* Latching button: it stays seated in the well until clicked again */}
         <g
           style={{
-            transform: isToggled ? 'rotate(12deg)' : 'rotate(-12deg)',
-            transformOrigin: '42px 38px',
-            transformBox: 'view-box',
-            transition: 'transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+            transform: isToggled ? 'translateY(1.8px)' : 'translateY(0)',
+            transition: 'transform 130ms cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
         >
           <rect
-            x="21"
+            x="25"
             y="27"
-            width="42"
+            width="32"
             height="22"
-            rx="2.5"
-            fill="url(#rockerPaddleGrad)"
-            stroke="#5b6473"
-            strokeWidth="0.9"
-            style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.7))' }}
+            rx="2"
+            fill={isToggled ? 'url(#buttonFacePressedM)' : 'url(#buttonFaceM)'}
+            stroke={isToggled ? '#a9a69c' : '#bcb9ae'}
+            strokeWidth="0.7"
+            style={{ filter: isToggled ? 'none' : 'drop-shadow(0 2px 2.5px rgba(0,0,0,0.35))' }}
           />
-          {[33, 38, 43].map(y => (
-            <line key={y} x1="29" y1={y} x2="55" y2={y} stroke="#22262e" strokeWidth="0.9" opacity="0.6" />
-          ))}
+          <path
+            d="M 26 28.6 H 56"
+            stroke="#ffffff"
+            strokeWidth="1"
+            opacity={isToggled ? 0.25 : 0.85}
+            strokeLinecap="round"
+          />
+          <path d="M 26 47.6 H 56" stroke="#9d9a90" strokeWidth="0.8" opacity="0.6" strokeLinecap="round" />
+
+          {/* Key symbol, printed on the button */}
+          <g stroke="#16181c" fill="none" strokeLinecap="round">
+            <circle cx="35.5" cy="38" r="3.4" strokeWidth="2.1" />
+            <path d="M 38.9 38 H 48.6" strokeWidth="2.1" />
+            <path d="M 44.6 38 V 41.4" strokeWidth="1.9" />
+            <path d="M 48 38 V 40.6" strokeWidth="1.9" />
+          </g>
+
+          {/* Held-in indicator, so a latched button is obvious at a glance */}
+          <circle
+            cx="29.5"
+            cy="31.5"
+            r="1.5"
+            fill={isToggled ? '#22c55e' : '#cbc8bd'}
+            stroke={isToggled ? '#15803d' : '#b0ada3'}
+            strokeWidth="0.4"
+            style={{ filter: isToggled ? 'drop-shadow(0 0 2.5px #22c55e)' : 'none' }}
+          />
         </g>
 
-        {/* Pivot bar */}
-        <rect x="15" y="36.5" width="54" height="3" rx="1.5" fill="#16191f" stroke="#2b313d" strokeWidth="0.5" />
+        <rect x="15" y="18" width="52" height="40" fill="transparent" />
 
-        {/* State chip on the bezel */}
-        <rect x="30" y="58" width="24" height="9" rx="2" fill={isToggled ? '#14532d' : '#2b313d'} stroke={isToggled ? '#22c55e' : '#4b5563'} strokeWidth="0.8" />
-        <text x="42" y="64.6" fill={isToggled ? '#dcfce7' : '#cbd5e1'} fontSize="5.6" fontWeight="900" fontFamily="monospace" textAnchor="middle" style={{ pointerEvents: 'none' }}>
+        {/* State chip below the plate */}
+        <rect x="30" y="60" width="24" height="8.5" rx="2" fill={isToggled ? '#14532d' : '#2b313d'} stroke={isToggled ? '#22c55e' : '#4b5563'} strokeWidth="0.8" />
+        <text x="42" y="66.3" fill={isToggled ? '#dcfce7' : '#cbd5e1'} fontSize="5.4" fontWeight="900" fontFamily="monospace" textAnchor="middle" style={{ pointerEvents: 'none' }}>
           {isToggled ? 'ON' : 'OFF'}
         </text>
       </g>
@@ -844,15 +907,26 @@ export const RockerSwitch2Pos: React.FC<ComponentProps> = ({ component }) => {
       </text>
 
       <defs>
-        <linearGradient id="rockerPaddleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#5b6473" />
-          <stop offset="55%" stopColor="#434a57" />
-          <stop offset="100%" stopColor="#2b313d" />
+        <linearGradient id="platePlasticM" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="55%" stopColor="#f4f2ec" />
+          <stop offset="100%" stopColor="#e2dfd6" />
         </linearGradient>
-        <linearGradient id="rockerBezelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#3a414e" />
-          <stop offset="100%" stopColor="#1d222b" />
+        <linearGradient id="buttonFaceM" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="60%" stopColor="#f2f0ea" />
+          <stop offset="100%" stopColor="#dbd8cf" />
         </linearGradient>
+        <linearGradient id="buttonFacePressedM" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#dddad1" />
+          <stop offset="55%" stopColor="#eae7e0" />
+          <stop offset="100%" stopColor="#f3f1eb" />
+        </linearGradient>
+        <radialGradient id="screwHeadM" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#f0eee8" />
+          <stop offset="60%" stopColor="#cfccc3" />
+          <stop offset="100%" stopColor="#a5a29a" />
+        </radialGradient>
       </defs>
     </g>
   );
