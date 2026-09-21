@@ -4,11 +4,8 @@ import type {
   Wire, 
   MultimeterState, 
   MultimeterMode, 
-  ProbeConnection, 
-  Achievement, 
-  GameScore 
+  ProbeConnection 
 } from '../types/game';
-import { levels } from '../levels/levelData';
 import { solveCircuit, queryMultimeter, type SolverResult } from '../simulation/circuitSolver';
 import {
   formatTimer6062Remaining,
@@ -25,17 +22,17 @@ import { soundManager } from '../audio/soundManager';
 import {
   buildCustomLabComponents,
   createCustomLabComponent,
+  findCustomLabPlacement,
   getCustomLabOption,
+  getCustomLabOptionId,
   MAX_CUSTOM_COMPONENTS
 } from '../customLab/componentCatalog';
-import confetti from 'canvas-confetti';
 
 let circuitEntitySequence = 0;
 const createCircuitEntityId = (prefix: 'wire' | 'junction') =>
   `${prefix}_${Date.now()}_${circuitEntitySequence++}`;
 
 interface GameState {
-  currentLevelIndex: number;
   components: CircuitComponent[];
   wires: Wire[];
   history: { components: CircuitComponent[]; wires: Wire[] }[];
@@ -45,28 +42,22 @@ interface GameState {
   probeMode: 'red' | 'black' | null;  // which probe is being placed (click-to-attach mode)
   isRunning: boolean;
   simulation: SolverResult;
-  levelCompleted: boolean;
-  successFeedback: string;
   
-  score: GameScore;
-  achievements: Achievement[];
-  recentAchievement: Achievement | null;
-  timeElapsed: number;
-  timerIntervalId: any | null;
   shortCircuitPopup: { show: boolean; quote: string } | null;
   dismissShortCircuitPopup: () => void;
   shortCircuitSmoke: { active: boolean; x: number; y: number } | null;
   
   // Actions
-  initLevel: (index: number, skipViewTransition?: boolean) => void;
-  resetLevel: () => void;
+  resetLab: () => void;
   /** Custom lab only: strip the bench back to the transformer and power supply. */
   clearCustomLabBench: () => void;
-  nextLevel: () => void;
   
   addComponent: (component: CircuitComponent) => void;
   removeComponent: (id: string) => void;
   updateComponentPosition: (id: string, x: number, y: number) => void;
+  beginComponentMove: (id: string) => void;
+  finishComponentMove: (id: string) => void;
+  cancelComponentMove: (id: string) => void;
   setComponentState: (id: string, key: string, value: any) => void;
   configureTimerRelay: (id: string, patch: Partial<Timer6062Config>) => void;
   pressButton: (id: string, pressed: boolean) => void;
@@ -119,39 +110,25 @@ interface GameState {
   setProbeMode: (mode: 'red' | 'black' | null) => void;
   toggleSimulation: () => void;
   
-  useHint: () => void;
-  hintRevealedAt: number;
   startTimer: () => void;
   stopTimer: () => void;
-  tickTimer: () => void;
   tickMotion: () => void;
-  checkAchievements: () => void;
-  dismissAchievement: () => void;
-  unlockAchievement: (id: string) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   bottomPanelOpen: boolean;
   toggleBottomPanel: () => void;
   setBottomPanelOpen: (open: boolean) => void;
-  viewMode: 'levels' | 'lab';
-  setViewMode: (mode: 'levels' | 'lab') => void;
+  viewMode: 'home' | 'lab';
+  setViewMode: (mode: 'home' | 'lab') => void;
   isCustomLab: boolean;
   customLabSelection: string[];
   setCustomLabSelection: (selection: string[]) => void;
   startCustomLab: (selection?: string[]) => void;
-  addCustomLabComponent: (optionId: string) => void;
-  removeCustomLabComponent: (optionId: string) => void;
+  addCustomLabComponent: (optionId: string, position?: { x: number; y: number }) => string | null;
+  duplicateCustomLabComponent: (componentId: string, position?: { x: number; y: number }) => string | null;
+  removeCustomLabComponent: (componentId: string) => void;
 }
-
-const initialAchievements: Achievement[] = [
-  { id: 'first_circuit', title: 'First Circuit', description: 'Power up your first lightbulb!', icon: 'Zap', unlocked: false },
-  { id: 'relay_master', title: 'Relay Master', description: 'Complete a control circuit using a relay.', icon: 'Cpu', unlocked: false },
-  { id: 'safety_first', title: 'Safety First', description: 'Wire an Emergency Stop safety loop.', icon: 'ShieldAlert', unlocked: false },
-  { id: 'door_unlocked', title: 'Access Granted', description: 'Wire a magnetic door lock card access system.', icon: 'KeySquare', unlocked: false },
-  { id: 'latch_expert', title: 'Latching Expert', description: 'Implement self-latching feedback relay control.', icon: 'Repeat', unlocked: false },
-  { id: 'multimeter_pro', title: 'Multimeter Pro', description: 'Probe a live circuit terminal to diagnose voltage.', icon: 'Gauge', unlocked: false }
-];
 
 interface Timer6062Runtime {
   lastPowered: boolean;
@@ -245,7 +222,7 @@ const clearAllCX12PlusRuntimes = () => {
   cx12PlusRuntimes.clear();
 };
 
-let motionIntervalId: any = null;
+let motionIntervalId: ReturnType<typeof setInterval> | null = null;
 
 const getAltronixTerminals = (component: CircuitComponent) => {
   const posName = component.terminals.find(t => t.id === 'pos')?.name || '(+)';
@@ -352,14 +329,18 @@ const normalizePowerStack = (components: CircuitComponent[]) => {
 };
 
 export const useGameStore = create<GameState>((set, get) => {
+  const componentMoveStarts = new Map<string, { x: number; y: number }>();
+  const getCustomLabSelection = (components: CircuitComponent[]) =>
+    components.map(getCustomLabOptionId).filter((id): id is string => Boolean(id));
+  const createSnapshot = (components: CircuitComponent[], wires: Wire[]) => ({
+    components: structuredClone(components),
+    wires: structuredClone(wires)
+  });
   
   const saveToHistory = (components: CircuitComponent[], wires: Wire[]) => {
     const { history } = get();
     // Keep history size to 30 elements
-    const newHistory = [...history, { 
-      components: JSON.parse(JSON.stringify(components)), 
-      wires: [...wires] 
-    }].slice(-30);
+    const newHistory = [...history, createSnapshot(components, wires)].slice(-30);
     
     set({ history: newHistory, redoHistory: [] });
   };
@@ -1122,40 +1103,7 @@ export const useGameStore = create<GameState>((set, get) => {
       );
     }
 
-    // Trigger success criteria check if simulation is running
-    let completed = false;
-    let feedback = '';
-
-    if (currentIsRunning && !effectiveSolverResult.shortCircuit && !get().isCustomLab) {
-      const level = levels[get().currentLevelIndex];
-      const isEnergizedFn = (cid: string) => effectiveSolverResult.energizedComponents.has(cid);
-      const testResult = level.successCriteria(
-        updatedComponents,
-        currentWires,
-        effectiveSolverResult.nodeVoltages,
-        isEnergizedFn
-      );
-      
-      if (testResult.success) {
-        completed = true;
-        // Trigger win effects
-        if (!get().levelCompleted) {
-          soundManager.playSuccess();
-          confetti({
-            particleCount: 80,
-            spread: 60,
-            origin: { y: 0.6 }
-          });
-          get().stopTimer();
-          // Unlock any achievements
-          get().checkAchievements();
-        }
-      } else {
-        feedback = testResult.feedback || '';
-      }
-    } else if (effectiveSolverResult.shortCircuit) {
-      feedback = '🚨 Short Circuit Detected! Current is flowing directly from Positive to Negative without passing through a load. Check your wiring loops.';
-      
+    if (effectiveSolverResult.shortCircuit) {
       if (currentIsRunning) {
         soundManager.playShortCircuit();
         currentIsRunning = false;
@@ -1209,18 +1157,16 @@ export const useGameStore = create<GameState>((set, get) => {
 
     set({
       components: updatedComponents,
+      ...(get().isCustomLab ? { customLabSelection: getCustomLabSelection(updatedComponents) } : {}),
       simulation: effectiveSolverResult,
       multimeter: {
         ...get().multimeter,
         reading: multimeterReading
-      },
-      levelCompleted: completed,
-      successFeedback: feedback
+      }
     });
   };
 
   return {
-    currentLevelIndex: 0,
     components: [],
     wires: [],
     history: [],
@@ -1244,34 +1190,27 @@ export const useGameStore = create<GameState>((set, get) => {
       diagnosticLog: [],
       faultLocation: null
     },
-    levelCompleted: false,
-    successFeedback: '',
-    
-    score: {
-      stars: 0,
-      score: 0,
-      timeElapsed: 0,
-      hintsUsed: 0,
-      errorsMade: 0
-    },
-    achievements: initialAchievements,
-    recentAchievement: null,
-    timeElapsed: 0,
-    timerIntervalId: null,
     sidebarOpen: true,
     toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
     setSidebarOpen: (open) => set({ sidebarOpen: open }),
     bottomPanelOpen: true,
     toggleBottomPanel: () => set(state => ({ bottomPanelOpen: !state.bottomPanelOpen })),
     setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
-    hintRevealedAt: 0,
-    viewMode: 'levels',
-    setViewMode: (mode) => set({ viewMode: mode }),
+    viewMode: 'home',
+    setViewMode: (mode) => {
+      if (mode === 'home') {
+        if (get().isRunning) get().toggleSimulation();
+        get().stopTimer();
+      } else get().startTimer();
+      set({ viewMode: mode });
+    },
     isCustomLab: false,
     customLabSelection: [],
-    setCustomLabSelection: (selection) => set({ customLabSelection: [...selection] }),
+    setCustomLabSelection: (selection) => set({
+      customLabSelection: selection.filter(id => getCustomLabOption(id)).slice(0, MAX_CUSTOM_COMPONENTS)
+    }),
     startCustomLab: (selection) => {
-      const selectedIds = [...new Set(selection ?? get().customLabSelection)]
+      const selectedIds = [...(selection ?? get().customLabSelection)]
         .filter(optionId => Boolean(getCustomLabOption(optionId)))
         .slice(0, MAX_CUSTOM_COMPONENTS);
       const customComponents = normalizePowerStack(buildCustomLabComponents(selectedIds));
@@ -1280,6 +1219,7 @@ export const useGameStore = create<GameState>((set, get) => {
       soundManager.stopAllHums();
       clearAllTimer6062Runtimes();
       clearAllCX12PlusRuntimes();
+      componentMoveStarts.clear();
 
       set({
         components: customComponents,
@@ -1287,23 +1227,13 @@ export const useGameStore = create<GameState>((set, get) => {
         history: [],
         redoHistory: [],
         isRunning: false,
-        levelCompleted: false,
-        successFeedback: '',
-        shortCircuitPopup: null,
+                shortCircuitPopup: null,
         shortCircuitSmoke: null,
-        timeElapsed: 0,
-        multimeter: {
+            multimeter: {
           mode: 'OFF',
           redProbe: null,
           blackProbe: null,
           reading: '---'
-        },
-        score: {
-          stars: 0,
-          score: 0,
-          timeElapsed: 0,
-          hintsUsed: 0,
-          errorsMade: 0
         },
         sidebarOpen: true,
         bottomPanelOpen: false,
@@ -1315,131 +1245,93 @@ export const useGameStore = create<GameState>((set, get) => {
       runSimulation(customComponents, [], false);
       get().startTimer();
     },
-    addCustomLabComponent: (optionId) => {
+    addCustomLabComponent: (optionId, position) => {
       const state = get();
       if (
         !state.isCustomLab ||
         !getCustomLabOption(optionId) ||
-        state.customLabSelection.includes(optionId) ||
-        state.customLabSelection.length >= MAX_CUSTOM_COMPONENTS
-      ) return;
+        getCustomLabSelection(state.components).length >= MAX_CUSTOM_COMPONENTS
+      ) return null;
 
-      const component = createCustomLabComponent(optionId, state.components);
-      if (!component) return;
+      const component = createCustomLabComponent(optionId, state.components, position);
+      if (!component) return null;
 
-      const newComponents = [...state.components, component];
+      const newComponents = [...state.components, ...normalizePowerStack([component])];
       saveToHistory(state.components, state.wires);
       set({
         components: newComponents,
-        customLabSelection: [...state.customLabSelection, optionId]
+        customLabSelection: getCustomLabSelection(newComponents)
       });
       runSimulation(newComponents, state.wires, state.isRunning);
       soundManager.playClick();
+      return component.id;
     },
-    removeCustomLabComponent: (optionId) => {
+    duplicateCustomLabComponent: (componentId, position) => {
       const state = get();
-      if (!state.isCustomLab || !state.customLabSelection.includes(optionId)) return;
-
-      const componentId = `custom_${optionId}`;
-      const newComponents = state.components.filter(component => component.id !== componentId);
-      const newWires = state.wires.filter(wire =>
-        wire.fromComponentId !== componentId && wire.toComponentId !== componentId
-      );
-      const redProbe = state.multimeter.redProbe?.componentId === componentId ? null : state.multimeter.redProbe;
-      const blackProbe = state.multimeter.blackProbe?.componentId === componentId ? null : state.multimeter.blackProbe;
-
-      clearTimer6062Runtime(componentId);
-      clearCX12PlusRuntime(componentId);
+      const source = state.components.find(component => component.id === componentId);
+      const optionId = source && getCustomLabOptionId(source);
+      if (!state.isCustomLab || !source || !optionId ||
+        getCustomLabSelection(state.components).length >= MAX_CUSTOM_COMPONENTS) return null;
+      const instance = createCustomLabComponent(optionId, state.components, position ?? {
+        x: source.x + 60, y: source.y + 60
+      });
+      if (!instance) return null;
+      const duplicate = {
+        ...structuredClone(source),
+        id: instance.id,
+        label: instance.label,
+        catalogId: optionId,
+        ...findCustomLabPlacement(source, state.components, position ?? { x: source.x + 60, y: source.y + 60 })
+      };
+      const components = [...state.components, ...normalizePowerStack([duplicate])];
 
       saveToHistory(state.components, state.wires);
       set({
-        components: newComponents,
-        wires: newWires,
-        customLabSelection: state.customLabSelection.filter(id => id !== optionId),
-        multimeter: { ...state.multimeter, redProbe, blackProbe }
+        components,
+        customLabSelection: getCustomLabSelection(components)
       });
-      runSimulation(newComponents, newWires, state.isRunning);
+      runSimulation(components, state.wires, state.isRunning);
+      soundManager.playClick();
+      return duplicate.id;
+    },
+    removeCustomLabComponent: (componentId) => {
+      const state = get();
+      if (!state.isCustomLab) return;
+      const component = state.components.find(candidate => candidate.id === componentId && getCustomLabOptionId(candidate)) ??
+        state.components.findLast(candidate => getCustomLabOptionId(candidate) === componentId);
+      if (!component) return;
+      get().removeComponent(component.id);
       soundManager.playClick();
     },
     shortCircuitPopup: null,
     dismissShortCircuitPopup: () => set({ shortCircuitPopup: null }),
     shortCircuitSmoke: null,
 
-    initLevel: (index, skipViewTransition = false) => {
-      const level = levels[index];
-      if (!level) return;
-
-      // Stop previous timer and hums
-      get().stopTimer();
-      soundManager.stopAllHums();
-      clearAllTimer6062Runtimes();
-      clearAllCX12PlusRuntimes();
-
-      // Deep copy level components
-      const newComps = normalizePowerStack(JSON.parse(JSON.stringify(level.preplacedComponents)));
-      const newWires = [...level.preplacedWires];
-
-      set({
-        currentLevelIndex: index,
-        components: newComps,
-        wires: newWires,
-        history: [],
-        redoHistory: [],
-        isRunning: false,
-        levelCompleted: false,
-        successFeedback: '',
-        shortCircuitPopup: null,
-        shortCircuitSmoke: null,
-        timeElapsed: 0,
-        multimeter: {
-          mode: 'OFF',
-          redProbe: null,
-          blackProbe: null,
-          reading: '---'
-        },
-        score: {
-          stars: 0,
-          score: 0,
-          timeElapsed: 0,
-          hintsUsed: 0,
-          errorsMade: 0
-        },
-        sidebarOpen: true,
-        bottomPanelOpen: true,
-        isCustomLab: false,
-        ...(skipViewTransition ? {} : { viewMode: 'lab' })
-      });
-
-      // Solve initial states
-      runSimulation(newComps, newWires, false);
-      get().startTimer();
-    },
-
-    resetLevel: () => {
-      const { initLevel, currentLevelIndex, isCustomLab, startCustomLab, customLabSelection } = get();
-      if (isCustomLab) {
-        startCustomLab(customLabSelection);
-        soundManager.playButton();
-        return;
-      }
-      initLevel(currentLevelIndex);
+    resetLab: () => {
+      const { startCustomLab, components, wires, history } = get();
+      const snapshot = createSnapshot(components, wires);
+      startCustomLab(getCustomLabSelection(components));
+      set({ history: [...history, snapshot].slice(-30), redoHistory: [] });
       soundManager.playButton();
     },
 
     clearCustomLabBench: () => {
-      const { isCustomLab, startCustomLab } = get();
-      if (!isCustomLab) return;
-      // An empty selection rebuilds the bench from the fixed power stack alone,
-      // so the transformer and power supply survive and everything else goes.
-      startCustomLab([]);
+      const state = get();
+      if (!state.isCustomLab) return;
+      const components = state.components.filter(component =>
+        component.id === 'custom_transformer' || component.id === 'custom_psu'
+      );
+      if (components.length === state.components.length && state.wires.length === 0) return;
+      saveToHistory(state.components, state.wires);
+      componentMoveStarts.clear();
+      clearAllTimer6062Runtimes();
+      clearAllCX12PlusRuntimes();
+      soundManager.stopAllHums();
+      set({ components, wires: [], customLabSelection: [], isRunning: false,
+        multimeter: { ...state.multimeter, redProbe: null, blackProbe: null },
+        shortCircuitPopup: null, shortCircuitSmoke: null });
+      runSimulation(components, [], false);
       soundManager.playButton();
-    },
-
-    nextLevel: () => {
-      const { currentLevelIndex, initLevel } = get();
-      if (currentLevelIndex < levels.length - 1) {
-        initLevel(currentLevelIndex + 1);
-      }
     },
 
     addComponent: (comp) => {
@@ -1450,6 +1342,8 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     removeComponent: (id) => {
+      if (!get().components.some(component => component.id === id)) return;
+      componentMoveStarts.delete(id);
       saveToHistory(get().components, get().wires);
       clearTimer6062Runtime(id);
       clearCX12PlusRuntime(id);
@@ -1464,16 +1358,40 @@ export const useGameStore = create<GameState>((set, get) => {
       set({ 
         components: newComponents, 
         wires: newWires,
+        ...(get().isCustomLab ? { customLabSelection: getCustomLabSelection(newComponents) } : {}),
         multimeter: { ...get().multimeter, redProbe, blackProbe }
       });
       runSimulation(newComponents, newWires, get().isRunning);
     },
 
     updateComponentPosition: (id, x, y) => {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
       const newComponents = get().components.map(c => 
         c.id === id ? { ...c, x, y } : c
       );
       set({ components: newComponents });
+    },
+
+    beginComponentMove: (id) => {
+      const component = get().components.find(candidate => candidate.id === id);
+      if (component && !componentMoveStarts.has(id)) {
+        componentMoveStarts.set(id, { x: component.x, y: component.y });
+      }
+    },
+
+    finishComponentMove: (id) => {
+      const start = componentMoveStarts.get(id);
+      componentMoveStarts.delete(id);
+      const { components, wires } = get();
+      const component = components.find(candidate => candidate.id === id);
+      if (!start || !component || (start.x === component.x && start.y === component.y)) return;
+      saveToHistory(components.map(candidate => candidate.id === id ? { ...candidate, ...start } : candidate), wires);
+    },
+
+    cancelComponentMove: (id) => {
+      const start = componentMoveStarts.get(id);
+      componentMoveStarts.delete(id);
+      if (start) get().updateComponentPosition(id, start.x, start.y);
     },
 
     setComponentState: (id, key, value) => {
@@ -1872,12 +1790,21 @@ export const useGameStore = create<GameState>((set, get) => {
 
       const prev = history[history.length - 1];
       const newHistory = history.slice(0, -1);
+      componentMoveStarts.clear();
+      clearAllTimer6062Runtimes();
+      clearAllCX12PlusRuntimes();
+      const validIds = new Set(prev.components.map(component => component.id));
+      const { multimeter } = get();
 
       set({
         history: newHistory,
-        redoHistory: [...redoHistory, { components: JSON.parse(JSON.stringify(components)), wires: [...wires] }],
+        redoHistory: [...redoHistory, createSnapshot(components, wires)].slice(-30),
         components: prev.components,
-        wires: prev.wires
+        wires: prev.wires,
+        ...(get().isCustomLab ? { customLabSelection: getCustomLabSelection(prev.components) } : {}),
+        multimeter: { ...multimeter,
+          redProbe: multimeter.redProbe && validIds.has(multimeter.redProbe.componentId) ? multimeter.redProbe : null,
+          blackProbe: multimeter.blackProbe && validIds.has(multimeter.blackProbe.componentId) ? multimeter.blackProbe : null }
       });
 
       soundManager.playClick();
@@ -1890,12 +1817,21 @@ export const useGameStore = create<GameState>((set, get) => {
 
       const next = redoHistory[redoHistory.length - 1];
       const newRedoHistory = redoHistory.slice(0, -1);
+      componentMoveStarts.clear();
+      clearAllTimer6062Runtimes();
+      clearAllCX12PlusRuntimes();
+      const validIds = new Set(next.components.map(component => component.id));
+      const { multimeter } = get();
 
       set({
-        history: [...history, { components: JSON.parse(JSON.stringify(components)), wires: [...wires] }],
+        history: [...history, createSnapshot(components, wires)].slice(-30),
         redoHistory: newRedoHistory,
         components: next.components,
-        wires: next.wires
+        wires: next.wires,
+        ...(get().isCustomLab ? { customLabSelection: getCustomLabSelection(next.components) } : {}),
+        multimeter: { ...multimeter,
+          redProbe: multimeter.redProbe && validIds.has(multimeter.redProbe.componentId) ? multimeter.redProbe : null,
+          blackProbe: multimeter.blackProbe && validIds.has(multimeter.blackProbe.componentId) ? multimeter.blackProbe : null }
       });
 
       soundManager.playClick();
@@ -1928,15 +1864,6 @@ export const useGameStore = create<GameState>((set, get) => {
         }
       });
 
-      // Trigger achievement if user probes a live terminal
-      if (probe && get().isRunning) {
-        const solved = get().simulation;
-        const termKey = `${probe.componentId}:${probe.terminalId}`;
-        if (solved.nodeVoltages[termKey] > 0) {
-          setTimeout(() => get().unlockAchievement('multimeter_pro'), 500);
-        }
-      }
-
       runSimulation(get().components, get().wires, get().isRunning);
     },
 
@@ -1951,36 +1878,13 @@ export const useGameStore = create<GameState>((set, get) => {
       runSimulation(get().components, get().wires, nextRunning);
     },
 
-    useHint: () => {
-      const score = { ...get().score, hintsUsed: get().score.hintsUsed + 1 };
-      set({ score, hintRevealedAt: Date.now() });
-    },
-
+    // Only the physical simulation needs a clock; idle editing never ticks the UI.
     startTimer: () => {
-      if (get().timerIntervalId) return;
-      const interval = setInterval(() => {
-        get().tickTimer();
-      }, 1000);
-      set({ timerIntervalId: interval });
-
-      if (!motionIntervalId) {
-        motionIntervalId = setInterval(() => {
-          get().tickMotion();
-        }, 80);
-      }
+      if (!motionIntervalId) motionIntervalId = setInterval(() => get().tickMotion(), 80);
     },
-
     stopTimer: () => {
-      const { timerIntervalId } = get();
-      if (timerIntervalId) {
-        clearInterval(timerIntervalId);
-        set({ timerIntervalId: null });
-      }
-    },
-
-    tickTimer: () => {
-      const nextTime = get().timeElapsed + 1;
-      set({ timeElapsed: nextTime });
+      if (motionIntervalId) clearInterval(motionIntervalId);
+      motionIntervalId = null;
     },
 
     tickMotion: () => {
@@ -2044,48 +1948,5 @@ export const useGameStore = create<GameState>((set, get) => {
       }
     },
 
-    checkAchievements: () => {
-      const { currentLevelIndex, achievements } = get();
-      
-      const unlock = (id: string) => {
-        const ach = achievements.find(a => a.id === id);
-        if (ach && !ach.unlocked) {
-          const updated = achievements.map(a => 
-            a.id === id ? { ...a, unlocked: true, unlockedAt: new Date().toLocaleTimeString() } : a
-          );
-          set({ 
-            achievements: updated,
-            recentAchievement: { ...ach, unlocked: true }
-          });
-          soundManager.playSuccess();
-        }
-      };
-
-      // Achievement triggers
-      if (currentLevelIndex === 0) unlock('first_circuit');
-      if (currentLevelIndex >= 5) unlock('relay_master');
-      if (currentLevelIndex === 7) unlock('safety_first');
-      if (currentLevelIndex === 8) unlock('door_unlocked');
-      if (currentLevelIndex === 11) unlock('latch_expert');
-    },
-
-    dismissAchievement: () => {
-      set({ recentAchievement: null });
-    },
-
-    unlockAchievement: (id: string) => {
-      const { achievements } = get();
-      const ach = achievements.find(a => a.id === id);
-      if (ach && !ach.unlocked) {
-        const updated = achievements.map(a => 
-          a.id === id ? { ...a, unlocked: true, unlockedAt: new Date().toLocaleTimeString() } : a
-        );
-        set({ 
-          achievements: updated,
-          recentAchievement: { ...ach, unlocked: true }
-        });
-        soundManager.playSuccess();
-      }
-    }
   };
 });

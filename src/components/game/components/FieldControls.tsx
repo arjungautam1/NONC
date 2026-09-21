@@ -138,17 +138,20 @@ export const KeySwitch: React.FC<FieldControlProps> = ({ component }) => {
   const toggleSwitch = useGameStore(state => state.toggleSwitch);
   const isOn = Boolean(component.state.toggled);
 
-  const handleToggle = (event: React.PointerEvent<SVGGElement>) => {
+  const handleToggle = (event: React.MouseEvent<SVGGElement>) => {
     event.stopPropagation();
     toggleSwitch(component.id);
   };
 
   return (
-    <g className="cursor-pointer select-none" onPointerUp={handleToggle}>
+    <g className="select-none">
       <rect x="-46" y="-52" width="92" height="104" rx="9" fill="#e5e7eb" stroke="#94a3b8" strokeWidth="2.5" />
       <rect x="-39" y="-45" width="78" height="90" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
       <text x="0" y="-32" fill="#475569" fontSize="6.5" fontWeight="900" textAnchor="middle">MAINTAINED KEY</text>
 
+      <g className="device-control cursor-pointer" role="button" tabIndex={0} aria-label={`Turn ${component.label} ${isOn ? 'off' : 'on'}`}
+        onPointerDown={event => event.stopPropagation()} onClick={handleToggle}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); toggleSwitch(component.id); } }}>
       <circle cx="0" cy="0" r="24" fill="#1e293b" stroke="#64748b" strokeWidth="3" />
       <circle cx="0" cy="0" r="15" fill="#0f172a" stroke={isOn ? '#22c55e' : '#94a3b8'} strokeWidth="2" />
       <g
@@ -158,6 +161,7 @@ export const KeySwitch: React.FC<FieldControlProps> = ({ component }) => {
         <rect x="-4" y="-7" width="29" height="14" rx="5" fill="#d1d5db" stroke="#64748b" strokeWidth="1.5" />
         <circle cx="-1" cy="0" r="4" fill="#475569" />
         <circle cx="20" cy="0" r="2.5" fill="#0f172a" />
+      </g>
       </g>
 
       <text x="-24" y="32" fill={!isOn ? '#0f172a' : '#94a3b8'} fontSize="7" fontWeight="900">OFF</text>

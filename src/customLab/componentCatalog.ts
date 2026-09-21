@@ -24,7 +24,7 @@ export interface CustomLabOption {
   template: ComponentTemplate;
 }
 
-export const MAX_CUSTOM_COMPONENTS = 8;
+export const MAX_CUSTOM_COMPONENTS = 32;
 
 export const customLabCategories: Array<{
   id: CustomLabCategory;
@@ -583,6 +583,12 @@ export const customLabOptions: CustomLabOption[] = [
 
 export const getCustomLabOption = (id: string) => customLabOptions.find(option => option.id === id);
 
+/** Older benches used the catalog ID as their instance ID. */
+export const getCustomLabOptionId = (component: CircuitComponent): string | undefined => {
+  if (component.catalogId && getCustomLabOption(component.catalogId)) return component.catalogId;
+  return customLabOptions.find(option => component.id === `custom_${option.id}`)?.id;
+};
+
 const createPowerStack = (): CircuitComponent[] => [
   {
     id: 'custom_transformer',
@@ -612,48 +618,101 @@ const createPowerStack = (): CircuitComponent[] => [
   }
 ];
 
-const placementSlots = [
-  { x: 365, y: 145 },
-  { x: 585, y: 145 },
-  { x: 805, y: 145 },
-  { x: 365, y: 315 },
-  { x: 585, y: 315 },
-  { x: 805, y: 315 },
-  { x: 365, y: 485 },
-  { x: 585, y: 485 },
-  { x: 805, y: 485 }
-];
+let customInstanceSequence = 0;
+
+// Include labels and terminals in the footprint so new devices remain easy to grab.
+const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals' | 'state'>) => {
+  const sizes: Partial<Record<ComponentType, [number, number]>> = {
+    transformer: [160, 100], power_supply: [100, 90], timer_relay: [95, 120],
+    relay: [70, 95], relay_dpdt: [85, 120], relay_rb1224: [85, 115],
+    relay_rbsnttl: [95, 120], pull_station: [85, 145], key_switch: [80, 105],
+    card_reader: [60, 110], wave_sensor: [75, 140], maglock: [90, 80],
+    door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100],
+    cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
+    wireless_transmitter: [65, 110], seco_larm_strobe_siren: [80, 115]
+  };
+  const [width, height] = sizes[component.type] ?? [80, 85];
+  // These baseline sizes include the standard display scale; honour enlarged devices too.
+  const scale = Math.max(1, Number(component.state.scale) || 1);
+  return {
+    x: Math.max(width, ...component.terminals.map(terminal => Math.abs(terminal.x) + 25)) * scale,
+    y: Math.max(height, ...component.terminals.map(terminal => Math.abs(terminal.y) + 30)) * scale
+  };
+};
+
+export const findCustomLabPlacement = (
+  template: Pick<CircuitComponent, 'type' | 'terminals' | 'state'>,
+  existingComponents: CircuitComponent[],
+  position?: { x: number; y: number }
+) => {
+  const size = getPlacementSize(template);
+  const requestedPosition = position && Number.isFinite(position.x) && Number.isFinite(position.y);
+  const origin = requestedPosition
+    ? { x: position.x, y: position.y }
+    : { x: 400, y: Math.max(170, size.y + 24) };
+  const hasSpace = (point: { x: number; y: number }) =>
+    (requestedPosition || (point.x >= size.x + 24 && point.y >= size.y + 24)) && existingComponents.every(component => {
+      const other = getPlacementSize(component);
+      return Math.abs(component.x - point.x) >= size.x + other.x + 28 ||
+        Math.abs(component.y - point.y) >= size.y + other.y + 28;
+    });
+
+  if (hasSpace(origin)) return origin;
+  // Expanding rings have no reused fallback slot, even after the original bench fills up.
+  for (let ring = 1; ; ring += 1) {
+    const candidates: { x: number; y: number }[] = [];
+    for (let offset = -ring; offset <= ring; offset += 1) {
+      candidates.push(
+        { x: origin.x + offset * 100, y: origin.y + ring * 100 },
+        { x: origin.x + offset * 100, y: origin.y - ring * 100 }
+      );
+      if (Math.abs(offset) !== ring) candidates.push(
+        { x: origin.x + ring * 100, y: origin.y + offset * 100 },
+        { x: origin.x - ring * 100, y: origin.y + offset * 100 }
+      );
+    }
+    candidates.sort((a, b) =>
+      Math.hypot(a.x - origin.x, a.y - origin.y) - Math.hypot(b.x - origin.x, b.y - origin.y) ||
+      a.y - b.y || a.x - b.x
+    );
+    const available = candidates.find(hasSpace);
+    if (available) return available;
+  }
+};
 
 export const createCustomLabComponent = (
   optionId: string,
-  existingComponents: CircuitComponent[] = []
+  existingComponents: CircuitComponent[] = [],
+  position?: { x: number; y: number }
 ): CircuitComponent | null => {
   const option = getCustomLabOption(optionId);
   if (!option) return null;
 
-  const availableSlot = placementSlots.find(slot =>
-    existingComponents.every(component =>
-      Math.abs(component.x - slot.x) > 90 || Math.abs(component.y - slot.y) > 75
-    )
-  );
-  const fallbackIndex = Math.max(0, existingComponents.filter(component => component.id.startsWith('custom_')).length - 2);
-  const slot = availableSlot ?? placementSlots[fallbackIndex % placementSlots.length];
+  const slot = findCustomLabPlacement(option.template, existingComponents, position);
+  let id: string;
+  do {
+    id = `custom_${option.id}_${Date.now().toString(36)}_${customInstanceSequence++}`;
+  } while (existingComponents.some(component => component.id === id));
+  const instanceNumber = existingComponents
+    .filter(component => getCustomLabOptionId(component) === optionId)
+    .reduce((highest, component) => Math.max(highest, Number(component.label.match(/#(\d+)$/)?.[1]) || 1), 0) + 1;
 
   return {
-    id: `custom_${option.id}`,
+    id,
+    catalogId: option.id,
     type: option.template.type,
     x: slot.x,
     y: slot.y,
-    label: option.template.label,
+    label: `${option.template.label} #${instanceNumber}`,
     terminals: option.template.terminals.map(terminal => ({ ...terminal })),
-    state: { ...option.template.state }
+    state: structuredClone(option.template.state)
   };
 };
 
 export const buildCustomLabComponents = (selectedIds: string[]): CircuitComponent[] => {
   const components = createPowerStack();
 
-  selectedIds.forEach(optionId => {
+  selectedIds.filter(optionId => getCustomLabOption(optionId)).slice(0, MAX_CUSTOM_COMPONENTS).forEach(optionId => {
     const component = createCustomLabComponent(optionId, components);
     if (component) components.push(component);
   });

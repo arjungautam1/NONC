@@ -83,6 +83,8 @@ export interface Terminal {
 
 export interface CircuitComponent {
   id: string;
+  /** Catalog type for a custom-lab instance; IDs identify individual devices. */
+  catalogId?: string;
   type: ComponentType;
   x: number;
   y: number;
@@ -122,37 +124,3 @@ export interface MultimeterState {
   reading: string;
 }
 
-export interface Level {
-  id: number;
-  title: string;
-  description: string;
-  instructions: string[];
-  goals: string[];
-  inventory: ComponentType[];
-  preplacedComponents: CircuitComponent[];
-  preplacedWires: Wire[];
-  hints: string[];
-  successCriteria: (
-    components: CircuitComponent[],
-    wires: Wire[],
-    nodeVoltages: Record<string, number>,
-    isEnergized: (cid: string) => boolean
-  ) => { success: boolean; feedback?: string };
-}
-
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  unlockedAt?: string;
-}
-
-export interface GameScore {
-  stars: number;
-  score: number;
-  timeElapsed: number;
-  hintsUsed: number;
-  errorsMade: number;
-}

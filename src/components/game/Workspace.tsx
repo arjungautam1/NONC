@@ -7,8 +7,8 @@ import { RBSNTTL_TERMINAL_POSITIONS } from './components/rbsnttlPinout';
 import { TIMER_6062_SCALE, TIMER_6062_TERMINAL_POSITIONS } from '../../simulation/timer6062';
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
-import { levels } from '../../levels/levelData';
-import { ArrowRight, CheckCircle2, Download, Info, Star, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Copy, Download, Grid2X2, Hand, Info, Maximize, MousePointer2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { getCustomLabOptionId, MAX_CUSTOM_COMPONENTS } from '../../customLab/componentCatalog';
 import { soundManager } from '../../audio/soundManager';
 import { Timer6062Panel } from './Timer6062Panel';
 
@@ -130,25 +130,32 @@ export const Workspace: React.FC = () => {
     setProbe,
     probeMode,
     setProbeMode,
-    currentLevelIndex,
-    levelCompleted,
-    timeElapsed,
-    score,
-    nextLevel,
-    setViewMode,
     sidebarOpen,
-    setSidebarOpen,
     bottomPanelOpen,
-    setBottomPanelOpen,
     shortCircuitSmoke,
     isCustomLab,
-    removeCustomLabComponent
+    removeCustomLabComponent,
+    addCustomLabComponent,
+    duplicateCustomLabComponent,
+    beginComponentMove,
+    finishComponentMove,
+    cancelComponentMove
   } = useGameStore();
 
   const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
   const [zoomScale, setZoomScale] = useState<number>(1.0);
   const [draggedCompId, setDraggedCompId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragSession = useRef<{ id: string; pointerId: number; startX: number; startY: number; offsetX: number; offsetY: number; moved: boolean } | null>(null);
+  const dragFrame = useRef<number | null>(null);
+  const pendingMove = useRef<{ id: string; x: number; y: number } | null>(null);
+  const suppressDeviceClick = useRef(false);
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const [canvasTool, setCanvasTool] = useState<'select' | 'pan'>('select');
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const panSession = useRef<{ x: number; y: number; shiftX: number; shiftY: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [libraryDropPoint, setLibraryDropPoint] = useState<{ x: number; y: number } | null>(null);
+  const [canvasNotice, setCanvasNotice] = useState('');
   // Figma-style smart guides: the axis a dragged device is currently lined up on.
   const [alignGuides, setAlignGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
   // Short-lived release animation played where a device was just set down.
@@ -195,14 +202,9 @@ export const Workspace: React.FC = () => {
 
   // Wire size adjust state
   const [wireSize, setWireSize] = useState<'normal' | 'thin'>('thin');
-  const [completionBarDismissed, setCompletionBarDismissed] = useState(false);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const wireDragMovedRef = useRef(false);
-
-  useEffect(() => {
-    if (!levelCompleted) setCompletionBarDismissed(false);
-  }, [currentLevelIndex, levelCompleted]);
 
   useEffect(() => {
     if (selectedTimerId && !components.some(component => component.id === selectedTimerId && component.type === 'timer_relay')) {
@@ -210,10 +212,15 @@ export const Workspace: React.FC = () => {
     }
   }, [components, selectedTimerId]);
 
+  useEffect(() => {
+    if (selectedCompId && !components.some(component => component.id === selectedCompId)) setSelectedCompId(null);
+    if (drawingWireStart && !components.some(component => component.id === drawingWireStart.componentId)) {
+      setDrawingWireStart(null); setTempWaypoints([]); setDraggingWireEndpoint(null);
+    }
+  }, [components, selectedCompId, drawingWireStart]);
+
   const startFocusedWireDrawing = (start: { componentId: string; terminalId: string }) => {
     setDrawingWireStart(start);
-    setSidebarOpen(false);
-    setBottomPanelOpen(false);
   };
 
   const cancelWireDrawing = () => {
@@ -224,23 +231,15 @@ export const Workspace: React.FC = () => {
     setPointerDownCoords(null);
   };
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      setProbeMode(null);
-      setDrawingWireStart(null);
-      setDraggingWireEndpoint(null);
-      setHoveredTerminal(null);
-      setTempWaypoints([]);
-      setPointerDownCoords(null);
-      setDraggingWireRoute(null);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setProbeMode]);
+  useEffect(() => () => {
+    if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
+    if (dropFxTimer.current) window.clearTimeout(dropFxTimer.current);
+    if (deleteBurstTimer.current) window.clearTimeout(deleteBurstTimer.current);
+    if (dragSession.current) useGameStore.getState().cancelComponentMove(dragSession.current.id);
+  }, []);
 
   // Listen to window resize to recalculate dynamic DMM anchor positions
-  const [resizeToggle, setResizeToggle] = useState(0);
+  const [, setResizeToggle] = useState(0);
   useEffect(() => {
     const handleResize = () => setResizeToggle(prev => prev + 1);
     window.addEventListener('resize', handleResize);
@@ -266,109 +265,9 @@ export const Workspace: React.FC = () => {
     return () => timers.forEach(window.clearTimeout);
   }, [sidebarOpen, bottomPanelOpen]);
 
-  const [offsets, setOffsets] = useState({ shiftX: 0, shiftY: 0 });
+  const [offsets, setOffsets] = useState({ shiftX: 20, shiftY: 20 });
 
-  const primaryTransformerId = components.find(component => component.type === 'transformer')?.id;
-  const primaryPowerSupplyId = components.find(component => component.type === 'power_supply')?.id;
-
-  // The project power station is a fixed part of the connection page rather
-  // than part of the circuit that is dynamically centered. Coordinates are
-  // converted back into the scaled SVG space so its terminals and wires still
-  // behave exactly like every other circuit component.
-  const componentLayoutKey = components.map(component => component.id).join('|');
-
-  const getComponentCanvasPosition = (component: CircuitComponent) => {
-    const sourceLeft = (20 - offsets.shiftX) / zoomScale;
-    const sourceTop = (20 - offsets.shiftY) / zoomScale;
-
-    if (component.id === primaryTransformerId) {
-      return { x: sourceLeft + 151, y: sourceTop + 85 };
-    }
-
-    if (component.id === primaryPowerSupplyId) {
-      return { x: sourceLeft + 151, y: sourceTop + 295 };
-    }
-
-    // Keep project devices out of the fixed source column. This is especially
-    // important in compact projects whose original first control was placed at
-    // the same coordinates now occupied by the Altronix supply.
-    const screenX = offsets.shiftX + component.x * zoomScale;
-    const screenY = offsets.shiftY + component.y * zoomScale;
-    const sourceStationRight = 20 + 259 * zoomScale;
-    const sourceStationBottom = 20 + 360 * zoomScale;
-    const overlapsSourceColumn =
-      screenX < sourceStationRight + 80 * zoomScale &&
-      screenY < sourceStationBottom + 30 * zoomScale;
-
-    if (overlapsSourceColumn) {
-      return {
-        x: (sourceStationRight + 90 * zoomScale - offsets.shiftX) / zoomScale,
-        y: component.y
-      };
-    }
-
-    return { x: component.x, y: component.y };
-  };
-
-  // Center components dynamically
-  useEffect(() => {
-    if (!svgRef.current || components.length === 0) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const svgWidth = rect.width;
-    const svgHeight = rect.height;
-
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-
-    const projectComponents = components.filter(component =>
-      component.type !== 'transformer' && component.type !== 'power_supply'
-    );
-    const componentsToCenter = projectComponents.length > 0 ? projectComponents : components;
-
-    componentsToCenter.forEach(c => {
-      const halfWidth = c.type === 'actuator'
-        ? 170
-        : c.type === 'sliding_gate'
-        ? 125
-        : c.type === 'parking_gate'
-        ? 105
-        : c.type === 'power_supply'
-          ? 85
-          : 70;
-      const halfHeight = c.type === 'pull_station'
-        ? 112
-        : c.type === 'key_switch'
-        ? 82
-        : c.type === 'relay_dpdt'
-        ? 92
-        : c.type === 'transformer' || c.type === 'power_supply'
-        ? 85
-        : 70;
-      minX = Math.min(minX, c.x - halfWidth);
-      maxX = Math.max(maxX, c.x + halfWidth);
-      minY = Math.min(minY, c.y - halfHeight);
-      maxY = Math.max(maxY, c.y + halfHeight);
-    });
-
-    const compWidth = maxX - minX;
-    const compHeight = maxY - minY;
-    const bottomOverlayHeight = bottomPanelOpen ? (window.innerWidth >= 768 ? 160 : 176) : 0;
-    const usableHeight = Math.max(240, svgHeight - bottomOverlayHeight);
-    const targetCenterX = svgWidth / 2;
-    const targetCenterY = usableHeight / 2;
-    const compCenterX = minX + compWidth / 2;
-    const compCenterY = minY + compHeight / 2;
-
-    setOffsets({
-      shiftX: targetCenterX - compCenterX * zoomScale,
-      shiftY: targetCenterY - compCenterY * zoomScale
-    });
-    // Re-centre only when the SET of components changes (added/removed/level
-    // loaded). Depending on `components` itself re-ran this on every drag, which
-    // shifted the canvas back and made components feel unmovable.
-  }, [componentLayoutKey, zoomScale, sidebarOpen, bottomPanelOpen, resizeToggle]);
+  const getComponentCanvasPosition = (component: CircuitComponent) => ({ x: component.x, y: component.y });
 
   // Convert screen coordinates of DMM ports to SVG coordinates relative to the SVG container
   const getPortCoords = (portId: string) => {
@@ -392,7 +291,7 @@ export const Workspace: React.FC = () => {
   };
 
   // Convert screen coordinates to SVG coordinates
-  const getSVGCoords = (e: React.PointerEvent | MouseEvent) => {
+  const getSVGCoords = (e: { clientX: number; clientY: number }) => {
     if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
     return {
@@ -425,7 +324,7 @@ export const Workspace: React.FC = () => {
     const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `schematic_level_${currentLevelIndex + 1}.svg`;
+    link.download = 'custom-lab-schematic.svg';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -521,141 +420,225 @@ export const Workspace: React.FC = () => {
     return base;
   };
 
-  // Keyboard listener to delete selected component in Custom Lab
+  const revealComponent = (componentId: string, forceCenter = false) => {
+    const component = useGameStore.getState().components.find(item => item.id === componentId);
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!component || !rect) return;
+    setSelectedCompId(componentId);
+    const x = component.x * zoomScale + offsets.shiftX;
+    const y = component.y * zoomScale + offsets.shiftY;
+    if (forceCenter || x < 110 || x > rect.width - 110 || y < 110 || y > rect.height - 110) {
+      setOffsets({ shiftX: rect.width / 2 - component.x * zoomScale, shiftY: rect.height / 2 - component.y * zoomScale });
+    }
+  };
+
+  const duplicateSelected = () => {
+    if (!selectedCompId || !components.some(c => c.id === selectedCompId && getCustomLabOptionId(c))) return;
+    const id = duplicateCustomLabComponent(selectedCompId);
+    if (id) {
+      revealComponent(id);
+      setCanvasNotice('Device duplicated. Its wiring is independent.');
+    } else setCanvasNotice(`The bench holds up to ${MAX_CUSTOM_COMPONENTS} devices.`);
+  };
+
+  const zoomCanvas = (next: number, anchor?: { x: number; y: number }) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const scale = Math.max(0.25, Math.min(2.5, next));
+    const point = anchor ?? { x: rect.width / 2, y: rect.height / 2 };
+    setOffsets({
+      shiftX: point.x - (point.x - offsets.shiftX) * scale / zoomScale,
+      shiftY: point.y - (point.y - offsets.shiftY) * scale / zoomScale
+    });
+    setZoomScale(scale);
+  };
+
+  const fitCanvas = () => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect || !components.length) return;
+    const positions = components.map(component => {
+      const p = getComponentCanvasPosition(component);
+      const bounds = getSelectionHighlightBounds(component.type, getComponentEffectiveScale(component));
+      return { left: p.x + bounds.x - 45, right: p.x + bounds.x + bounds.w + 45,
+        top: p.y + Math.min(bounds.y - 40, -125), bottom: p.y + bounds.y + bounds.h + 55 };
+    });
+    const left = Math.min(...positions.map(p => p.left));
+    const right = Math.max(...positions.map(p => p.right));
+    const top = Math.min(...positions.map(p => p.top));
+    const bottom = Math.max(...positions.map(p => p.bottom));
+    const scale = Math.max(0.25, Math.min(1.1, (rect.width - 48) / (right - left), (rect.height - 64) / (bottom - top)));
+    setZoomScale(scale);
+    setOffsets({ shiftX: rect.width / 2 - (left + right) / 2 * scale, shiftY: rect.height / 2 - (top + bottom) / 2 * scale });
+  };
+
   useEffect(() => {
-    if (!isCustomLab) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement).isContentEditable
-      ) {
-        return;
+    const focus = (event: Event) => revealComponent((event as CustomEvent<{ componentId: string }>).detail.componentId, true);
+    const added = (event: Event) => revealComponent((event as CustomEvent<{ componentId: string }>).detail.componentId);
+    window.addEventListener('nonc:focus-component', focus);
+    window.addEventListener('nonc:component-added', added);
+    return () => {
+      window.removeEventListener('nonc:focus-component', focus);
+      window.removeEventListener('nonc:component-added', added);
+    };
+  });
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (dragSession.current || drawingWireStart) return;
+      if (event.ctrlKey || event.metaKey) {
+        const rect = svg.getBoundingClientRect();
+        zoomCanvas(zoomScale * Math.exp(-event.deltaY * 0.008), { x: event.clientX - rect.left, y: event.clientY - rect.top });
+      } else {
+        setOffsets(previous => ({ shiftX: previous.shiftX - event.deltaX, shiftY: previous.shiftY - event.deltaY }));
       }
-      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedCompId) {
-        e.preventDefault();
-        soundManager.playClick();
-        const optionId = selectedCompId.replace('custom_', '');
-        removeCustomLabComponent(optionId);
+    };
+    svg.addEventListener('wheel', wheel, { passive: false });
+    return () => svg.removeEventListener('wheel', wheel);
+  });
+
+  const flushDeviceMove = () => {
+    if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = null;
+    const move = pendingMove.current;
+    pendingMove.current = null;
+    if (move) updateComponentPosition(move.id, move.x, move.y);
+  };
+
+  const cancelDeviceDrag = () => {
+    if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = null;
+    pendingMove.current = null;
+    if (dragSession.current) cancelComponentMove(dragSession.current.id);
+    dragSession.current = null;
+    setDraggedCompId(null);
+    setIsOverTrash(false);
+    setAlignGuides({ x: null, y: null });
+  };
+
+  useEffect(() => {
+    const keyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (event.code === 'Space' && target === document.body) { event.preventDefault(); setSpaceHeld(true); }
+      if (event.key === 'Escape') {
+        setProbeMode(null);
+        cancelWireDrawing();
+        setDraggingWireRoute(null);
+        cancelDeviceDrag();
+        panSession.current = null;
+        setIsPanning(false);
+        setSelectedCompId(null);
+      }
+      if (dragSession.current || panSession.current) return;
+      if (isCustomLab && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && selectedCompId) {
+        event.preventDefault(); duplicateSelected();
+      }
+      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedWireId) {
+        event.preventDefault(); removeWire(selectedWireId); setSelectedWireId(null);
+      } else if (isCustomLab && (event.key === 'Backspace' || event.key === 'Delete') && selectedCompId) {
+        event.preventDefault();
+        const component = components.find(item => item.id === selectedCompId);
+        if (component?.type === 'junction') removeComponent(selectedCompId);
+        else removeCustomLabComponent(selectedCompId);
         setSelectedCompId(null);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCustomLab, selectedCompId, removeCustomLabComponent]);
+    const keyUp = (event: KeyboardEvent) => { if (event.code === 'Space') setSpaceHeld(false); };
+    const blur = () => { setSpaceHeld(false); cancelDeviceDrag(); panSession.current = null; setIsPanning(false); };
+    window.addEventListener('keydown', keyDown);
+    window.addEventListener('keyup', keyUp);
+    window.addEventListener('blur', blur);
+    return () => { window.removeEventListener('keydown', keyDown); window.removeEventListener('keyup', keyUp); window.removeEventListener('blur', blur); };
+  });
 
-  // Component Dragging — blocked in probe mode
-  const handleCompPointerDown = (e: React.PointerEvent, comp: CircuitComponent) => {
-    if (probeMode) return;
-    const target = e.target as SVGElement;
-    // Interactive sub-controls opt out of the drag: taking a pointer capture here
-    // would retarget their pointerup/click to this group and swallow the press.
-    if (target.closest('.connector-control, .device-control')) return;
-    if (target.classList.contains('terminal-hitbox')) return;
-    if (!isCustomLab && comp.state.lockedPosition) {
-      e.stopPropagation();
-      return;
-    }
-    e.stopPropagation();
-    setDraggedCompId(comp.id);
-    const coords = getSVGCoords(e);
-    setDragOffset({ x: coords.x - comp.x, y: coords.y - comp.y });
-    // @ts-ignore
-    e.currentTarget.setPointerCapture(e.pointerId);
+  // Preserve the grab point and wait for a deliberate gesture before moving.
+  const handleCompPointerDown = (event: React.PointerEvent, component: CircuitComponent) => {
+    if (event.button !== 0 || probeMode || drawingWireStart || canvasTool === 'pan' || spaceHeld) return;
+    const target = event.target as SVGElement;
+    if (target.closest('.connector-control, .device-control, .terminal-hitbox')) return;
+    event.stopPropagation();
+    const point = getSVGCoords(event);
+    const position = getComponentCanvasPosition(component);
+    dragSession.current = { id: component.id, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+      offsetX: point.x - position.x, offsetY: point.y - position.y, moved: false };
+    suppressDeviceClick.current = false;
+    setSelectedCompId(component.id);
+    setSelectedWireId(null);
+    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const handleCompPointerMove = (e: React.PointerEvent) => {
-    if (draggedCompId) {
-      e.stopPropagation();
-      const coords = getSVGCoords(e);
-      const gridX = Math.round((coords.x - dragOffset.x) / 10) * 10;
-      const gridY = Math.round((coords.y - dragOffset.y) / 10) * 10;
-      // Keep components on the board without fencing them into the old, much
-      // smaller canvas — wide access-control layouts run well past x 920 / y 480,
-      // and a tight clamp makes those components snap back instead of dragging.
-      const clampedX = Math.max(-400, Math.min(2200, gridX));
-      const clampedY = Math.max(-200, Math.min(1400, gridY));
-
-      // Magnetic alignment: when the device comes within a few units of another
-      // device's centre line, pull it exactly onto that line and show the guide.
-      const SNAP_TOLERANCE = 9;
-      let snappedX = clampedX;
-      let snappedY = clampedY;
-      let guideX: number | null = null;
-      let guideY: number | null = null;
+  const handleCompPointerMove = (event: React.PointerEvent) => {
+    const session = dragSession.current;
+    if (!session || session.pointerId !== event.pointerId) return;
+    event.stopPropagation();
+    if (!session.moved) {
+      if (Math.hypot(event.clientX - session.startX, event.clientY - session.startY) < 4) return;
+      session.moved = true;
+      beginComponentMove(session.id);
+      setDraggedCompId(session.id);
+    }
+    const point = getSVGCoords(event);
+    const x = point.x - session.offsetX;
+    const y = point.y - session.offsetY;
+    let guideX: number | null = null;
+    let guideY: number | null = null;
+    if (snapToGrid && !event.altKey) {
       for (const other of components) {
-        if (other.id === draggedCompId) continue;
-        const otherPos = getComponentCanvasPosition(other);
-        if (guideX === null && Math.abs(otherPos.x - clampedX) <= SNAP_TOLERANCE) {
-          snappedX = otherPos.x;
-          guideX = otherPos.x;
-        }
-        if (guideY === null && Math.abs(otherPos.y - clampedY) <= SNAP_TOLERANCE) {
-          snappedY = otherPos.y;
-          guideY = otherPos.y;
-        }
-        if (guideX !== null && guideY !== null) break;
-      }
-      updateComponentPosition(draggedCompId, snappedX, snappedY);
-      setAlignGuides(prev => (prev.x === guideX && prev.y === guideY ? prev : { x: guideX, y: guideY }));
-
-      // Check if dragged over trash zone (only in custom lab)
-      if (isCustomLab) {
-        const trashEl = document.getElementById('workspace-trash-zone');
-        if (trashEl) {
-          const rect = trashEl.getBoundingClientRect();
-          const over = (
-            e.clientX >= rect.left &&
-            e.clientX <= rect.right &&
-            e.clientY >= rect.top &&
-            e.clientY <= rect.bottom
-          );
-          setIsOverTrash(over);
-        }
+        if (other.id === session.id) continue;
+        const position = getComponentCanvasPosition(other);
+        if (Math.abs(position.x - x) < 6 / zoomScale) guideX = position.x;
+        if (Math.abs(position.y - y) < 6 / zoomScale) guideY = position.y;
       }
     }
+    pendingMove.current = { id: session.id, x, y };
+    if (dragFrame.current === null) dragFrame.current = requestAnimationFrame(flushDeviceMove);
+    setAlignGuides(previous => previous.x === guideX && previous.y === guideY ? previous : { x: guideX, y: guideY });
+    const trash = document.getElementById('workspace-trash-zone')?.getBoundingClientRect();
+    setIsOverTrash(Boolean(isCustomLab && trash && event.clientX >= trash.left && event.clientX <= trash.right && event.clientY >= trash.top && event.clientY <= trash.bottom));
   };
 
-  const handleCompPointerUp = (e: React.PointerEvent) => {
-    if (draggedCompId) {
-      e.stopPropagation();
+  const handleCompPointerUp = (event: React.PointerEvent) => {
+    const session = dragSession.current;
+    if (!session) return;
+    event.stopPropagation();
+    flushDeviceMove();
+    suppressDeviceClick.current = session.moved;
+    if (session.moved) {
       if (isCustomLab && isOverTrash) {
-        soundManager.playClick();
-        const optionId = draggedCompId.replace('custom_', '');
-        removeCustomLabComponent(optionId);
-        if (selectedCompId === draggedCompId) {
-          setSelectedCompId(null);
-        }
+        cancelComponentMove(session.id);
+        const component = components.find(item => item.id === session.id);
+        if (component?.type === 'junction') removeComponent(session.id);
+        else removeCustomLabComponent(session.id);
+        setSelectedCompId(null);
         if (deleteBurstTimer.current) window.clearTimeout(deleteBurstTimer.current);
         setDeleteBurst(Date.now());
         deleteBurstTimer.current = window.setTimeout(() => setDeleteBurst(null), 560);
       } else {
-        // Set-down feedback: the landing pad closes onto the device, a ring
-        // pushes out from it, and any guide it locked onto flashes away.
-        const dropped = components.find(c => c.id === draggedCompId);
+        const dropped = useGameStore.getState().components.find(component => component.id === session.id);
         if (dropped) {
-          const droppedPosition = getComponentCanvasPosition(dropped);
+          const x = snapToGrid && !event.altKey ? alignGuides.x ?? Math.round(dropped.x / 10) * 10 : dropped.x;
+          const y = snapToGrid && !event.altKey ? alignGuides.y ?? Math.round(dropped.y / 10) * 10 : dropped.y;
+          updateComponentPosition(session.id, x, y);
+          finishComponentMove(session.id);
           if (dropFxTimer.current) window.clearTimeout(dropFxTimer.current);
-          setDropFx({
-            key: Date.now(),
-            x: droppedPosition.x,
-            y: droppedPosition.y,
-            bounds: getSelectionHighlightBounds(dropped.type, getComponentEffectiveScale(dropped)),
-            guideX: alignGuides.x,
-            guideY: alignGuides.y
-          });
+          setDropFx({ key: Date.now(), x, y, bounds: getSelectionHighlightBounds(dropped.type, getComponentEffectiveScale(dropped)), guideX: alignGuides.x, guideY: alignGuides.y });
           dropFxTimer.current = window.setTimeout(() => setDropFx(null), 480);
         }
       }
-      setDraggedCompId(null);
-      setIsOverTrash(false);
-      setAlignGuides({ x: null, y: null });
     }
+    dragSession.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    setDraggedCompId(null);
+    setIsOverTrash(false);
+    setAlignGuides({ x: null, y: null });
   };
 
   // Wire Drawing — blocked in probe mode
   const handleTerminalPointerDown = (e: React.PointerEvent, componentId: string, terminalId: string) => {
-    if (probeMode) return;
+    if (probeMode || canvasTool === 'pan' || spaceHeld || e.button !== 0) return;
     const target = e.target as SVGElement;
     if (target.closest('.terminal-branch-control')) return;
     e.stopPropagation();
@@ -715,6 +698,7 @@ export const Workspace: React.FC = () => {
       drawingWireStart.componentId === target.componentId &&
       drawingWireStart.terminalId === target.terminalId;
 
+    if (isStartTerminal) return;
     if (!isStartTerminal) {
       if (draggingWireEndpoint) {
         reconnectWire(
@@ -743,6 +727,7 @@ export const Workspace: React.FC = () => {
     e.stopPropagation();
     if (drawingWireStart) {
       finishWireAtTerminal({ componentId, terminalId });
+      setPointerDownCoords(null);
     }
   };
 
@@ -761,6 +746,11 @@ export const Workspace: React.FC = () => {
   };
 
   const handleWorkspacePointerMove = (e: React.PointerEvent) => {
+    if (panSession.current) {
+      const pan = panSession.current;
+      setOffsets({ shiftX: pan.shiftX + e.clientX - pan.x, shiftY: pan.shiftY + e.clientY - pan.y });
+      return;
+    }
     if (drawingWireStart) {
       const coords = getSVGCoords(e);
       const snapTarget = getPointerTerminal(e, coords);
@@ -777,12 +767,25 @@ export const Workspace: React.FC = () => {
 
   const handleWorkspacePointerDown = (e: React.PointerEvent) => {
     const target = e.target as SVGElement;
+    if (!drawingWireStart && !probeMode && (canvasTool === 'pan' || spaceHeld || e.button === 1 || target === e.currentTarget)) {
+      e.preventDefault();
+      panSession.current = { x: e.clientX, y: e.clientY, ...offsets };
+      setIsPanning(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      return;
+    }
     if (target.closest('.cursor-grab') || probeMode) return;
     const coords = getSVGCoords(e);
     setPointerDownCoords(coords);
   };
 
   const handleWorkspacePointerUp = (e: React.PointerEvent) => {
+    if (panSession.current) {
+      panSession.current = null;
+      setIsPanning(false);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+      return;
+    }
     setPointerDownCoords(null);
     if (drawingWireStart) {
       const coords = getSVGCoords(e);
@@ -891,7 +894,7 @@ export const Workspace: React.FC = () => {
   };
 
   const getPointerTerminal = (
-    event: React.PointerEvent,
+    event: React.PointerEvent | PointerEvent,
     coords = getSVGCoords(event)
   ) => {
     const element = document.elementFromPoint(event.clientX, event.clientY);
@@ -911,6 +914,44 @@ export const Workspace: React.FC = () => {
     return getNearestTerminal(coords);
   };
 
+  useEffect(() => {
+    if (!drawingWireStart) return;
+
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      const coords = getSVGCoords(e);
+      const snapTarget = getPointerTerminal(e, coords);
+      setMousePos(snapTarget ? getTerminalPos(snapTarget.componentId, snapTarget.terminalId) : coords);
+      setHoveredTerminal(previous => {
+        if (
+          previous?.componentId === snapTarget?.componentId &&
+          previous?.terminalId === snapTarget?.terminalId
+        ) return previous;
+        return snapTarget;
+      });
+    };
+
+    const handleWindowPointerUp = (e: PointerEvent) => {
+      const coords = getSVGCoords(e);
+      const snapTarget = getPointerTerminal(e, coords) || hoveredTerminal;
+      if (snapTarget) {
+        finishWireAtTerminal(snapTarget);
+      } else if (pointerDownCoords) {
+        const dist = Math.hypot(coords.x - pointerDownCoords.x, coords.y - pointerDownCoords.y);
+        if (dist > 15) {
+          cancelWireDrawing();
+        }
+      }
+      setPointerDownCoords(null);
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove);
+    window.addEventListener('pointerup', handleWindowPointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', handleWindowPointerUp);
+    };
+  }, [drawingWireStart, hoveredTerminal, pointerDownCoords, offsets, zoomScale]);
+
   type WirePoint = { x: number; y: number };
   type WireDirection = { x: -1 | 0 | 1; y: -1 | 0 | 1 };
 
@@ -919,7 +960,10 @@ export const Workspace: React.FC = () => {
   const WIRE_TERMINAL_LEAD = 32;
   const WIRE_FAN_SPACING = 9;
   const WIRE_ROUTE_CLEARANCE = 14;
-  const wireRouteCache = new Map<string, WirePoint[]>();
+  const routeCacheRef = useRef<{ key: string; routes: Map<string, WirePoint[]> }>({ key: '', routes: new Map() });
+  const routeGeometryKey = JSON.stringify([components.map(c => [c.id, c.x, c.y, c.state.scale]), wires]);
+  if (routeCacheRef.current.key !== routeGeometryKey) routeCacheRef.current = { key: routeGeometryKey, routes: new Map() };
+  const wireRouteCache = routeCacheRef.current.routes;
   const snapWireCoord = (value: number) => Math.round(value / WIRE_GRID) * WIRE_GRID;
 
   const sameWirePoint = (a: WirePoint, b: WirePoint) =>
@@ -1625,15 +1669,18 @@ export const Workspace: React.FC = () => {
 
   // Build a clean Manhattan route with a short lead-out and fan separation at every terminal.
   const getWireSegmentsPoints = (wire: Wire) => {
-    const cachedRoute = wireRouteCache.get(wire.id);
-    if (cachedRoute) return cachedRoute;
+    const isTempWire = wire.id === 'temp-live-wire' || wire.id.startsWith('temp-');
+    if (!isTempWire) {
+      const cachedRoute = wireRouteCache.get(wire.id);
+      if (cachedRoute) return cachedRoute;
+    }
     const isLiveDrawing = !wire.toComponentId;
     const startLead = getTerminalLeadPoints(wire, wire.fromComponentId, wire.fromTerminalId);
     const rawEnd = isLiveDrawing
       ? (wire.waypoints?.[wire.waypoints.length - 1] || { x: 0, y: 0 })
       : getTerminalPos(wire.toComponentId, wire.toTerminalId);
     const endLead = isLiveDrawing
-      ? { direction: null, points: [{ x: snapWireCoord(rawEnd.x), y: snapWireCoord(rawEnd.y) }] }
+      ? { direction: null, points: [{ x: rawEnd.x, y: rawEnd.y }] }
       : getTerminalLeadPoints(wire, wire.toComponentId, wire.toTerminalId);
     const startExit = startLead.points[startLead.points.length - 1];
     const endExit = endLead.points[endLead.points.length - 1];
@@ -1660,7 +1707,9 @@ export const Workspace: React.FC = () => {
     }
     if (!isLiveDrawing) routed.push(...endLead.points.slice(0, -1).reverse());
     const simplifiedRoute = simplifyWirePoints(routed);
-    wireRouteCache.set(wire.id, simplifiedRoute);
+    if (!isTempWire) {
+      wireRouteCache.set(wire.id, simplifiedRoute);
+    }
     return simplifiedRoute;
   };
 
@@ -1861,20 +1910,54 @@ export const Workspace: React.FC = () => {
     return (vFrom > 0 || vTo > 0) && simulation.energizedComponents.size > 0;
   };
 
-  const activeLevel = levels[currentLevelIndex];
-  const completionStars = score.hintsUsed === 0 && timeElapsed < 90
-    ? 3
-    : score.hintsUsed <= 2 && timeElapsed < 180
-      ? 2
-      : 1;
-  const formattedCompletionTime = `${Math.floor(timeElapsed / 60).toString().padStart(2, '0')}:${(timeElapsed % 60).toString().padStart(2, '0')}`;
-
   return (
     <div className="flex-1 flex flex-col relative min-h-0 bg-[#090e15] select-none">
       
       {/* Canvas Toolbars */}
-      <div className="h-12 border-b border-white/10 bg-[#090d14]/92 px-2 flex items-center justify-center text-xs font-medium text-slate-300 shrink-0 backdrop-blur overflow-x-auto">
-        <div className="mx-auto flex min-w-max items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.025] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
+      <div className="min-h-14 border-b border-white/10 bg-[#101722] px-3 py-2 flex items-center text-xs font-medium text-slate-300 shrink-0 overflow-x-auto">
+        <div className="flex min-w-max items-center gap-2">
+          <div className="flex items-center rounded-lg border border-white/10 bg-black/15 p-1">
+            <button aria-label="Select and move devices" aria-pressed={canvasTool === 'select'} title="Select and move devices"
+              onClick={() => setCanvasTool('select')} className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs ${canvasTool === 'select' ? 'bg-blue-500/20 text-blue-200' : 'text-slate-400 hover:bg-white/10'}`}>
+              <MousePointer2 size={15} /> Select
+            </button>
+            <button aria-label="Pan canvas" aria-pressed={canvasTool === 'pan'} title="Pan canvas, or hold Space and drag"
+              onClick={() => { setCanvasTool('pan'); cancelWireDrawing(); }} className={`flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs ${canvasTool === 'pan' ? 'bg-blue-500/20 text-blue-200' : 'text-slate-400 hover:bg-white/10'}`}>
+              <Hand size={15} /> Pan
+            </button>
+          </div>
+          <button onClick={fitCanvas} title="Fit all devices on screen" aria-label="Fit all devices on screen" className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs hover:bg-white/10"><Maximize size={15} /> Fit</button>
+          {/* Zoom controls */}
+          <div className="flex h-9 items-center gap-0.5 bg-black/20 p-0.5 rounded-md border border-white/[0.08]">
+            <button
+              onClick={() => zoomCanvas(zoomScale - 0.1)}
+              className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
+              title="Zoom Out Canvas"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <span className="px-1 text-[10px] font-mono font-semibold text-slate-400 select-none min-w-[32px] text-center">
+              {Math.round(zoomScale * 100)}%
+            </span>
+            <button
+              onClick={() => zoomCanvas(zoomScale + 0.1)}
+              className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
+              title="Zoom In Canvas"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+            {zoomScale !== 1.0 && (
+              <button
+                onClick={() => zoomCanvas(1)}
+                className="px-1.5 h-5 flex items-center justify-center text-[9px] font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded cursor-pointer transition-colors border-l border-white/10 ml-0.5"
+                title="Reset Zoom to 100%"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
+          <button onClick={() => setSnapToGrid(value => !value)} aria-pressed={snapToGrid} title="Align devices when dropped. Hold Alt for free placement." className={`flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs ${snapToGrid ? 'border-blue-400/25 bg-blue-400/10 text-blue-200' : 'border-white/10 text-slate-400'}`}><Grid2X2 size={15} /> Snap {snapToGrid ? 'on' : 'off'}</button>
         <div className="flex items-center gap-2 px-1.5">
           <span className="text-slate-500 uppercase tracking-[0.14em] text-[9px] font-bold">Wiring</span>
           <div className="flex gap-1.5">
@@ -1901,7 +1984,7 @@ export const Workspace: React.FC = () => {
           {/* Add Splice Connector button */}
           <button
             onClick={handleAddSpliceConnector}
-            className="h-7 px-2.5 text-[10px] font-bold bg-orange-500/[0.08] hover:bg-orange-500/[0.14] text-orange-300 rounded-md cursor-pointer transition-colors border border-orange-400/15 flex items-center gap-1.5 hover:border-orange-400/35"
+            className="h-9 px-2.5 text-[11px] font-bold bg-orange-500/[0.08] hover:bg-orange-500/[0.14] text-orange-300 rounded-md cursor-pointer transition-colors border border-orange-400/15 flex items-center gap-1.5 hover:border-orange-400/35"
             title="Place Splice Connector on the right side of the circuit"
           >
             <svg
@@ -1921,45 +2004,57 @@ export const Workspace: React.FC = () => {
             <span>+ Splice Connector</span>
           </button>
 
-          {/* Zoom controls */}
-          <div className="flex h-7 items-center gap-0.5 bg-black/20 p-0.5 rounded-md border border-white/[0.08]">
-            <button
-              onClick={() => setZoomScale(prev => Math.max(0.6, parseFloat((prev - 0.1).toFixed(1))))}
-              className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
-              title="Zoom Out Canvas"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <span className="px-1 text-[10px] font-mono font-semibold text-slate-400 select-none min-w-[32px] text-center">
-              {Math.round(zoomScale * 100)}%
-            </span>
-            <button
-              onClick={() => setZoomScale(prev => Math.min(2.0, parseFloat((prev + 0.1).toFixed(1))))}
-              className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/[0.08] rounded cursor-pointer transition-colors"
-              title="Zoom In Canvas"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-            {zoomScale !== 1.0 && (
-              <button
-                onClick={() => setZoomScale(1.0)}
-                className="px-1.5 h-5 flex items-center justify-center text-[9px] font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded cursor-pointer transition-colors border-l border-white/10 ml-0.5"
-                title="Reset Zoom to 100%"
-              >
-                Reset
-              </button>
-            )}
+          <button
+            onClick={handleDownloadSchematic}
+            className="h-9 px-2.5 text-[11px] font-semibold tracking-wide bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 rounded-md border border-white/[0.08] cursor-pointer transition-all flex items-center gap-1.5"
+            title="Download Schematic SVG File"
+          >
+            <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
+            <span>Schematic</span>
+          </button>
+          <button
+            onClick={() => setWireSize(prev => prev === 'normal' ? 'thin' : 'normal')}
+            className="h-9 px-2.5 text-[11px] font-semibold tracking-wide bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 rounded-md border border-white/[0.08] cursor-pointer transition-colors"
+            title="Toggle wire thickness"
+          >
+            Size: {wireSize}
+          </button>
+          <div className="hidden 2xl:flex h-7 items-center gap-1.5 text-[10px] text-slate-500 px-2.5 rounded-md border border-white/[0.06]">
+            <Info className="w-3.5 h-3.5" />
+            <span>Drag to route · select to edit</span>
           </div>
+        </div>
+        </div>
+      </div>
 
-          {/* Selected Device Scale & Actions Top Pill */}
+
+      <div className="h-12 shrink-0 overflow-x-auto border-b border-white/[0.06] bg-[#101722]">
+          {!selectedCompId && <p className="flex h-full items-center px-4 text-xs text-slate-500">Select a device to resize, duplicate, or remove it.</p>}
           {selectedCompId && (() => {
             const selectedComp = components.find(c => c.id === selectedCompId);
             if (!selectedComp) return null;
             const currentScale = getComponentEffectiveScale(selectedComp);
             return (
-              <div className="flex h-7 items-center gap-1.5 bg-blue-950/70 border border-blue-500/40 px-2.5 rounded-md text-xs text-blue-200 shadow-md">
+              <div className="flex h-full min-w-max items-center gap-2 bg-blue-400/[0.06] px-4 py-1 text-xs text-blue-200">
                 <span className="font-semibold text-white max-w-[120px] truncate">{selectedComp.label}</span>
                 <span className="text-[10px] text-blue-300 font-mono">({currentScale}x)</span>
+                {isCustomLab && getCustomLabOptionId(selectedComp) && (
+                  <button onClick={duplicateSelected} title="Duplicate selected device (Ctrl/Cmd+D)" className="ml-2 flex h-8 items-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-xs text-blue-200 hover:bg-blue-400/20"><Copy size={14} /> Duplicate</button>
+                )}
+                {isCustomLab && (getCustomLabOptionId(selectedComp) || selectedComp.type === 'junction') && (
+                  <button
+                    onClick={() => {
+                      soundManager.playClick();
+                      if (selectedComp.type === 'junction') removeComponent(selectedComp.id);
+                      else removeCustomLabComponent(selectedComp.id);
+                      setSelectedCompId(null);
+                    }}
+                    className="ml-1 h-8 px-2.5 text-[11px] font-semibold bg-red-500/15 hover:bg-red-500/45 text-red-300 rounded border border-red-500/40 cursor-pointer transition-colors"
+                    title="Delete selected component"
+                  >
+                    Delete
+                  </button>
+                )}
                 <div className="flex items-center gap-0.5 bg-black/40 rounded p-0.5 ml-0.5 border border-white/10">
                   <button
                     onClick={() => {
@@ -1998,20 +2093,6 @@ export const Workspace: React.FC = () => {
                     </button>
                   )}
                 </div>
-                {isCustomLab && (
-                  <button
-                    onClick={() => {
-                      soundManager.playClick();
-                      const optionId = selectedComp.id.replace('custom_', '');
-                      removeCustomLabComponent(optionId);
-                      setSelectedCompId(null);
-                    }}
-                    className="ml-1 px-1.5 py-0.5 text-[9px] font-bold bg-red-500/25 hover:bg-red-500/45 text-red-300 rounded border border-red-500/40 cursor-pointer transition-colors"
-                    title="Delete selected component"
-                  >
-                    Delete
-                  </button>
-                )}
                 <button
                   onClick={() => setSelectedCompId(null)}
                   className="ml-0.5 text-slate-400 hover:text-white cursor-pointer p-0.5"
@@ -2023,119 +2104,43 @@ export const Workspace: React.FC = () => {
             );
           })()}
 
-          <button
-            onClick={handleDownloadSchematic}
-            className="h-7 px-2.5 text-[10px] font-semibold tracking-wide bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 rounded-md border border-white/[0.08] cursor-pointer transition-all flex items-center gap-1.5"
-            title="Download Schematic SVG File"
-          >
-            <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
-            <span>Schematic</span>
-          </button>
-          <button
-            onClick={() => setWireSize(prev => prev === 'normal' ? 'thin' : 'normal')}
-            className="h-7 px-2.5 text-[10px] font-semibold tracking-wide bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 rounded-md border border-white/[0.08] cursor-pointer transition-colors"
-            title="Toggle wire thickness"
-          >
-            Size: {wireSize}
-          </button>
-          <div className="hidden 2xl:flex h-7 items-center gap-1.5 text-[10px] text-slate-500 px-2.5 rounded-md border border-white/[0.06]">
-            <Info className="w-3.5 h-3.5" />
-            <span>Drag to route · select to edit</span>
-          </div>
-        </div>
-        </div>
+
       </div>
-
-      {levelCompleted && !completionBarDismissed && (
-        <div className="min-h-12 shrink-0 border-b border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-2 flex flex-wrap items-center justify-between gap-2 pointer-events-auto shadow-[0_8px_24px_rgba(0,0,0,0.14)]">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-400/25 bg-emerald-400/10 text-emerald-300">
-              <CheckCircle2 className="h-4.5 w-4.5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-emerald-300">Module complete</span>
-                <span className="hidden text-[10px] text-slate-600 sm:inline">•</span>
-                <span className="hidden truncate text-[11px] font-semibold text-slate-200 sm:inline">{activeLevel.title}</span>
-              </div>
-              <p className="text-[10px] text-slate-500">Circuit verified. Review your work or continue when ready.</p>
-            </div>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <div className="hidden items-center gap-1 rounded-md border border-white/[0.07] bg-black/15 px-2 py-1 md:flex">
-              {[1, 2, 3].map(num => (
-                <Star
-                  key={num}
-                  className={`h-3.5 w-3.5 ${num <= completionStars ? 'fill-amber-300 text-amber-300' : 'text-slate-700'}`}
-                />
-              ))}
-            </div>
-            <div className="hidden items-center gap-3 px-2 text-[10px] text-slate-500 lg:flex">
-              <span><strong className="font-semibold text-slate-300">{formattedCompletionTime}</strong> time</span>
-              <span><strong className="font-semibold text-slate-300">{score.hintsUsed}</strong> hints</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCompletionBarDismissed(true)}
-              className="flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.035] px-2.5 text-[10px] font-semibold text-slate-400 transition hover:bg-white/[0.08] hover:text-white"
-              title="Dismiss and keep reviewing the circuit"
-            >
-              <X className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Review circuit</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playButton();
-                if (currentLevelIndex === levels.length - 1) setViewMode('levels');
-                else nextLevel();
-              }}
-              className="flex h-8 items-center gap-1.5 rounded-lg bg-emerald-400 px-3 text-[10px] font-bold text-emerald-950 transition hover:bg-emerald-300"
-            >
-              <span>{currentLevelIndex === levels.length - 1 ? 'Finish course' : 'Next module'}</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* === PROBE / WIRE DRAWING BANNER === */}
-      {(probeMode || drawingWireStart) && (
-        <div
-            className={`absolute top-12 left-0 right-0 z-30 flex items-center justify-between px-5 py-2 font-semibold tracking-wide text-sm pointer-events-auto ${
-            probeMode === 'red'
-              ? 'bg-red-600 text-white border-b-2 border-red-300'
-              : probeMode === 'black'
-              ? 'bg-slate-600 text-white border-b-2 border-slate-300'
-              : 'bg-indigo-600 text-white border-b-2 border-indigo-400'
-          }`}
-        >
-          <span>
-            {probeMode === 'red'
-              ? '🔴 RED PROBE ACTIVE — Click any terminal on the canvas to attach'
-              : probeMode === 'black'
-              ? '⚫ BLACK PROBE ACTIVE — Click any terminal on the canvas to attach'
-              : draggingWireEndpoint
-                ? '🔁 RECONNECTING WIRE END — Drag near a new terminal and release; it will snap automatically'
-                : `🔌 ROUTING WIRE (${tempWaypoints.length} bends) — Drag near a terminal to snap, or click empty space to add a bend`}
-          </span>
-          <button
-            onClick={() => {
-              setProbeMode(null);
-              cancelWireDrawing();
-            }}
-            className="bg-black/30 hover:bg-black/50 px-3 py-1 rounded text-xs cursor-pointer transition-colors ml-4 font-bold"
-          >
-            ✕ Cancel
-          </button>
-        </div>
-      )}
-
+      <div className={`flex h-10 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 text-[11px] ${drawingWireStart || probeMode ? 'bg-blue-500/10 text-blue-200' : 'bg-[#0d141f] text-slate-400'}`}>
+        <span className="flex min-w-0 items-center gap-2"><Info size={13} className="shrink-0 text-blue-300" /><span className="truncate">{probeMode ? `Click a terminal to attach the ${probeMode} probe.` : drawingWireStart ? 'Click another terminal to connect · Click empty space for a bend · Esc cancels' : canvasTool === 'pan' ? 'Drag to move around · Choose Select to move devices or wire' : 'Drag devices to move · Click two terminals to connect · Drag empty space to pan'}</span></span>
+        {drawingWireStart || probeMode ? <button className="flex h-8 shrink-0 items-center gap-1 rounded-md bg-blue-400/10 px-2 text-blue-100 hover:bg-blue-400/20" onClick={() => { setProbeMode(null); cancelWireDrawing(); }}><X size={14} /> Cancel</button> : <span className="hidden shrink-0 xl:inline">Ctrl / ⌘ + scroll to zoom</span>}
+      </div>
+      <span className="sr-only" role="status" aria-live="polite">{canvasNotice}</span>
       {/* SVG Canvas Container */}
       <svg
         ref={svgRef}
-        className={`workspace-grid w-full flex-1 relative touch-none ${probeMode ? 'cursor-cell' : 'cursor-crosshair'}`}
+        aria-label="Circuit workspace"
+        className={`workspace-grid w-full flex-1 min-h-0 relative touch-none ${isPanning ? 'cursor-grabbing' : canvasTool === 'pan' || spaceHeld ? 'cursor-grab' : probeMode ? 'cursor-cell' : drawingWireStart ? 'cursor-crosshair' : 'cursor-default'}`}
+        onDragOver={(event) => {
+          if (!isCustomLab || !event.dataTransfer.types.includes('application/x-nonc-component')) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'copy';
+          setLibraryDropPoint(getSVGCoords(event));
+        }}
+        onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setLibraryDropPoint(null); }}
+        onDrop={(event) => {
+          if (!isCustomLab) return;
+          event.preventDefault();
+          const optionId = event.dataTransfer.getData('application/x-nonc-component');
+          if (!optionId) return;
+          const point = getSVGCoords(event);
+          if (snapToGrid) { point.x = Math.round(point.x / 10) * 10; point.y = Math.round(point.y / 10) * 10; }
+          const id = addCustomLabComponent(optionId, point);
+          setLibraryDropPoint(null);
+          if (id) { revealComponent(id); setCanvasNotice('Device added. Drag its body to move, or click a terminal to connect.'); }
+          else setCanvasNotice(`The bench holds up to ${MAX_CUSTOM_COMPONENTS} devices.`);
+        }}
+        onPointerDownCapture={(event) => {
+          if (!drawingWireStart && !probeMode && (canvasTool === 'pan' || spaceHeld || event.button === 1)) {
+            event.stopPropagation(); handleWorkspacePointerDown(event);
+          }
+        }}
+        onPointerCancel={() => { cancelDeviceDrag(); cancelWireDrawing(); panSession.current = null; setIsPanning(false); }}
         onPointerDown={handleWorkspacePointerDown}
         onPointerMove={handleWorkspacePointerMove}
         onPointerUp={handleWorkspacePointerUp}
@@ -2149,7 +2154,7 @@ export const Workspace: React.FC = () => {
           cancelWireDrawing();
           setProbeMode(null);
         }}
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', backgroundPosition: `${offsets.shiftX}px ${offsets.shiftY}px`, backgroundSize: `${20 * zoomScale}px ${20 * zoomScale}px` }}
       >
         {/* Glow Filters */}
         <defs>
@@ -2162,7 +2167,11 @@ export const Workspace: React.FC = () => {
           </filter>
         </defs>
 
-        <g transform={`translate(${offsets.shiftX}, ${offsets.shiftY}) scale(${zoomScale})`} style={{ transformOrigin: 'top left', transition: 'transform 0.15s ease-out' }}>
+        <g transform={`translate(${offsets.shiftX}, ${offsets.shiftY}) scale(${zoomScale})`} style={{ transformOrigin: 'top left' }}>
+          {libraryDropPoint && <g transform={`translate(${libraryDropPoint.x}, ${libraryDropPoint.y})`} pointerEvents="none">
+            <rect x="-70" y="-70" width="140" height="140" rx="16" fill="#3b82f61a" stroke="#60a5fa" strokeWidth={2 / zoomScale} strokeDasharray="7 5" />
+            <text y="-85" textAnchor="middle" fill="#bfdbfe" fontSize={13 / zoomScale}>Release to add device</text>
+          </g>}
           {/* Compact corded outlet strip behind the transformer, so the adapter reads as plugged in. */}
           {(() => {
             const transformer = components.find(c => c.type === 'transformer');
@@ -2305,6 +2314,7 @@ export const Workspace: React.FC = () => {
           return (
             <g
               key={comp.id}
+              data-component-id={comp.id}
               transform={`translate(${componentPosition.x}, ${componentPosition.y})`}
               style={{
                 filter: isDragging
@@ -2319,22 +2329,19 @@ export const Workspace: React.FC = () => {
               }}
               onPointerMove={handleCompPointerMove}
               onPointerUp={handleCompPointerUp}
+              onPointerCancel={cancelDeviceDrag}
+              onLostPointerCapture={() => { if (dragSession.current) cancelDeviceDrag(); }}
               onPointerOver={() => setHoveredCompId(comp.id)}
               onPointerOut={() => setHoveredCompId(null)}
               onClick={(e) => {
                 e.stopPropagation();
+                if (suppressDeviceClick.current) { suppressDeviceClick.current = false; return; }
                 if (comp.type === 'timer_relay') setSelectedTimerId(comp.id);
                 setSelectedCompId(comp.id);
               }}
-              onContextMenu={(e) => {
-                if (isCustomLab) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  soundManager.playClick();
-                  const optionId = comp.id.replace('custom_', '');
-                  removeCustomLabComponent(optionId);
-                  if (selectedCompId === comp.id) setSelectedCompId(null);
-                }
+              onContextMenu={(event) => {
+                event.preventDefault(); event.stopPropagation();
+                cancelWireDrawing(); setSelectedCompId(comp.id);
               }}
               onKeyDown={(e) => {
                 if (comp.type === 'timer_relay' && (e.key === 'Enter' || e.key === ' ')) {
@@ -2374,8 +2381,7 @@ export const Workspace: React.FC = () => {
                   fill="none"
                   stroke="#3b82f6"
                   strokeWidth="2.5"
-                  strokeDasharray="5,3"
-                  className="animate-pulse pointer-events-none"
+                  className="pointer-events-none"
                   style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
                 />
               )}
@@ -2821,7 +2827,7 @@ export const Workspace: React.FC = () => {
           const previewEnd = pts[pts.length - 1];
           
           return (
-            <g>
+            <g pointerEvents="none">
               <path
                 d={path}
                 fill="none"
@@ -3421,7 +3427,7 @@ export const Workspace: React.FC = () => {
       </svg>
 
       {/* Drag-to-Delete Trash Zone overlay */}
-      {isCustomLab && draggedCompId && (
+      {isCustomLab && draggedCompId && components.some(component => component.id === draggedCompId && (getCustomLabOptionId(component) || component.type === 'junction')) && (
         <div
           id="workspace-trash-zone"
           className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none"

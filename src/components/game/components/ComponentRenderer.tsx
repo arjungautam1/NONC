@@ -38,7 +38,7 @@ interface ComponentRendererProps {
   isEnergized: boolean;
 }
 
-export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component, isEnergized }) => {
+export const ComponentRenderer = React.memo(function ComponentRenderer({ component, isEnergized }: ComponentRendererProps) {
   switch (component.type) {
     case 'battery':
       return <Battery component={component} />;
@@ -182,5 +182,5 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
     default:
       return null;
   }
-};
+});
 export default ComponentRenderer;

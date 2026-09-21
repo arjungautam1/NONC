@@ -1,74 +1,35 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useGameStore } from './store/useGameStore';
-import { ControlPanel } from './components/game/ControlPanel';
-import { Sidebar } from './components/game/Sidebar';
-import { Workspace } from './components/game/Workspace';
-import { HelpOverlay } from './components/game/HelpOverlay';
-import { LevelDashboard } from './components/game/LevelDashboard';
-import { CustomLabSidebar } from './components/game/CustomLabSidebar';
+import { LabHome } from './components/game/LabHome';
 import { BetaBanner } from './components/game/BetaBanner';
 
+const CustomLab = lazy(() => import('./components/game/CustomLab'));
+
 function App() {
-  const initLevel = useGameStore(state => state.initLevel);
-  const revealHint = useGameStore(state => state.useHint);
+  const undo = useGameStore(state => state.undo);
+  const redo = useGameStore(state => state.redo);
   const viewMode = useGameStore(state => state.viewMode);
-  const isCustomLab = useGameStore(state => state.isCustomLab);
 
-  // Initialize first level on mount, skipping the view mode change so it starts at the levels screen
   useEffect(() => {
-    initLevel(0, true);
-  }, [initLevel]);
-
-  // Shortcut key listener: 'h'/'H' for next hint
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
-        return;
-      }
-      if (e.key === 'h' || e.key === 'H') {
-        e.preventDefault();
-        revealHint();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (viewMode !== 'lab' || event.defaultPrevented) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]')) return;
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && (key === 'z' || key === 'y')) {
+        event.preventDefault();
+        if (key === 'y' || event.shiftKey) redo();
+        else undo();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [revealHint]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, viewMode]);
 
-  if (viewMode === 'levels') {
-    return (
-      <>
-        <BetaBanner />
-        <LevelDashboard />
-      </>
-    );
-  }
-
-  return (
-    <div className="h-screen flex flex-col bg-[#080b12] text-slate-200 overflow-hidden font-sans select-none">
-      <BetaBanner />
-
-      {/* Top Engineering Control Bar */}
-      <ControlPanel />
-
-      {/* Main Workspace split */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-0">
-        {/* Left Objectives & DMM Sidebar */}
-        {isCustomLab ? <CustomLabSidebar /> : <Sidebar />}
-
-        {/* Center Schematic Canvas & Diagnostics */}
-        <div className="flex-1 flex flex-col overflow-hidden relative min-w-0 min-h-0">
-          <Workspace />
-          <HelpOverlay />
-        </div>
-      </div>
-    </div>
+  return viewMode === 'home' ? <><BetaBanner /><LabHome /></> : (
+    <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#080b12] text-slate-300" role="status">Opening your lab…</div>}>
+      <CustomLab />
+    </Suspense>
   );
 }
 
