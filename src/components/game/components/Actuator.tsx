@@ -10,9 +10,12 @@ interface ActuatorProps {
 export const Actuator: React.FC<ActuatorProps> = ({ component, isEnergized: _isEnergized }) => {
   const travel = component.state.travel || 0; // 0 to 100
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const groundedTerminals = useGameStore(state => state.simulation.groundedTerminals);
 
-  const vPos = nodeVoltages[`${component.id}:pos`] || 0;
-  const vNeg = nodeVoltages[`${component.id}:neg`] || 0;
+  const posKey = `${component.id}:pos`;
+  const negKey = `${component.id}:neg`;
+  const vPos = nodeVoltages[posKey] || 0;
+  const vNeg = nodeVoltages[negKey] || 0;
 
   // Calculate pixel translation for the piston shaft (travel is 0% to 100%)
   // Casing ends at X=40. Max extension is 60px to the right.
@@ -20,8 +23,8 @@ export const Actuator: React.FC<ActuatorProps> = ({ component, isEnergized: _isE
   
   // Direction indicator
   let motionState: 'extending' | 'retracting' | 'stopped' = 'stopped';
-  if (vPos > vNeg) motionState = 'extending';
-  else if (vNeg > vPos) motionState = 'retracting';
+  if (vPos > 0 && groundedTerminals.has(negKey)) motionState = 'extending';
+  else if (vNeg > 0 && groundedTerminals.has(posKey)) motionState = 'retracting';
 
   return (
     <g>

@@ -9,6 +9,7 @@ interface ComponentProps {
 
 export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const groundedTerminals = useGameStore(state => state.simulation.groundedTerminals);
   const isRunning = useGameStore(state => state.isRunning);
 
   const travel = component.state.travel || 0;
@@ -21,7 +22,9 @@ export const ParkingGate: React.FC<ComponentProps> = ({ component }) => {
   const vPos = isRunning ? (nodeVoltages[posKey] || 0) : 0;
   const vNeg = isRunning ? (nodeVoltages[negKey] || 0) : 0;
 
-  const isEnergized = vPos > 0 || vNeg > 0;
+  const isEnergized =
+    (vPos > 0 && groundedTerminals.has(negKey)) ||
+    (vNeg > 0 && groundedTerminals.has(posKey));
 
   // Gate arm rotation angle: 0 degrees (horizontal) to -90 degrees (vertical/up)
   const angle = -(travel / 100) * 90;

@@ -10,16 +10,19 @@ interface ElevatorCabinProps {
 export const ElevatorCabin: React.FC<ElevatorCabinProps> = ({ component, isEnergized }) => {
   const travel = component.state.travel || 0; // 0 to 100%
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const groundedTerminals = useGameStore(state => state.simulation.groundedTerminals);
 
-  const vPos = nodeVoltages[`${component.id}:pos`] || 0;
-  const vNeg = nodeVoltages[`${component.id}:neg`] || 0;
+  const posKey = `${component.id}:pos`;
+  const negKey = `${component.id}:neg`;
+  const vPos = nodeVoltages[posKey] || 0;
+  const vNeg = nodeVoltages[negKey] || 0;
 
   // Y coordinate of the cabin box.
   // travel=0 -> Y=45 (Ground floor). travel=100 -> Y=-45 (Top floor).
   const cabinY = 45 - (travel / 100) * 90;
 
-  const isUpActive = vPos > vNeg;
-  const isDownActive = vNeg > vPos;
+  const isUpActive = vPos > 0 && groundedTerminals.has(negKey);
+  const isDownActive = vNeg > 0 && groundedTerminals.has(posKey);
 
   return (
     <g>

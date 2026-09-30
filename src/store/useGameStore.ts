@@ -1903,13 +1903,17 @@ export const useGameStore = create<GameState>((set, get) => {
       let hasChanges = false;
       const updatedComponents = components.map(c => {
         if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
-          const vPos = simulation.nodeVoltages[`${c.id}:pos`] || 0;
-          const vNeg = simulation.nodeVoltages[`${c.id}:neg`] || 0;
+          const posKey = `${c.id}:pos`;
+          const negKey = `${c.id}:neg`;
+          const vPos = simulation.nodeVoltages[posKey] || 0;
+          const vNeg = simulation.nodeVoltages[negKey] || 0;
+          const posGrounded = simulation.groundedTerminals.has(posKey);
+          const negGrounded = simulation.groundedTerminals.has(negKey);
           const currentTravel = c.state.travel || 0;
 
           let direction = 0;
-          if (vPos > vNeg) direction = 1;
-          else if (vNeg > vPos) direction = -1;
+          if (vPos > 0 && negGrounded) direction = 1;
+          else if (vNeg > 0 && posGrounded) direction = -1;
 
           let newTravel = currentTravel;
           if (direction === 1) {

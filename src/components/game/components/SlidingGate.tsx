@@ -8,11 +8,16 @@ interface SlidingGateProps {
 
 export const SlidingGate: React.FC<SlidingGateProps> = ({ component }) => {
   const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
+  const groundedTerminals = useGameStore(state => state.simulation.groundedTerminals);
   const isRunning = useGameStore(state => state.isRunning);
   const travel = Math.max(0, Math.min(100, component.state.travel || 0));
-  const vPos = isRunning ? (nodeVoltages[`${component.id}:pos`] || 0) : 0;
-  const vNeg = isRunning ? (nodeVoltages[`${component.id}:neg`] || 0) : 0;
-  const direction = vPos > vNeg ? 'opening' : vNeg > vPos ? 'closing' : 'stopped';
+  const posKey = `${component.id}:pos`;
+  const negKey = `${component.id}:neg`;
+  const vPos = isRunning ? (nodeVoltages[posKey] || 0) : 0;
+  const vNeg = isRunning ? (nodeVoltages[negKey] || 0) : 0;
+  const direction = vPos > 0 && groundedTerminals.has(negKey)
+    ? 'opening'
+    : vNeg > 0 && groundedTerminals.has(posKey) ? 'closing' : 'stopped';
   const gateOffset = -(travel / 100) * 70;
   const stateLabel = travel >= 96 ? 'OPEN' : travel <= 4 ? 'CLOSED' : direction.toUpperCase();
   const stateColor = travel >= 96 ? '#34d399' : travel <= 4 ? '#fb7185' : '#fbbf24';
