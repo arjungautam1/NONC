@@ -4,6 +4,7 @@ import { useGameStore } from '../../../store/useGameStore';
 
 interface ComponentProps {
   component: CircuitComponent;
+  isEnergized?: boolean;
 }
 
 export const Maglock: React.FC<ComponentProps> = ({ component }) => {
@@ -475,7 +476,7 @@ export const DoorStrike: React.FC<ComponentProps> = ({ component }) => {
   );
 };
 
-export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
+export const WaveSensor: React.FC<ComponentProps> = ({ component, isEnergized = false }) => {
   const triggerWaveSensor = useGameStore(state => state.triggerWaveSensor);
   const isActive = component.state.active || false;
 
@@ -488,8 +489,7 @@ export const WaveSensor: React.FC<ComponentProps> = ({ component }) => {
     e.stopPropagation();
   };
 
-  // Battery-powered sensor: no standby glow, the ring only lights on activation.
-  let ringColor = '#27272a'; // dark bezel/unlit
+  let ringColor = isEnergized ? '#38bdf8' : '#27272a';
   let ringGlow = undefined;
   if (isActive) {
     ringColor = '#22c55e'; // active green flash

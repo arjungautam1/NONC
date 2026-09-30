@@ -75,7 +75,7 @@ export const ComponentRenderer = React.memo(function ComponentRenderer({ compone
     case 'card_reader':
       return <CardReader component={component} />;
     case 'wave_sensor':
-      return <WaveSensor component={component} />;
+      return <WaveSensor component={component} isEnergized={isEnergized} />;
     case 'door_sensor':
       return <DoorSensor component={component} />;
     case 'terminal_block':

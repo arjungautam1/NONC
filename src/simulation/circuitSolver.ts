@@ -168,7 +168,7 @@ export function solveCircuit(
           addConnection(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
         }
       } else if (c.type === 'wave_sensor') {
-        const isActive = c.state.active || false;
+        const isActive = (c.state.active && c.state.powered) || false;
         if (isActive) {
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
         } else {
@@ -491,6 +491,9 @@ export function solveCircuit(
         // is switched by relayTriggered above, this only drives the LED/UI.
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'wave_sensor') {
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'sm500_maglock') {
         isCoil = true;
         inKey = getTerminalKey(c.id, 'pos');
@@ -796,7 +799,7 @@ function checkPathBetween(
         addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
       }
     } else if (c.type === 'wave_sensor') {
-      const isActive = c.state.active || false;
+      const isActive = (c.state.active && c.state.powered) || false;
       if (isActive) {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {

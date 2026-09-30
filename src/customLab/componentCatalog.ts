@@ -133,17 +133,19 @@ export const customLabOptions: CustomLabOption[] = [
     id: 'wave_sensor',
     category: 'input',
     name: 'Wave sensor',
-    description: 'Battery-powered touchless switch (2 AA batteries) with a Form C (SPDT) relay output. Requires no external power wiring.',
-    terminalSummary: 'C · NC · NO',
+    description: '12/24VDC powered touchless switch with a Form C (SPDT) relay output.',
+    terminalSummary: '+ · − · C · NC · NO',
     template: {
       type: 'wave_sensor',
       label: 'Wave Sensor',
       terminals: [
         { id: 'com', name: 'C', type: 'com', x: -20, y: -72 },
         { id: 'nc', name: 'NC', type: 'nc', x: 0, y: -72 },
-        { id: 'no', name: 'NO', type: 'no', x: 20, y: -72 }
+        { id: 'no', name: 'NO', type: 'no', x: 20, y: -72 },
+        { id: 'pos', name: '+', type: 'pos', x: -12, y: 72 },
+        { id: 'neg', name: '−', type: 'neg', x: 12, y: 72 }
       ],
-      state: { active: false }
+      state: { active: false, powered: false }
     }
   },
   {

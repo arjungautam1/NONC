@@ -235,6 +235,19 @@ export const Workspace: React.FC = () => {
     setPointerDownCoords(null);
   };
 
+  const cancelLastWireStep = () => {
+    if (drawingWireStart && tempWaypoints.length > 0) {
+      setTempWaypoints(previous => previous.slice(0, -1));
+      setCanvasNotice('Last wire bend removed.');
+      return;
+    }
+    if (drawingWireStart) {
+      cancelWireDrawing();
+      setCanvasNotice('Wire cancelled.');
+    }
+    if (probeMode) setProbeMode(null);
+  };
+
   useEffect(() => () => {
     if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
     if (dropFxTimer.current) window.clearTimeout(dropFxTimer.current);
@@ -2162,8 +2175,7 @@ export const Workspace: React.FC = () => {
         }}
         onContextMenu={(e) => {
           e.preventDefault();
-          cancelWireDrawing();
-          setProbeMode(null);
+          cancelLastWireStep();
         }}
         style={{ touchAction: 'none', backgroundPosition: `${offsets.shiftX}px ${offsets.shiftY}px`, backgroundSize: `${20 * zoomScale}px ${20 * zoomScale}px` }}
       >
@@ -2372,7 +2384,8 @@ export const Workspace: React.FC = () => {
               }}
               onContextMenu={(event) => {
                 event.preventDefault(); event.stopPropagation();
-                cancelWireDrawing(); setSelectedCompId(comp.id);
+                if (drawingWireStart || probeMode) cancelLastWireStep();
+                else setSelectedCompId(comp.id);
               }}
               onKeyDown={(e) => {
                 if (comp.type === 'timer_relay' && (e.key === 'Enter' || e.key === ' ')) {
@@ -2562,7 +2575,7 @@ export const Workspace: React.FC = () => {
                 aria-label="Select or drag wire route"
                 className="cursor-grab active:cursor-grabbing"
                 onPointerDown={(e) => {
-                  if (!drawingWireStart && !e.shiftKey) {
+                  if (e.button === 0 && !drawingWireStart && !e.shiftKey) {
                     beginWireRouteDrag(e, wire, null);
                   }
                 }}
@@ -2614,6 +2627,17 @@ export const Workspace: React.FC = () => {
                     // Regular selection
                     setSelectedWireId(isSelected ? null : wire.id);
                   }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (drawingWireStart || probeMode) {
+                    cancelLastWireStep();
+                    return;
+                  }
+                  removeWire(wire.id);
+                  if (selectedWireId === wire.id) setSelectedWireId(null);
+                  setCanvasNotice('Wire removed.');
                 }}
               />
 

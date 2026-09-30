@@ -582,6 +582,13 @@ export const useGameStore = create<GameState>((set, get) => {
     // trigger edges, DIP selections, jumper cuts, and trimpot setting.
     let timerContactChanged = false;
     const updatedComponents = currentComponents.map(c => {
+      if (c.type === 'wave_sensor') {
+        const powered = currentIsRunning && solverResult.energizedComponents.has(c.id);
+        if (powered !== Boolean(c.state.powered) || (!powered && c.state.active)) {
+          timerContactChanged = true;
+          return { ...c, state: { ...c.state, powered, active: powered ? c.state.active : false } };
+        }
+      }
       if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224') {
         const isEnergized = solverResult.energizedComponents.has(c.id);
         if (isEnergized !== c.state.energized) {
@@ -1514,6 +1521,8 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     triggerWaveSensor: (id) => {
+      const state = get();
+      if (!state.isRunning || !state.simulation.energizedComponents.has(id)) return;
       soundManager.playCardScan(); // trigger scan chirp
 
       // Sensor goes active for 3 seconds, then resets
