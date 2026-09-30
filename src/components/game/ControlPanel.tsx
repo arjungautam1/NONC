@@ -8,17 +8,21 @@ import {
   Eraser,
   VolumeX,
   Volume2,
-  LayoutGrid
+  LayoutGrid,
+  ChevronUp
 } from 'lucide-react';
 import { soundManager } from '../../audio/soundManager';
 
-export const ControlPanel: React.FC = () => {
+interface ControlPanelProps {
+  onHide: () => void;
+}
+
+export const ControlPanel: React.FC<ControlPanelProps> = ({ onHide }) => {
   const canUndo = useGameStore(state => state.history.length > 0);
   const canRedo = useGameStore(state => state.redoHistory.length > 0);
   const undo = useGameStore(state => state.undo);
   const redo = useGameStore(state => state.redo);
   const setViewMode = useGameStore(state => state.setViewMode);
-  const deviceCount = useGameStore(state => state.customLabSelection.length);
   const hasBenchContents = useGameStore(state => state.components.length > 2 || state.wires.length > 0);
   const isRunning = useGameStore(state => state.isRunning);
   const toggleSimulation = useGameStore(state => state.toggleSimulation);
@@ -130,10 +134,10 @@ export const ControlPanel: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg border border-sky-400/20 bg-sky-400/[0.07] px-3 py-2 text-xs">
-        <span className="hidden sm:inline text-slate-400">On your bench</span>
-        <span className="font-semibold text-white">{deviceCount} {deviceCount === 1 ? 'device' : 'devices'}</span>
-      </div>
+      <button onClick={onHide} className={`${toolClass} border border-white/10 bg-white/[0.04]`} title="Hide top controls" aria-label="Hide top controls">
+        <ChevronUp className="h-4 w-4" />
+        <span className="hidden sm:inline">Hide controls</span>
+      </button>
     </div>
   );
 };

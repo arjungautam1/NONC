@@ -38,7 +38,7 @@ export const customLabCategories: Array<{
   },
   {
     id: 'control',
-    label: 'Control devices',
+    label: 'Relays',
     description: 'Relays, timers, and protection components that process or route signals.'
   },
   {

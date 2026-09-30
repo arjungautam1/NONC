@@ -72,7 +72,7 @@ interface GameState {
     fromTId: string, 
     toCId: string, 
     toTId: string, 
-    color: 'red' | 'black' | 'green' | 'orange', 
+    color: 'red' | 'black' | 'gray' | 'green' | 'orange',
     waypoints?: { x: number; y: number }[]
   ) => void;
   removeWire: (id: string) => void;
@@ -96,7 +96,7 @@ interface GameState {
     y: number,
     fromCId: string,
     fromTId: string,
-    color: 'red' | 'black' | 'green' | 'orange',
+    color: 'red' | 'black' | 'gray' | 'green' | 'orange',
     waypoints?: { x: number; y: number }[],
     waypoints1?: { x: number; y: number }[],
     waypoints2?: { x: number; y: number }[]
@@ -1190,10 +1190,10 @@ export const useGameStore = create<GameState>((set, get) => {
       diagnosticLog: [],
       faultLocation: null
     },
-    sidebarOpen: true,
+    sidebarOpen: false,
     toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
     setSidebarOpen: (open) => set({ sidebarOpen: open }),
-    bottomPanelOpen: true,
+    bottomPanelOpen: false,
     toggleBottomPanel: () => set(state => ({ bottomPanelOpen: !state.bottomPanelOpen })),
     setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
     viewMode: 'home',
@@ -1202,7 +1202,7 @@ export const useGameStore = create<GameState>((set, get) => {
         if (get().isRunning) get().toggleSimulation();
         get().stopTimer();
       } else get().startTimer();
-      set({ viewMode: mode });
+      set({ viewMode: mode, ...(mode === 'lab' ? { sidebarOpen: false } : {}) });
     },
     isCustomLab: false,
     customLabSelection: [],
@@ -1235,7 +1235,7 @@ export const useGameStore = create<GameState>((set, get) => {
           blackProbe: null,
           reading: '---'
         },
-        sidebarOpen: true,
+        sidebarOpen: false,
         bottomPanelOpen: false,
         isCustomLab: true,
         customLabSelection: [...selectedIds],

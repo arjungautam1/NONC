@@ -7,11 +7,9 @@ import {
   Lightbulb,
   MousePointerClick,
   Plus,
-  GripVertical,
   LocateFixed,
   PackageOpen,
   Search,
-  ShieldCheck,
   Trash2,
   Wrench,
   Zap
@@ -236,7 +234,7 @@ export const CustomLabSidebar: React.FC = () => {
               <div aria-label="Device categories" className="mt-2 flex flex-wrap gap-1.5 md:mt-2.5">
                 {(['all', ...customLabCategories.map(category => category.id)] as const).map(category => (
                   <button key={category} type="button" aria-pressed={activeCategory === category} onClick={() => setActiveCategory(category)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${focusRing} ${activeCategory === category ? 'border-sky-400/30 bg-sky-400/15 text-sky-200' : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white'}`}>
-                    {category === 'all' ? 'All devices' : category === 'input' ? 'Inputs' : category === 'control' ? 'Controls' : 'Outputs'}
+                    {category === 'all' ? 'All devices' : category === 'input' ? 'Inputs' : category === 'control' ? 'Relays' : 'Outputs'}
                   </button>
                 ))}
               </div>
@@ -246,10 +244,6 @@ export const CustomLabSidebar: React.FC = () => {
           <div id="custom-device-panel" role="tabpanel" aria-labelledby={activeTab === 'library' ? 'custom-library-tab' : 'custom-bench-tab'} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-3">
             {activeTab === 'library' ? (
               <>
-                <div className="mb-3 flex items-center justify-between gap-2 text-[11px]">
-                  <p className="text-slate-400">Click <span className="font-semibold text-slate-200">Add</span> for each copy you need.</p>
-                  <span className="hidden shrink-0 items-center gap-1 text-slate-500 md:flex"><GripVertical className="h-3 w-3" /> Or drag in</span>
-                </div>
                 {customLabCategories.map(category => {
                   const options = matchingOptions.filter(option => option.category === category.id);
                   if (!options.length) return null;
@@ -261,25 +255,20 @@ export const CustomLabSidebar: React.FC = () => {
                         <h3 className="text-[11px] font-semibold text-slate-300">{category.label}</h3>
                         <span className="text-[10px] text-slate-500">{options.length}</span>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         {options.map(option => {
                           const count = counts.get(option.id) ?? 0;
                           return (
                             <div key={option.id} draggable={!atCapacity} onDragStart={event => {
                               event.dataTransfer.setData('application/x-nonc-component', option.id);
                               event.dataTransfer.effectAllowed = 'copy';
-                            }} className={`group rounded-xl border p-3 transition ${atCapacity ? 'border-white/[0.07] bg-white/[0.015]' : 'cursor-grab border-white/10 bg-white/[0.025] hover:border-sky-300/30 hover:bg-sky-300/[0.04] active:cursor-grabbing'}`}>
-                              <div className="flex items-start gap-3">
+                            }} className={`group rounded-xl border p-2 transition ${atCapacity ? 'border-white/[0.07] bg-white/[0.015]' : 'cursor-grab border-white/10 bg-white/[0.025] hover:border-sky-300/30 hover:bg-sky-300/[0.04] active:cursor-grabbing'}`}>
+                              <div className="flex items-center gap-3">
                                 <LibraryThumbnail selected={count > 0} component={libraryPreviews[option.id]} />
                                 <div className="min-w-0 flex-1">
                                   <p className="text-xs font-semibold leading-4 text-slate-100">{option.name}</p>
-                                  <p className="mt-1 text-[10px] leading-4 text-slate-400">{option.terminalSummary}</p>
                                 </div>
-                              </div>
-                              <p title={option.description} className="mt-2 line-clamp-2 text-[11px] leading-[1.55] text-slate-400">{option.description}</p>
-                              <div className="mt-2.5 flex items-center justify-between gap-2">
-                                <span className={`text-[10px] ${count ? 'text-sky-300' : 'text-slate-500'}`}>{count ? `${count} on bench` : 'Add as many as you need'}</span>
-                                <button type="button" onClick={() => addDevice(option.id, option.name)} disabled={atCapacity} aria-label={`Add ${option.name}${count ? ' again' : ''}`} title={atCapacity ? `Your bench holds ${MAX_CUSTOM_COMPONENTS} devices` : `Add ${option.name} to your bench`} className={`flex h-8 items-center justify-center gap-1.5 rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 text-[11px] font-semibold text-sky-200 transition hover:border-sky-300/50 hover:bg-sky-400/20 disabled:cursor-not-allowed disabled:border-white/5 disabled:bg-white/5 disabled:text-slate-600 ${focusRing}`}>
+                                <button type="button" onClick={() => addDevice(option.id, option.name)} disabled={atCapacity} aria-label={`Add ${option.name}${count ? ' again' : ''}`} title={atCapacity ? `Your bench holds ${MAX_CUSTOM_COMPONENTS} devices` : `Add ${option.name} to your bench`} className={`flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/15 px-3 text-xs font-semibold text-sky-100 transition hover:border-sky-300/60 hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:border-white/5 disabled:bg-white/5 disabled:text-slate-600 ${focusRing}`}>
                                   <Plus className="h-3.5 w-3.5" /> Add
                                 </button>
                               </div>
@@ -318,11 +307,6 @@ export const CustomLabSidebar: React.FC = () => {
             )}
           </div>
 
-          <div className="shrink-0 border-t border-white/10 bg-black/10 px-3 py-2 md:px-4 md:py-3">
-            <div className="flex items-center justify-between text-[11px]"><span className={atCapacity ? 'text-amber-300' : 'text-slate-400'}>{atCapacity ? 'Bench full — remove a device to add more' : 'Room to experiment'}</span><span className="shrink-0 pl-2 font-medium tabular-nums text-slate-300">{benchComponents.length} / {MAX_CUSTOM_COMPONENTS}</span></div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.07]"><div className={`h-full rounded-full transition-all ${atCapacity ? 'bg-amber-400' : 'bg-sky-400/70'}`} style={{ width: `${benchComponents.length / MAX_CUSTOM_COMPONENTS * 100}%` }} /></div>
-            <p className="mt-2 hidden items-center gap-1.5 text-[10px] text-slate-500 md:flex"><ShieldCheck className="h-3 w-3 shrink-0" /> Add, connect, experiment. Undo is always close by.</p>
-          </div>
         </aside>
       )}
     </div>

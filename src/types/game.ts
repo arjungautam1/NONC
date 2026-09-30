@@ -106,7 +106,7 @@ export interface Wire {
   fromTerminalId: string;
   toComponentId: string;
   toTerminalId: string;
-  color: 'red' | 'black' | 'green' | 'orange';
+  color: 'red' | 'black' | 'gray' | 'green' | 'orange';
   waypoints?: { x: number; y: number }[];
 }
 
@@ -123,4 +123,3 @@ export interface MultimeterState {
   blackProbe: ProbeConnection | null;
   reading: string;
 }
-

@@ -2,8 +2,7 @@ import React from 'react';
 import { FlaskConical } from 'lucide-react';
 
 /**
- * Sitewide notice that the simulator is pre-release. Shown above both the
- * dashboard and the lab so it is the first thing read on any screen.
+ * Pre-release notice shown on the landing page before students enter the lab.
  */
 export const BetaBanner: React.FC = () => (
   <div

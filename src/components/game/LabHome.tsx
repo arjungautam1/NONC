@@ -60,27 +60,32 @@ export function LabHome() {
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [pendingLaunch, setPendingLaunch] = useState<{ action: () => void } | null>(null);
 
   const hasBench = isCustomLab && benchComponents.length > 0;
   const deviceCount = benchComponents.length;
 
-  const openLab = () => {
+  const requestLaunch = (action: () => void) => {
     soundManager.playButton();
-    if (hasBench) {
-      setViewMode('lab');
-    } else {
-      startCustomLab([]);
-    }
+    setPendingLaunch({ action });
+  };
+
+  const confirmLaunch = () => {
+    const action = pendingLaunch?.action;
+    setPendingLaunch(null);
+    action?.();
+  };
+
+  const openLab = () => {
+    requestLaunch(() => hasBench ? setViewMode('lab') : startCustomLab([]));
   };
 
   const handleLaunchPreset = (preset: LabPreset) => {
-    soundManager.playButton();
-    startCustomLab(preset.deviceCatalogIds);
+    requestLaunch(() => startCustomLab(preset.deviceCatalogIds));
   };
 
   const handleAddDeviceAndOpen = (optionId: string) => {
-    soundManager.playButton();
-    startCustomLab([optionId]);
+    requestLaunch(() => startCustomLab([optionId]));
   };
 
   const filteredDevices = customLabOptions.filter(device => {
@@ -524,6 +529,24 @@ export function LabHome() {
           </div>
         </div>
       </footer>
+
+      {pendingLaunch && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/75 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="lab-warning-title">
+          <div className="w-full max-w-md rounded-2xl border border-amber-400/25 bg-[#101722] p-6 shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-300">
+              <ShieldCheck className="h-6 w-6 shrink-0" />
+              <h2 id="lab-warning-title" className="text-lg font-semibold text-white">Before you enter the lab</h2>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-300">
+              This simulator is still in development and can make mistakes. Always verify against the manufacturer&apos;s documentation before wiring real equipment.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setPendingLaunch(null)} className="h-10 rounded-xl px-4 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white">Cancel</button>
+              <button type="button" onClick={confirmLaunch} autoFocus className="h-10 rounded-xl bg-amber-400 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-300">I understand — enter lab</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

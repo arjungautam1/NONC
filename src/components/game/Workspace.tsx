@@ -131,6 +131,7 @@ export const Workspace: React.FC = () => {
     probeMode,
     setProbeMode,
     sidebarOpen,
+    setSidebarOpen,
     bottomPanelOpen,
     shortCircuitSmoke,
     isCustomLab,
@@ -142,7 +143,7 @@ export const Workspace: React.FC = () => {
     cancelComponentMove
   } = useGameStore();
 
-  const [activeColor, setActiveColor] = useState<'red' | 'black' | 'green' | 'orange'>('red');
+  const [activeColor, setActiveColor] = useState<'red' | 'black' | 'gray' | 'green' | 'orange'>('red');
   const [zoomScale, setZoomScale] = useState<number>(1.0);
   const [draggedCompId, setDraggedCompId] = useState<string | null>(null);
   const dragSession = useRef<{ id: string; pointerId: number; startX: number; startY: number; offsetX: number; offsetY: number; moved: boolean } | null>(null);
@@ -220,6 +221,9 @@ export const Workspace: React.FC = () => {
   }, [components, selectedCompId, drawingWireStart]);
 
   const startFocusedWireDrawing = (start: { componentId: string; terminalId: string }) => {
+    if (sidebarOpen) {
+      setSidebarOpen(false);
+    }
     setDrawingWireStart(start);
   };
 
@@ -1355,10 +1359,10 @@ export const Workspace: React.FC = () => {
   const getComponentBounds = (comp: CircuitComponent, padding = 12) => {
     const position = getComponentCanvasPosition(comp);
     if (comp.type === 'transformer') {
-      // Include the corded System Power outlet behind the adapter. Without this
-      // larger footprint, unrelated wires can be routed across the station.
+      // Include the outlet strip behind the adapter. The mains cord itself is
+      // flexible and anchored to the canvas, so it is not part of this obstacle.
       return {
-        left: position.x - 159 - padding,
+        left: position.x - 112 - padding,
         right: position.x + 112 + padding,
         top: position.y - 78 - padding,
         bottom: position.y + 78 + padding
@@ -1840,7 +1844,8 @@ export const Workspace: React.FC = () => {
   const getWireColorHex = (colorName: string) => {
     switch (colorName) {
       case 'red': return '#ef4444';   // Positive / Hot
-      case 'black': return '#94a3b8'; // Negative / Neutral — lifted well clear of the dark canvas so the run always reads as a wire
+      case 'black': return '#080b10';
+      case 'gray': return '#94a3b8';
       case 'green': return '#22c55e'; // PE Ground
       case 'orange': return '#f97316'; // Control loops
       default: return '#f59e0b';
@@ -1914,7 +1919,7 @@ export const Workspace: React.FC = () => {
     <div className="flex-1 flex flex-col relative min-h-0 bg-[#090e15] select-none">
       
       {/* Canvas Toolbars */}
-      <div className="min-h-14 border-b border-white/10 bg-[#101722] px-3 py-2 flex items-center text-xs font-medium text-slate-300 shrink-0 overflow-x-auto">
+      <div className="min-h-11 border-b border-white/10 bg-[#101722] px-2 py-1 flex items-center text-xs font-medium text-slate-300 shrink-0 overflow-x-auto">
         <div className="flex min-w-max items-center gap-2">
           <div className="flex items-center rounded-lg border border-white/10 bg-black/15 p-1">
             <button aria-label="Select and move devices" aria-pressed={canvasTool === 'select'} title="Select and move devices"
@@ -1961,7 +1966,7 @@ export const Workspace: React.FC = () => {
         <div className="flex items-center gap-2 px-1.5">
           <span className="text-slate-500 uppercase tracking-[0.14em] text-[9px] font-bold">Wiring</span>
           <div className="flex gap-1.5">
-            {(['red', 'black', 'green', 'orange'] as const).map(color => (
+            {(['red', 'black', 'gray', 'green', 'orange'] as const).map(color => (
               <button
                 key={color}
                 onClick={() => setActiveColor(color)}
@@ -1970,7 +1975,7 @@ export const Workspace: React.FC = () => {
                 }`}
                 style={{
                   backgroundColor: getWireColorHex(color),
-                  borderColor: color === 'black' ? '#52525b' : '#18181b'
+                  borderColor: color === 'black' ? '#cbd5e1' : '#18181b'
                 }}
                 title={`${color.toUpperCase()} Wire`}
               />
@@ -2019,17 +2024,21 @@ export const Workspace: React.FC = () => {
           >
             Size: {wireSize}
           </button>
-          <div className="hidden 2xl:flex h-7 items-center gap-1.5 text-[10px] text-slate-500 px-2.5 rounded-md border border-white/[0.06]">
-            <Info className="w-3.5 h-3.5" />
-            <span>Drag to route · select to edit</span>
-          </div>
+          <details className="group">
+            <summary className="flex h-8 cursor-pointer list-none items-center gap-1 rounded-md px-2 text-slate-400 hover:bg-white/10 hover:text-white" title="Workspace help">
+              <Info size={14} /> Help
+            </summary>
+            <div className="absolute left-2 right-2 top-12 z-50 rounded-lg border border-white/15 bg-[#101722] p-3 text-xs leading-relaxed text-slate-300 shadow-xl">
+              Drag devices to move · Click two terminals to connect · Drag empty space to pan.
+              <br />Select a device to resize, duplicate, or remove it. Ctrl / ⌘ + scroll to zoom. Use Fit to show all devices.
+            </div>
+          </details>
         </div>
         </div>
       </div>
 
 
-      <div className="h-12 shrink-0 overflow-x-auto border-b border-white/[0.06] bg-[#101722]">
-          {!selectedCompId && <p className="flex h-full items-center px-4 text-xs text-slate-500">Select a device to resize, duplicate, or remove it.</p>}
+      {selectedCompId && <div className="h-10 shrink-0 overflow-x-auto border-b border-white/[0.06] bg-[#101722]">
           {selectedCompId && (() => {
             const selectedComp = components.find(c => c.id === selectedCompId);
             if (!selectedComp) return null;
@@ -2105,11 +2114,7 @@ export const Workspace: React.FC = () => {
           })()}
 
 
-      </div>
-      <div className={`flex h-10 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 text-[11px] ${drawingWireStart || probeMode ? 'bg-blue-500/10 text-blue-200' : 'bg-[#0d141f] text-slate-400'}`}>
-        <span className="flex min-w-0 items-center gap-2"><Info size={13} className="shrink-0 text-blue-300" /><span className="truncate">{probeMode ? `Click a terminal to attach the ${probeMode} probe.` : drawingWireStart ? 'Click another terminal to connect · Click empty space for a bend · Esc cancels' : canvasTool === 'pan' ? 'Drag to move around · Choose Select to move devices or wire' : 'Drag devices to move · Click two terminals to connect · Drag empty space to pan'}</span></span>
-        {drawingWireStart || probeMode ? <button className="flex h-8 shrink-0 items-center gap-1 rounded-md bg-blue-400/10 px-2 text-blue-100 hover:bg-blue-400/20" onClick={() => { setProbeMode(null); cancelWireDrawing(); }}><X size={14} /> Cancel</button> : <span className="hidden shrink-0 xl:inline">Ctrl / ⌘ + scroll to zoom</span>}
-      </div>
+      </div>}
       <span className="sr-only" role="status" aria-live="polite">{canvasNotice}</span>
       {/* SVG Canvas Container */}
       <svg
@@ -2136,6 +2141,7 @@ export const Workspace: React.FC = () => {
           else setCanvasNotice(`The bench holds up to ${MAX_CUSTOM_COMPONENTS} devices.`);
         }}
         onPointerDownCapture={(event) => {
+          if (sidebarOpen) setSidebarOpen(false);
           if (!drawingWireStart && !probeMode && (canvasTool === 'pan' || spaceHeld || event.button === 1)) {
             event.stopPropagation(); handleWorkspacePointerDown(event);
           }
@@ -2177,8 +2183,34 @@ export const Workspace: React.FC = () => {
             const transformer = components.find(c => c.type === 'transformer');
             const transformerPosition = transformer ? getComponentCanvasPosition(transformer) : null;
             if (!transformer || !transformerPosition) return null;
+            const cordSource = { x: 18, y: 22 };
+            const cordEnd = { x: transformerPosition.x - 104, y: transformerPosition.y - 20 };
+            const cordControlX = Math.max(cordSource.x + 28, cordEnd.x - 72);
             return (
-              <g transform={`translate(${transformerPosition.x}, ${transformerPosition.y - 18})`}>
+              <React.Fragment>
+                {/* Fixed mains feed: moving the transformer naturally pulls out more cord. */}
+                <g pointerEvents="none">
+                  <rect x="4" y="5" width="28" height="32" rx="6" fill="#1b222c" stroke="#64748b" strokeWidth="1.2" />
+                  <circle cx={cordSource.x} cy={cordSource.y} r="7" fill="#080b10" stroke="#94a3b8" strokeWidth="1.2" />
+                  <circle cx={cordSource.x} cy={cordSource.y} r="3.5" fill="#020407" />
+                  <path
+                    d={`M ${cordSource.x} ${cordSource.y} C ${cordSource.x + 38} ${cordSource.y}, ${cordControlX} ${cordEnd.y}, ${cordEnd.x} ${cordEnd.y}`}
+                    fill="none"
+                    stroke="#020407"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    filter="drop-shadow(0 2px 2px rgba(0,0,0,0.55))"
+                  />
+                  <path
+                    d={`M ${cordSource.x} ${cordSource.y - 0.7} C ${cordSource.x + 38} ${cordSource.y - 0.7}, ${cordControlX} ${cordEnd.y - 0.7}, ${cordEnd.x} ${cordEnd.y - 0.7}`}
+                    fill="none"
+                    stroke="#374151"
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                    opacity="0.7"
+                  />
+                </g>
+                <g transform={`translate(${transformerPosition.x}, ${transformerPosition.y - 18})`}>
                 <defs>
                   <linearGradient id="corded-strip-top" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#4b5563" />
@@ -2208,16 +2240,9 @@ export const Workspace: React.FC = () => {
                   </filter>
                 </defs>
 
-                {/* Short molded cord entering from the left side of the outlet strip. */}
-                <path
-                  d="M -104 -2 C -116 -2 -119 5 -130 5 C -139 5 -145 1 -151 1"
-                  fill="none"
-                  stroke="#121417"
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                  filter="drop-shadow(0 2px 2px rgba(0,0,0,0.45))"
-                />
-                <path d="M -104 -2 H -114" stroke="#47505a" strokeWidth="9" strokeLinecap="round" />
+                {/* Molded strain relief where the flexible cord enters the strip. */}
+                <path d="M -104 -2 H -114" stroke="#11151a" strokeWidth="10" strokeLinecap="round" />
+                <path d="M -104 -3 H -113" stroke="#4b5563" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
 
                 {/* Low-profile black metal body. */}
                 <path
@@ -2293,7 +2318,8 @@ export const Workspace: React.FC = () => {
 
                 <circle cx="-104" cy="18" r="1.7" fill="#111827" stroke="#7c8794" strokeWidth="0.7" />
                 <circle cx="104" cy="18" r="1.7" fill="#111827" stroke="#7c8794" strokeWidth="0.7" />
-              </g>
+                </g>
+              </React.Fragment>
             );
           })()}
 
@@ -2590,8 +2616,10 @@ export const Workspace: React.FC = () => {
               <path
                 d={pathD}
                 fill="none"
-                stroke="#020611"
-                strokeWidth={wireSize === 'normal' ? 6.2 : 4.4}
+                stroke={wire.color === 'black' ? '#64748b' : '#020611'}
+                strokeWidth={wire.color === 'black'
+                  ? (wireSize === 'normal' ? 4.8 : 3.25)
+                  : (wireSize === 'normal' ? 6.2 : 4.4)}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 opacity={isEndpointBeingDragged ? 0.16 : 0.92}
@@ -2631,6 +2659,20 @@ export const Workspace: React.FC = () => {
                   'brightness-110'
                 }`}
               />
+
+              {/* A fine graphite highlight keeps black insulation readable without making it look gray. */}
+              {wire.color === 'black' && !isEndpointBeingDragged && (
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke="#475569"
+                  strokeWidth={wireSize === 'normal' ? 0.7 : 0.45}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.7"
+                  pointerEvents="none"
+                />
+              )}
 
               {/* Voltage presence pulsing ring under glowing wires */}
               {isRunning && !isWireDead && !drawingWireStart && !isEndpointBeingDragged && (
@@ -2831,8 +2873,8 @@ export const Workspace: React.FC = () => {
               <path
                 d={path}
                 fill="none"
-                stroke="#020611"
-                strokeWidth="5.5"
+                stroke={finalColor === 'black' ? '#64748b' : '#020611'}
+                strokeWidth={finalColor === 'black' ? 4.8 : 5.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 opacity="0.9"
@@ -2847,6 +2889,9 @@ export const Workspace: React.FC = () => {
                 strokeDasharray={hoveredTerminal ? undefined : '6,5'}
                 opacity={hoveredTerminal ? 1 : 0.92}
               />
+              {finalColor === 'black' && (
+                <path d={path} fill="none" stroke="#475569" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+              )}
               {hoveredTerminal ? (
                 <g transform={`translate(${previewEnd.x}, ${previewEnd.y})`} pointerEvents="none">
                   <circle cx="0" cy="0" r="12" fill="rgba(16, 185, 129, 0.16)" stroke="#34d399" strokeWidth="2" className="animate-pulse" />

@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useGameStore } from './store/useGameStore';
 import { LabHome } from './components/game/LabHome';
-import { BetaBanner } from './components/game/BetaBanner';
 
 const CustomLab = lazy(() => import('./components/game/CustomLab'));
 
@@ -26,7 +25,7 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo, viewMode]);
 
-  return viewMode === 'home' ? <><BetaBanner /><LabHome /></> : (
+  return viewMode === 'home' ? <LabHome /> : (
     <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#080b12] text-slate-300" role="status">Opening your lab…</div>}>
       <CustomLab />
     </Suspense>
