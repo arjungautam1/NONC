@@ -337,8 +337,9 @@ export const Workspace: React.FC = () => {
   // Get default scale for each component type (1.35x default zoom for all control & input devices)
   const getComponentDefaultScale = (type: string): number => {
     switch (type) {
-      case 'power_supply':
       case 'relay':
+        return 1.85;
+      case 'power_supply':
       case 'relay_dpdt':
       case 'relay_rbsnttl':
       case 'relay_rb1224':
@@ -2043,10 +2044,14 @@ export const Workspace: React.FC = () => {
             const selectedComp = components.find(c => c.id === selectedCompId);
             if (!selectedComp) return null;
             const currentScale = getComponentEffectiveScale(selectedComp);
+            const defaultScale = selectedComp.type === 'junction'
+              ? SPLICE_CONNECTOR_DEFAULT_SCALE
+              : getComponentDefaultScale(selectedComp.type);
+            const displayedScale = parseFloat((currentScale / defaultScale).toFixed(2));
             return (
               <div className="flex h-full min-w-max items-center gap-2 bg-blue-400/[0.06] px-4 py-1 text-xs text-blue-200">
                 <span className="font-semibold text-white max-w-[120px] truncate">{selectedComp.label}</span>
-                <span className="text-[10px] text-blue-300 font-mono">({currentScale}x)</span>
+                <span className="text-[10px] text-blue-300 font-mono">({displayedScale}x)</span>
                 {isCustomLab && getCustomLabOptionId(selectedComp) && (
                   <button onClick={duplicateSelected} title="Duplicate selected device (Ctrl/Cmd+D)" className="ml-2 flex h-8 items-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-xs text-blue-200 hover:bg-blue-400/20"><Copy size={14} /> Duplicate</button>
                 )}
@@ -2068,9 +2073,9 @@ export const Workspace: React.FC = () => {
                   <button
                     onClick={() => {
                       soundManager.playClick();
-                      let next = parseFloat((currentScale - 0.25).toFixed(2));
+                      let next = parseFloat((displayedScale - 0.25).toFixed(2));
                       if (next < 0.75) next = 0.75;
-                      setComponentState(selectedComp.id, 'scale', next);
+                      setComponentState(selectedComp.id, 'scale', parseFloat((defaultScale * next).toFixed(2)));
                     }}
                     className="h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
                     title="Make device smaller"
@@ -2080,20 +2085,20 @@ export const Workspace: React.FC = () => {
                   <button
                     onClick={() => {
                       soundManager.playClick();
-                      let next = parseFloat((currentScale + 0.35).toFixed(2));
+                      let next = parseFloat((displayedScale + 0.35).toFixed(2));
                       if (next > 2.2) next = 1.0;
-                      setComponentState(selectedComp.id, 'scale', next);
+                      setComponentState(selectedComp.id, 'scale', parseFloat((defaultScale * next).toFixed(2)));
                     }}
                     className="h-5 px-1.5 flex items-center justify-center text-[10px] font-bold text-blue-300 hover:text-white hover:bg-white/10 rounded cursor-pointer"
                     title="Make device bigger"
                   >
                     + Scale
                   </button>
-                  {currentScale !== 1.0 && (
+                  {displayedScale !== 1.0 && (
                     <button
                       onClick={() => {
                         soundManager.playClick();
-                        setComponentState(selectedComp.id, 'scale', 1.0);
+                        setComponentState(selectedComp.id, 'scale', defaultScale);
                       }}
                       className="px-1.5 h-5 flex items-center justify-center text-[9px] font-bold text-indigo-300 hover:text-white hover:bg-indigo-500/20 rounded cursor-pointer border-l border-white/10"
                       title="Reset Device Scale to 1.0x"

@@ -33,7 +33,7 @@ export const customLabCategories: Array<{
 }> = [
   {
     id: 'input',
-    label: 'Input devices',
+    label: 'Inputs',
     description: 'Buttons, readers, and field switches that create a control signal.'
   },
   {
@@ -43,7 +43,7 @@ export const customLabCategories: Array<{
   },
   {
     id: 'output',
-    label: 'Output devices',
+    label: 'Outputs',
     description: 'Lights, sounders, motors, and locks that perform the work.'
   }
 ];

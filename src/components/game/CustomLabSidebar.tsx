@@ -2,7 +2,6 @@ import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  CircleDot,
   Cpu,
   Lightbulb,
   MousePointerClick,
@@ -11,7 +10,6 @@ import {
   PackageOpen,
   Search,
   Trash2,
-  Wrench,
   Zap
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
@@ -113,7 +111,7 @@ const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible
 
 export const CustomLabSidebar: React.FC = () => {
   const {
-    components, isRunning, simulation, wires, sidebarOpen, toggleSidebar,
+    components, isRunning, wires, sidebarOpen, toggleSidebar,
     toggleSimulation, addCustomLabComponent, removeCustomLabComponent
   } = useGameStore();
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -145,7 +143,6 @@ export const CustomLabSidebar: React.FC = () => {
   const fixedPowerSources = components.filter(component =>
     component.id === 'custom_transformer' || component.id === 'custom_psu'
   );
-  const energizedCount = components.filter(component => simulation.energizedComponents.has(component.id)).length;
 
   const addDevice = (optionId: string, name: string) => {
     const componentId = addCustomLabComponent(optionId);
@@ -189,52 +186,28 @@ export const CustomLabSidebar: React.FC = () => {
       ) : (
         <aside aria-label="Custom lab device library" className="flex h-full w-full flex-col overflow-hidden border-b border-white/10 bg-[#0b1220] md:w-[380px] md:border-b-0 md:border-r">
           <div className="shrink-0 border-b border-white/10 px-3 py-2 md:px-4 md:pb-3 md:pt-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="hidden items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-sky-300 md:flex">
-                  <Wrench className="h-3.5 w-3.5" /> Your custom lab
-                </div>
-                <h2 className="mt-1 text-sm font-semibold tracking-tight text-white md:text-lg">Build your circuit</h2>
-              </div>
-              <button type="button" onClick={toggleSimulation} aria-pressed={isRunning} aria-label={isRunning ? 'Turn circuit power off' : 'Turn circuit power on'} className={`ml-auto flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium md:hidden ${isRunning ? 'bg-emerald-400/10 text-emerald-300' : 'bg-white/5 text-slate-300'} ${focusRing}`}><Zap className="h-3.5 w-3.5" /> Power {isRunning ? 'on' : 'off'}</button>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold tracking-tight text-white">Devices</h2>
+              <button type="button" onClick={toggleSimulation} aria-pressed={isRunning} aria-label={isRunning ? 'Turn circuit power off' : 'Turn circuit power on'} className={`ml-auto flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold ${isRunning ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'border-white/10 bg-white/5 text-slate-300'} ${focusRing}`}><Zap className="h-3.5 w-3.5" /> {isRunning ? 'On' : 'Off'}</button>
               <button type="button" onClick={toggleSidebar} aria-label="Hide device library" title="Hide device library" className={`flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white ${focusRing}`}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-3 hidden items-center gap-3 md:flex">
-              <button
-                type="button"
-                onClick={toggleSimulation}
-                aria-pressed={isRunning}
-                aria-label={isRunning ? 'Turn circuit power off' : 'Turn circuit power on'}
-                className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition ${focusRing} ${isRunning ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20' : 'border-white/15 bg-white/5 text-slate-200 hover:bg-white/10'}`}
-              >
-                <Zap className="h-4 w-4" /> Power {isRunning ? 'on' : 'off'}
-                <span className={`h-1.5 w-1.5 rounded-full ${isRunning ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-              </button>
-              <div className="min-w-0 text-xs">
-                <p className={`flex items-center gap-1.5 font-medium ${simulation.shortCircuit ? 'text-red-300' : 'text-slate-300'}`}>
-                  <CircleDot className="h-3 w-3 shrink-0" />
-                  {simulation.shortCircuit ? 'Short circuit detected' : isRunning ? `${energizedCount} devices energized` : 'Ready when you are'}
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500">{wires.length} wire{wires.length === 1 ? '' : 's'} connected</p>
-              </div>
-            </div>
-            <div role="tablist" aria-label="Device panels" onKeyDown={navigateTabs} className="mt-2 grid grid-cols-2 gap-1 rounded-xl bg-black/20 p-1 md:mt-4">
-              <button id="custom-library-tab" type="button" role="tab" tabIndex={activeTab === 'library' ? 0 : -1} aria-selected={activeTab === 'library'} aria-controls="custom-device-panel" onClick={() => setActiveTab('library')} className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${focusRing} ${activeTab === 'library' ? 'bg-slate-700/60 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}>Device library</button>
+            <div role="tablist" aria-label="Device panels" onKeyDown={navigateTabs} className="mt-2 grid grid-cols-2 gap-1 rounded-xl bg-black/20 p-1">
+              <button id="custom-library-tab" type="button" role="tab" tabIndex={activeTab === 'library' ? 0 : -1} aria-selected={activeTab === 'library'} aria-controls="custom-device-panel" onClick={() => setActiveTab('library')} className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${focusRing} ${activeTab === 'library' ? 'bg-slate-700/60 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}>Library</button>
               <button id="custom-bench-tab" type="button" role="tab" tabIndex={activeTab === 'bench' ? 0 : -1} aria-selected={activeTab === 'bench'} aria-controls="custom-device-panel" onClick={() => setActiveTab('bench')} className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${focusRing} ${activeTab === 'bench' ? 'bg-slate-700/60 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}>
-                On bench <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] tabular-nums">{benchComponents.length}</span>
+                Added
               </button>
             </div>
             <label className="relative mt-2 block md:mt-3">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input type="search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder={activeTab === 'library' ? 'Find a device…' : 'Find a device on your bench…'} aria-label={activeTab === 'library' ? 'Search device library' : 'Search bench devices'} className="h-10 w-full rounded-xl border border-white/10 bg-black/15 pl-10 pr-3 text-xs text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/10" />
+              <input type="search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Search…" aria-label={activeTab === 'library' ? 'Search device library' : 'Search added devices'} className="h-10 w-full rounded-xl border border-white/10 bg-black/15 pl-10 pr-3 text-xs text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/10" />
             </label>
             {activeTab === 'library' && (
               <div aria-label="Device categories" className="mt-2 flex flex-wrap gap-1.5 md:mt-2.5">
                 {(['all', ...customLabCategories.map(category => category.id)] as const).map(category => (
                   <button key={category} type="button" aria-pressed={activeCategory === category} onClick={() => setActiveCategory(category)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${focusRing} ${activeCategory === category ? 'border-sky-400/30 bg-sky-400/15 text-sky-200' : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white'}`}>
-                    {category === 'all' ? 'All devices' : category === 'input' ? 'Inputs' : category === 'control' ? 'Relays' : 'Outputs'}
+                    {category === 'all' ? 'All' : category === 'input' ? 'Inputs' : category === 'control' ? 'Relays' : 'Outputs'}
                   </button>
                 ))}
               </div>
@@ -253,7 +226,6 @@ export const CustomLabSidebar: React.FC = () => {
                       <div className="mb-2 flex items-center gap-2">
                         <Icon className={`h-3.5 w-3.5 ${iconClass}`} />
                         <h3 className="text-[11px] font-semibold text-slate-300">{category.label}</h3>
-                        <span className="text-[10px] text-slate-500">{options.length}</span>
                       </div>
                       <div className="space-y-1.5">
                         {options.map(option => {
