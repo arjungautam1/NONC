@@ -364,6 +364,35 @@ export function solveCircuit(
       }
     });
 
+    // Track regulated DC independently from the transformer's raw AC output.
+    // Devices such as the Camden CM-221/CM-222 must be powered from a battery
+    // or an active regulated supply, even though the transformer is represented
+    // by the same positive/negative graph rails for legacy lab circuits.
+    const traceSourceRail = (sources: string[]) => {
+      const connected = new Set(sources);
+      const queue = [...sources];
+      while (queue.length > 0) {
+        const key = queue.shift()!;
+        const neighbors = adjList[key] || new Set<string>();
+        neighbors.forEach(neighbor => {
+          if (!connected.has(neighbor)) {
+            connected.add(neighbor);
+            queue.push(neighbor);
+          }
+        });
+      }
+      return connected;
+    };
+    const regulatedSources = components.filter(c =>
+      c.type === 'battery' || (c.type === 'power_supply' && c.state.active)
+    );
+    const connectedToRegulatedPos = traceSourceRail(
+      regulatedSources.map(c => getTerminalKey(c.id, 'pos'))
+    );
+    const connectedToRegulatedNeg = traceSourceRail(
+      regulatedSources.map(c => getTerminalKey(c.id, 'neg'))
+    );
+
     // 3. Traverse from Positive sources to find all connected terminals
     const connectedToPos = new Set<string>();
     const propagatedPositiveVoltage: Record<string, number> = {};
@@ -517,6 +546,12 @@ export function solveCircuit(
         const outNeg = connectedToNeg.has(outKey);
 
         let isPowered = (inPos && outNeg) || (outPos && inNeg);
+
+        if (c.type === 'wave_sensor') {
+          isPowered =
+            (connectedToRegulatedPos.has(inKey) && connectedToRegulatedNeg.has(outKey)) ||
+            (connectedToRegulatedPos.has(outKey) && connectedToRegulatedNeg.has(inKey));
+        }
 
         // Seco-Larm 3-wire: RED and GRN are two independent positive inputs and
         // either one runs the unit — but only against BLK, so both still need

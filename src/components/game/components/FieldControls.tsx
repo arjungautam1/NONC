@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { useGameStore } from '../../../store/useGameStore';
 import { PULL_STATION_PINS } from './pullStationPinout';
@@ -11,26 +11,35 @@ interface FieldControlProps {
  * Camden CM-700 Series 'Universal' Blue pull station (four-screw CM-702 style).
  *
  * The plate latches down when pulled and, exactly as the installation sheet
- * describes, only returns by pushing it back in through the reset hole — so the
- * plate activates the station and the reset hole clears it.
+ * plate activates the station and clicking the opened plate resets it.
  */
 export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
   const toggleSwitch = useGameStore(state => state.toggleSwitch);
   const isPulled = Boolean(component.state.toggled);
+  const [isResetting, setIsResetting] = useState(false);
+  const resetTimer = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
+  }, []);
 
   // Click rather than pointerup: the workspace takes a pointer capture on the
   // component group for dragging, which retargets pointerup away from here.
-  const activate = (event: React.MouseEvent<SVGGElement>) => {
+  const togglePullStation = (event: React.MouseEvent<SVGGElement>) => {
     event.stopPropagation();
-    if (!isPulled) toggleSwitch(component.id);
-  };
+    if (!isPulled) {
+      toggleSwitch(component.id);
+      return;
+    }
 
-  const reset = (event: React.MouseEvent<SVGGElement>) => {
-    event.stopPropagation();
-    if (isPulled) toggleSwitch(component.id);
+    if (isResetting) return;
+    setIsResetting(true);
+    resetTimer.current = window.setTimeout(() => {
+      toggleSwitch(component.id);
+      setIsResetting(false);
+      resetTimer.current = null;
+    }, 1100);
   };
-
-  const plateShift = isPulled ? 13 : 0;
 
   return (
     <g className="select-none">
@@ -47,59 +56,65 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
       {/* Specular sheen down the face */}
       <rect x="-33" y="-66" width="10" height="130" fill="#3b82f6" opacity="0.28" />
 
-      {/* ---- Upper fascia with the reset hole ---- */}
+      {/* ---- Upper fascia ---- */}
       <rect x="-35" y="-42" width="70" height="30" rx="1.5" fill="#1d4ed8" stroke="#172554" strokeWidth="0.8" />
-      <g className="device-control cursor-pointer" onClick={reset}>
-        {/* Generous invisible target — the moulded port itself is only a few px across */}
-        <circle cx="0" cy="-27" r="12" fill="transparent" />
-        {/* Screwdriver reset port */}
-        <circle cx="0" cy="-27" r="5.2" fill="#0b1220" stroke="#1e3a8a" strokeWidth="1.2" />
-        <circle cx="-1.2" cy="-28.4" r="2" fill="#3b82f6" opacity="0.5" />
-        {isPulled && (
-          <>
-            <circle cx="0" cy="-27" r="8.5" fill="none" stroke="#fbbf24" strokeWidth="1.2" className="animate-pulse" />
-            <text x="0" y="-13.5" fill="#fde68a" fontSize="5.4" fontWeight="900" textAnchor="middle" fontFamily="monospace">
-              RESET
-            </text>
-          </>
-        )}
-      </g>
 
-      {/* ---- Pull plate: drops and latches when operated ---- */}
-      <g
-        className="device-control cursor-pointer"
-        onClick={activate}
-        transform={`translate(0, ${plateShift})`}
-        style={{ transition: 'transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1)' }}
-      >
-        {/* Shadow gap revealed above the plate once it has dropped */}
-        {isPulled && <rect x="-35" y="-14" width="70" height="13" fill="#0b1220" opacity="0.85" />}
-        <rect x="-35" y="-10" width="70" height="46" rx="1.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
-        {/* Direction-of-pull arrow */}
-        <path
-          d="M0 -6.5 L7 1.5 L3.4 1.5 L3.4 7 L-3.4 7 L-3.4 1.5 L-7 1.5 Z"
-          fill="#111827"
-          stroke="#9ca3af"
-          strokeWidth="0.8"
-          strokeLinejoin="round"
-        />
-        <text x="0" y="17.5" fill="#111827" fontSize="10.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">
-          PULL
-        </text>
-        <text x="0" y="25" fill="#111827" fontSize="6.6" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">
-          FOR DOOR
-        </text>
-        <text x="0" y="31.5" fill="#111827" fontSize="6.6" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">
-          RELEASE
-        </text>
-      </g>
+      {!isPulled ? (
+        /* ---- Closed pull plate ---- */
+        <g className="device-control cursor-pointer" onClick={togglePullStation}>
+          <rect x="-35" y="-10" width="70" height="46" rx="1.5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
+          <path
+            d="M0 -6.5 L7 1.5 L3.4 1.5 L3.4 7 L-3.4 7 L-3.4 1.5 L-7 1.5 Z"
+            fill="#111827"
+            stroke="#9ca3af"
+            strokeWidth="0.8"
+            strokeLinejoin="round"
+          />
+          <text x="0" y="17.5" fill="#111827" fontSize="10.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">
+            PULL
+          </text>
+          <text x="0" y="25" fill="#111827" fontSize="6.6" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">
+            FOR DOOR
+          </text>
+          <text x="0" y="31.5" fill="#111827" fontSize="6.6" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">
+            RELEASE
+          </text>
+        </g>
+      ) : (
+        /* ---- Open station: cavity exposed and plate folded around its lower hinge ---- */
+        <g className="device-control cursor-pointer" onClick={togglePullStation}>
+          {isResetting && (
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0 0; 0 0; 0 -9"
+              keyTimes="0; 0.68; 1"
+              dur="1100ms"
+              fill="freeze"
+            />
+          )}
+          <rect x="-35" y="-10" width="70" height="46" rx="1.5" fill="#090f1c" stroke="#172554" strokeWidth="1" />
+          <rect x="-30" y="-5" width="60" height="36" rx="2" fill="#111c31" stroke="#334155" strokeWidth="0.8" />
+          <path d="M -30 -5 L -24 1 L -24 28 L -30 31 Z" fill="#1e3a8a" opacity="0.75" />
+          <path d="M 30 -5 L 24 1 L 24 28 L 30 31 Z" fill="#0b1220" />
+          <rect x="-7" y="0" width="14" height="16" rx="2" fill="#475569" stroke="#94a3b8" strokeWidth="0.8" />
+          <path d="M -4 3 L 4 3 L 2 11 L -2 11 Z" fill="#cbd5e1" />
+          <circle cx="0" cy="23" r="3.2" fill="#64748b" stroke="#cbd5e1" strokeWidth="0.7" />
+          <text x="0" y="30" fill="#4ade80" fontSize="5.8" fontWeight="900" textAnchor="middle" fontFamily="monospace">
+            ACTIVATED
+          </text>
 
-      {/* ---- Status band, clear of the plate's travel ---- */}
-      <rect x="-35" y="52" width="70" height="10" rx="1.5" fill={isPulled ? '#7f1d1d' : '#172554'} />
-      <circle cx="-28" cy="57" r="2.2" fill={isPulled ? '#f87171' : '#22c55e'} className={isPulled ? 'animate-pulse' : ''} />
-      <text x="4" y="59.5" fill="#e0e7ff" fontSize="5.8" fontWeight="800" textAnchor="middle" fontFamily="monospace">
-        {isPulled ? 'ACTIVATED' : 'NORMAL'}
-      </text>
+          {/* Barrel hinge and foreshortened face lying fully open. */}
+          <rect x="-37" y="33" width="74" height="6" rx="3" fill="#1e3a8a" stroke="#60a5fa" strokeWidth="0.8" />
+          <circle cx="-30" cy="36" r="2" fill="#93c5fd" />
+          <circle cx="30" cy="36" r="2" fill="#93c5fd" />
+          <path d="M -35 38 L 35 38 L 43 58 L -43 58 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1" />
+          <path d="M -30 41 L 30 41 L 34 54 L -34 54 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.7" />
+          <ellipse cx="0" cy="56" rx="4.8" ry="1.8" fill="#050a13" stroke="#94a3b8" strokeWidth="0.7" />
+          <path d="M -43 58 L 43 58 L 38 65 L -38 65 Z" fill="#1d4ed8" stroke="#172554" strokeWidth="1" />
+          <path d="M -35 58 L 35 58 L 32 61 L -32 61 Z" fill="#60a5fa" opacity="0.7" />
+        </g>
+      )}
 
       {/* ---- Four-screw terminal block (CM-702 wiring diagram) ---- */}
       <rect x="-42" y="68" width="84" height="20" rx="2" fill="#111827" stroke="#334155" strokeWidth="1" />
@@ -107,7 +122,18 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
         <g key={pin}>
           <circle cx={x} cy={y} r="4.6" fill="#9aa3b2" stroke="#5b6373" strokeWidth="0.7" />
           <path d={`M ${x - 3} ${y - 1.8} L ${x + 3} ${y + 1.8}`} stroke="#3f4653" strokeWidth="1.5" strokeLinecap="round" />
-          <text x={x} y={y - 6.4} fill="#e2e8f0" fontSize="5.8" fontWeight="900" fontFamily="monospace" textAnchor="middle">
+          <text
+            x={x}
+            y={y - 6.8}
+            fill="#ffffff"
+            stroke="#111827"
+            strokeWidth="1.8"
+            paintOrder="stroke"
+            fontSize="7.4"
+            fontWeight="900"
+            fontFamily="monospace"
+            textAnchor="middle"
+          >
             {pin}
           </text>
           <text
@@ -124,12 +150,37 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
         </g>
       ))}
 
-      <g transform="translate(0, 102)" pointerEvents="none">
-        <rect x="-51" y="-9" width="102" height="18" rx="5" fill="#070b13" stroke="#334155" />
-        <text x="0" y="3" fill="#f1f5f9" fontSize="8.5" fontWeight="800" textAnchor="middle" fontFamily="monospace">
-          {component.label}
-        </text>
-      </g>
+      {/* Foreground reset tool: rises through the hole beneath the open plate. */}
+      {isPulled && isResetting && (
+        <g pointerEvents="none" transform="translate(0 55)">
+          <g>
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0 42; 0 20; 0 1; 0 1"
+              keyTimes="0; 0.38; 0.7; 1"
+              dur="1100ms"
+              fill="freeze"
+            />
+            <path d="M -2.8 3 L 0 -3 L 2.8 3 Z" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" />
+            <rect x="-2.5" y="2" width="5" height="30" rx="1.5" fill="#f1f5f9" stroke="#0f172a" strokeWidth="1.2" />
+            <path d="M -1.1 4 L -1.1 29" stroke="#ffffff" strokeWidth="1" opacity="0.9" />
+            <rect x="-8" y="28" width="16" height="34" rx="6" fill="#f97316" stroke="#431407" strokeWidth="2" />
+            <rect x="-6" y="34" width="12" height="5" rx="1.5" fill="#fbbf24" />
+            <rect x="-6" y="47" width="12" height="5" rx="1.5" fill="#c2410c" />
+            <path d="M -5 31 Q 0 28 5 31" fill="none" stroke="#fed7aa" strokeWidth="1.2" />
+          </g>
+        </g>
+      )}
+
+      {!isResetting && (
+        <g transform="translate(0, 102)" pointerEvents="none">
+          <rect x="-51" y="-9" width="102" height="18" rx="5" fill="#070b13" stroke="#334155" />
+          <text x="0" y="3" fill="#f1f5f9" fontSize="8.5" fontWeight="800" textAnchor="middle" fontFamily="monospace">
+            {component.label}
+          </text>
+        </g>
+      )}
     </g>
   );
 };

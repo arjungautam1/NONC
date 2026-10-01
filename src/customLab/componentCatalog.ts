@@ -660,6 +660,26 @@ export const findCustomLabPlacement = (
     });
 
   if (hasSpace(origin)) return origin;
+
+  // Library additions stay in the upper work area and grow from left to right.
+  // This keeps new devices visible instead of sending them toward the limited
+  // space at the bottom of the canvas.
+  if (!requestedPosition) {
+    const candidate = { ...origin };
+    while (!hasSpace(candidate)) {
+      const blockers = existingComponents.filter(component => {
+        const other = getPlacementSize(component);
+        return Math.abs(component.x - candidate.x) < size.x + other.x + 28 &&
+          Math.abs(component.y - candidate.y) < size.y + other.y + 28;
+      });
+      candidate.x = Math.max(
+        candidate.x + 100,
+        ...blockers.map(component => component.x + size.x + getPlacementSize(component).x + 28)
+      );
+    }
+    return candidate;
+  }
+
   // Expanding rings have no reused fallback slot, even after the original bench fills up.
   for (let ring = 1; ; ring += 1) {
     const candidates: { x: number; y: number }[] = [];
