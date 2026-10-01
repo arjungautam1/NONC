@@ -37,6 +37,7 @@ export type ComponentType =
   | 'wave_sensor'
   | 'cube_power'
   | 'wireless_transmitter'
+  | 'wireless_relay_kr2402'
   | 'sm500_maglock'
   | 'cx12plus'
   | 'sti_siren_strobe'

@@ -5,6 +5,7 @@ import { rb1224Terminals } from '../components/game/components/rb1224Pinout';
 import { rbsnttlTerminals } from '../components/game/components/rbsnttlPinout';
 import { cubePowerTerminals } from '../components/game/components/cubePowerPinout';
 import { sm500Terminals } from '../components/game/components/sm500Pinout';
+import { kr2402Terminals } from '../components/game/components/kr2402Pinout';
 
 export type CustomLabCategory = 'input' | 'control' | 'output';
 
@@ -118,14 +119,31 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'wireless_transmitter',
     category: 'input',
-    name: 'RF keyfob transmitter',
-    description: 'Radium/Erone-style handheld RF remote — the entire line is compatible with the CDVI CUBE POWER receiver. No wiring: pressing the button pairs wirelessly and toggles the relay on any powered CUBE POWER unit on the bench.',
+    name: 'Two-button RF keyfob',
+    description: '433.92MHz A/B transmitter for the KR2402A receiver. Button A controls channel 1 and button B controls channel 2; button A also operates powered CUBE POWER receivers.',
     terminalSummary: 'Wireless — no terminals',
     template: {
       type: 'wireless_transmitter',
       label: 'RF Transmitter',
       terminals: [],
       state: {}
+    }
+  },
+  {
+    id: 'nascom_n282txg',
+    category: 'input',
+    name: 'NASCOM N282TXG SPDT door contact',
+    description: 'N282TXGW/STSD white extra-wide-gap surface-mount magnetic contact. Click the set to open or close the door; its SPDT dry contact transfers COM between NC and NO.',
+    terminalSummary: 'NC · COM · NO',
+    template: {
+      type: 'door_sensor',
+      label: 'NASCOM N282TXG',
+      terminals: [
+        { id: 'nc', name: 'NC', type: 'nc', x: -51, y: -24 },
+        { id: 'com', name: 'COM', type: 'com', x: -51, y: 0 },
+        { id: 'no', name: 'NO', type: 'no', x: -51, y: 24 }
+      ],
+      state: { toggled: false }
     }
   },
   {
@@ -210,6 +228,19 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'wireless_relay_kr2402',
+    category: 'control',
+    name: 'QIACHIP KR2402A wireless relay',
+    description: 'Green 433.92MHz two-channel receiver. Powered by 5-60VDC with two independent Form-C relay outputs and momentary, toggle, or latching RF modes.',
+    terminalSummary: '+V · −V · NO1/COM1/NC1 · NO2/COM2/NC2',
+    template: {
+      type: 'wireless_relay_kr2402',
+      label: 'KR2402A Wireless Relay',
+      terminals: kr2402Terminals(),
+      state: { channel1Active: false, channel2Active: false, wirelessMode: 'toggle' }
+    }
+  },
+  {
     id: 'timer_relay',
     category: 'control',
     name: 'Altronix 6062 timer',
@@ -276,22 +307,6 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'neg', name: 'NEG', type: 'neg', x: 30, y: 35 }
       ],
       state: { travel: 0 }
-    }
-  },
-  {
-    id: 'motor',
-    category: 'output',
-    name: 'DC motor',
-    description: 'Rotating 24 V load for motor-control experiments.',
-    terminalSummary: 'IN · OUT',
-    template: {
-      type: 'motor',
-      label: 'DC Motor',
-      terminals: [
-        { id: 'in', name: 'IN', type: 'in', x: -20, y: 35 },
-        { id: 'out', name: 'OUT', type: 'out', x: 20, y: 35 }
-      ],
-      state: {}
     }
   },
   {
@@ -487,7 +502,7 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'dc_fan',
     category: 'output',
-    name: 'DC cooling fan',
+    name: 'DC Fan',
     description: '12-24VDC square cooling fan with rotating impeller blades. Spins and hums when powered.',
     terminalSummary: '+ · −',
     template: {
@@ -553,7 +568,7 @@ const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals'
     card_reader: [60, 110], wave_sensor: [75, 140], maglock: [90, 80],
     door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100],
     cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
-    wireless_transmitter: [65, 110], seco_larm_strobe_siren: [80, 115]
+    wireless_transmitter: [65, 110], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
   };
   const [width, height] = sizes[component.type] ?? [80, 85];
   // These baseline sizes include the standard display scale; honour enlarged devices too.

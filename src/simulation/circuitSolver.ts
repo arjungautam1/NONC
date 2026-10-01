@@ -100,8 +100,13 @@ export function solveCircuit(
         }
       } else if (c.type === 'button_nc' && !c.state.pressed) {
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-      } else if (c.type === 'door_sensor' && !c.state.toggled) {
-        addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+      } else if (c.type === 'door_sensor') {
+        // N282TXG SPDT: with the magnet present (door closed), COM transfers
+        // to NO. With the magnet away (door open), COM rests on NC.
+        addConnection(
+          getTerminalKey(c.id, 'com'),
+          getTerminalKey(c.id, c.state.toggled ? 'nc' : 'no')
+        );
       } else if (c.type === 'switch_selector') {
         const targetOut = c.state.toggled ? 'out_b' : 'out_a';
         addConnection(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
@@ -182,6 +187,15 @@ export function solveCircuit(
         } else {
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
         }
+      } else if (c.type === 'wireless_relay_kr2402') {
+        addConnection(
+          getTerminalKey(c.id, 'com1'),
+          getTerminalKey(c.id, c.state.channel1Active ? 'no1' : 'nc1')
+        );
+        addConnection(
+          getTerminalKey(c.id, 'com2'),
+          getTerminalKey(c.id, c.state.channel2Active ? 'no2' : 'nc2')
+        );
       } else if (c.type === 'sm500_maglock') {
         // Built-in holding-force sensor: NO once the lock is driven closed,
         // NC at rest. Driven by the same coil hysteresis as a relay.
@@ -520,6 +534,9 @@ export function solveCircuit(
         // is switched by relayTriggered above, this only drives the LED/UI.
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'wireless_relay_kr2402') {
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'wave_sensor') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
@@ -709,7 +726,7 @@ export function queryMultimeter(
       else if (c.type === 'elevator_motor') resistance += 30.0;
       else if (c.type === 'buzzer') resistance += 150.0;
       else if (c.type === 'sti_siren_strobe' || c.type === 'seco_larm_strobe_siren') resistance += 60.0;
-      else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl' || c.type === 'timer_relay' || c.type === 'cube_power' || c.type === 'cx12plus') resistance += 80.0;
+      else if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl' || c.type === 'timer_relay' || c.type === 'cube_power' || c.type === 'wireless_relay_kr2402' || c.type === 'cx12plus') resistance += 80.0;
       else if (c.type === 'maglock' || c.type === 'door_strike' || c.type === 'sm500_maglock') resistance += 120.0;
       else if (c.type === 'card_reader' || c.type === 'wave_sensor') resistance += 100.0;
     });
@@ -754,8 +771,8 @@ function checkPathBetween(
       }
     } else if (c.type === 'button_nc' && !c.state.pressed) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'door_sensor' && !c.state.toggled) {
-      addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+    } else if (c.type === 'door_sensor') {
+      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, c.state.toggled ? 'nc' : 'no'));
     } else if (c.type === 'switch_selector') {
       const targetOut = c.state.toggled ? 'out_b' : 'out_a';
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
@@ -846,6 +863,9 @@ function checkPathBetween(
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
       }
+    } else if (c.type === 'wireless_relay_kr2402') {
+      addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, c.state.channel1Active ? 'no1' : 'nc1'));
+      addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, c.state.channel2Active ? 'no2' : 'nc2'));
     } else if (c.type === 'sm500_maglock') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {
@@ -929,8 +949,8 @@ function getComponentsInPath(
       }
     } else if (c.type === 'button_nc' && !c.state.pressed) {
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
-    } else if (c.type === 'door_sensor' && !c.state.toggled) {
-      addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, 'out'));
+    } else if (c.type === 'door_sensor') {
+      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, c.state.toggled ? 'nc' : 'no'));
     } else if (c.type === 'switch_selector') {
       const targetOut = c.state.toggled ? 'out_b' : 'out_a';
       addConn(getTerminalKey(c.id, 'in'), getTerminalKey(c.id, targetOut));
@@ -1008,6 +1028,9 @@ function getComponentsInPath(
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
       }
+    } else if (c.type === 'wireless_relay_kr2402') {
+      addConn(getTerminalKey(c.id, 'com1'), getTerminalKey(c.id, c.state.channel1Active ? 'no1' : 'nc1'));
+      addConn(getTerminalKey(c.id, 'com2'), getTerminalKey(c.id, c.state.channel2Active ? 'no2' : 'nc2'));
     } else if (c.type === 'sm500_maglock') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {

@@ -359,6 +359,7 @@ export const Workspace: React.FC = () => {
       case 'timer_relay':
       case 'cx12plus':
       case 'cube_power':
+      case 'wireless_relay_kr2402':
       case 'transformer':
       case 'wireless_transmitter':
       case 'fuse':
@@ -422,6 +423,9 @@ export const Workspace: React.FC = () => {
         break;
       case 'cube_power':
         base = { x: -55, y: -75, w: 110, h: 150 };
+        break;
+      case 'wireless_relay_kr2402':
+        base = { x: -72, y: -64, w: 144, h: 150 };
         break;
       default:
         base = { x: -50, y: -50, w: 100, h: 100 };
@@ -1426,9 +1430,10 @@ export const Workspace: React.FC = () => {
       parking_gate: [76, 68],
       sliding_gate: [120, 70],
       led_strip: [58, 34],
-      door_sensor: [54, 38],
+      door_sensor: [120, 105],
       terminal_block: [56, 44],
       cube_power: [92, 70],
+      wireless_relay_kr2402: [100, 100],
       sm500_maglock: [64, 106],
       cx12plus: [135, 120],
       wireless_transmitter: [34, 84]
@@ -3250,7 +3255,7 @@ export const Workspace: React.FC = () => {
                         </g>
                       )}
 
-                      {!isHovered && comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (
+                      {!isHovered && comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'wireless_relay_kr2402' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (
                         <g transform="translate(0, -10)">
                           {/* High contrast dark stroke background outline */}
                           <text

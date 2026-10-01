@@ -30,6 +30,7 @@ import { CX12Plus } from './CX12Plus';
 import { STISirenStrobe } from './STISirenStrobe';
 import { SecoLarmSirenStrobe } from './SecoLarmSirenStrobe';
 import { DCCoolingFan } from './DCCoolingFan';
+import { KR2402Relay } from './KR2402Relay';
 
 const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
 
@@ -169,6 +170,8 @@ export const ComponentRenderer = React.memo(function ComponentRenderer({ compone
       return <CubePower component={component} isEnergized={isEnergized} />;
     case 'wireless_transmitter':
       return <WirelessTransmitter component={component} />;
+    case 'wireless_relay_kr2402':
+      return <KR2402Relay component={component} isEnergized={isEnergized} />;
     case 'sm500_maglock':
       return <SM500Maglock component={component} isEnergized={isEnergized} />;
     case 'cx12plus':

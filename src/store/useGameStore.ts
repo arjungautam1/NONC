@@ -64,7 +64,7 @@ interface GameState {
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
   triggerWaveSensor: (id: string) => void;
-  triggerWirelessTransmitter: (id: string) => void;
+  triggerWirelessTransmitter: (id: string, channel?: 1 | 2, pressed?: boolean) => void;
   configureCX12Plus: (id: string, patch: Partial<CX12PlusConfig>) => void;
   
   addWire: (
@@ -587,6 +587,21 @@ export const useGameStore = create<GameState>((set, get) => {
         if (powered !== Boolean(c.state.powered) || (!powered && c.state.active)) {
           timerContactChanged = true;
           return { ...c, state: { ...c.state, powered, active: powered ? c.state.active : false } };
+        }
+      }
+      if (c.type === 'wireless_relay_kr2402') {
+        const powered = currentIsRunning && solverResult.energizedComponents.has(c.id);
+        if (powered !== Boolean(c.state.powered) || (!powered && (c.state.channel1Active || c.state.channel2Active))) {
+          timerContactChanged = true;
+          return {
+            ...c,
+            state: {
+              ...c.state,
+              powered,
+              channel1Active: powered ? c.state.channel1Active : false,
+              channel2Active: powered ? c.state.channel2Active : false
+            }
+          };
         }
       }
       if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224') {
@@ -1543,22 +1558,32 @@ export const useGameStore = create<GameState>((set, get) => {
       }, 3000);
     },
 
-    triggerWirelessTransmitter: () => {
-      // A handheld RF fob has no wired connection to the receiver — it toggles
-      // the relay (Latch mode) on any powered CUBE POWER units in range,
-      // exactly like pressing the receiver's own pairing/test button.
+    triggerWirelessTransmitter: (_id, channel = 1, pressed = true) => {
       const state = get();
       if (!state.isRunning) return;
       const poweredIds = state.simulation.energizedComponents;
-      const hasTarget = state.components.some(c => c.type === 'cube_power' && poweredIds.has(c.id));
+      const hasTarget = state.components.some(c =>
+        (c.type === 'cube_power' || c.type === 'wireless_relay_kr2402') && poweredIds.has(c.id)
+      );
       if (!hasTarget) return;
 
-      soundManager.playClick();
-      const newComponents = state.components.map(c =>
-        c.type === 'cube_power' && poweredIds.has(c.id)
-          ? { ...c, state: { ...c.state, relayTriggered: !c.state.relayTriggered } }
-          : c
-      );
+      if (pressed) soundManager.playClick();
+      const newComponents = state.components.map(c => {
+        if (!poweredIds.has(c.id)) return c;
+        if (c.type === 'cube_power' && channel === 1 && pressed) {
+          return { ...c, state: { ...c.state, relayTriggered: !c.state.relayTriggered } };
+        }
+        if (c.type !== 'wireless_relay_kr2402') return c;
+
+        const mode = c.state.wirelessMode ?? 'toggle';
+        const key = channel === 1 ? 'channel1Active' : 'channel2Active';
+        if (mode === 'momentary') return { ...c, state: { ...c.state, [key]: pressed } };
+        if (!pressed) return c;
+        if (mode === 'latching') {
+          return { ...c, state: { ...c.state, channel1Active: channel === 1, channel2Active: channel === 2 } };
+        }
+        return { ...c, state: { ...c.state, [key]: !c.state[key] } };
+      });
       runSimulation(newComponents, state.wires, state.isRunning);
     },
 

@@ -40,6 +40,8 @@ const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   wave_sensor: '-52 -92 104 200',
   cube_power: '-96 -78 166 168',
   wireless_transmitter: '-40 -50 80 155',
+  door_sensor: '-72 -62 175 165',
+  wireless_relay_kr2402: '-78 -68 156 165',
   sm500_maglock: '-66 -112 140 230',
   actuator: '-80 -35 200 70',
   cx12plus: '-135 -72 270 200',

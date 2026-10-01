@@ -1,76 +1,64 @@
 import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
 import { useGameStore } from '../../../store/useGameStore';
-import { getTerminalKey } from '../../../simulation/circuitSolver';
 
 interface ComponentProps {
   component: CircuitComponent;
 }
 
+/** NASCOM N282TXG white surface-mount SPDT switch/magnet set. */
 export const DoorSensor: React.FC<ComponentProps> = ({ component }) => {
   const toggleSwitch = useGameStore(state => state.toggleSwitch);
-  const nodeVoltages = useGameStore(state => state.simulation.nodeVoltages);
-  const isRunning = useGameStore(state => state.isRunning);
+  const doorOpen = Boolean(component.state.toggled);
 
-  const isOpen = component.state.toggled || false;
-  const inKey = getTerminalKey(component.id, 'in');
-  const outKey = getTerminalKey(component.id, 'out');
-  const hasVoltage = isRunning && ((nodeVoltages[inKey] || 0) > 0 || (nodeVoltages[outKey] || 0) > 0);
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.stopPropagation();
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    e.stopPropagation();
+  const toggleDoor = (event: React.PointerEvent) => {
+    event.stopPropagation();
     toggleSwitch(component.id);
   };
 
+  const housing = (x: number, width: number) => (
+    <g transform={`translate(${x}, 0)`}>
+      <rect x={-width / 2} y="-49" width={width} height="98" rx="7" fill="#d8d5c9" stroke="#8f8b80" strokeWidth="1.5" />
+      <rect x={-width / 2 + 4} y="-34" width={width - 8} height="68" rx="5" fill="#eeeade" stroke="#b9b5aa" />
+      <circle cx="0" cy="-41" r="4.2" fill="#4b5563" stroke="#f5f5f4" strokeWidth="1.3" />
+      <circle cx="0" cy="41" r="4.2" fill="#4b5563" stroke="#f5f5f4" strokeWidth="1.3" />
+      <rect x={-width / 2 + 7} y="-13" width={width - 14} height="26" rx="2" fill="none" stroke="#c7c2b6" />
+      <text x="0" y="4" fill="#9a968b" fontSize="8.5" fontWeight="900" textAnchor="middle" transform="rotate(90 0 0)">nascom</text>
+      <path d={`M ${width / 2 - 10} 25 l 5 4 l -5 4 z`} fill="none" stroke="#aaa69b" strokeWidth="1.4" />
+    </g>
+  );
+
   return (
-    <g transform="translate(-48, -32)" className="select-none">
-      <rect x="0" y="6" width="96" height="48" rx="4" fill="#1e222b" stroke="#475569" strokeWidth="2" />
-      <g className="cursor-pointer device-control" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
-        <rect x="8" y="12" width="34" height="34" rx="3" fill="#0f172a" stroke="#334155" strokeWidth="1.5" />
-        <rect x="54" y="12" width="34" height="34" rx="3" fill="#111827" stroke="#334155" strokeWidth="1.5" />
+    <g className="select-none">
+      <g className="device-control cursor-pointer" onPointerDown={event => event.stopPropagation()} onPointerUp={toggleDoor}>
+        {housing(-31, 48)}
+        <g transform={`translate(${doorOpen ? 74 : 31}, 0)`} style={{ transition: 'transform 260ms ease' }}>
+          {housing(0, 38)}
+        </g>
+        <rect x="-57" y="-50" width={doorOpen ? 154 : 110} height="100" fill="transparent" pointerEvents="all" />
       </g>
 
-      <text x="25" y="25" textAnchor="middle" fill="#cbd5e1" fontSize="7" fontWeight="bold">DOOR</text>
-      <text x="25" y="36" textAnchor="middle" fill="#94a3b8" fontSize="6">MAG</text>
-      <text x="71" y="25" textAnchor="middle" fill="#cbd5e1" fontSize="7" fontWeight="bold">REED</text>
-      <text x="71" y="36" textAnchor="middle" fill={isOpen ? '#f87171' : '#86efac'} fontSize="6" fontWeight="bold">
-        {isOpen ? 'OPEN' : 'CLOSED'}
-      </text>
+      <g fontFamily="monospace" fontWeight="900" fontSize="7" textAnchor="end">
+        <text x="-57" y="-22" fill="#fca5a5">NC</text>
+        <text x="-57" y="1" fill="#fde68a">COM</text>
+        <text x="-57" y="24" fill="#86efac">NO</text>
+      </g>
+      {[-24, 0, 24].map((y, index) => (
+        <g key={y} transform={`translate(-51 ${y})`}>
+          <circle r="6" fill="#d1d5db" stroke="#52525b" strokeWidth="1" />
+          <path d="M -3 -2 L 3 2" stroke="#52525b" strokeWidth="1.5" />
+          <circle r="8.5" fill="transparent" pointerEvents="all" />
+          {index === 1 && <circle r="2" fill="#a16207" opacity="0.65" />}
+        </g>
+      ))}
 
-      <line x1="12" y1="30" x2="34" y2="30" stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
-      <line x1="62" y1="30" x2="84" y2="30" stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
-      {isOpen ? (
-        <line
-          x1="38"
-          y1="30"
-          x2="58"
-          y2="20"
-          stroke={hasVoltage ? '#fbbf24' : '#f87171'}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-      ) : (
-        <line
-          x1="34"
-          y1="30"
-          x2="62"
-          y2="30"
-          stroke={hasVoltage ? '#22c55e' : '#94a3b8'}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-      )}
-
-      <circle cx="12" cy="30" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-      <circle cx="84" cy="30" r="2.5" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
-
-      <text x="48" y="68" fill="#cbd5e1" fontSize="10" fontWeight="bold" textAnchor="middle">
-        {component.label}
-      </text>
+      <g transform="translate(7, 61)" pointerEvents="none">
+        <rect x="-55" y="-9" width="110" height="18" rx="5" fill="#070b13" stroke="#334155" />
+        <text x="0" y="3" fill={doorOpen ? '#fca5a5' : '#86efac'} fontSize="8" fontWeight="900" textAnchor="middle">
+          {doorOpen ? 'DOOR OPEN' : 'DOOR CLOSED'}
+        </text>
+      </g>
+      <text x="7" y="82" fill="#e2e8f0" fontSize="9" fontWeight="800" textAnchor="middle">{component.label}</text>
     </g>
   );
 };
