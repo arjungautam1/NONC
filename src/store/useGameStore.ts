@@ -1325,10 +1325,13 @@ export const useGameStore = create<GameState>((set, get) => {
     clearCustomLabBench: () => {
       const state = get();
       if (!state.isCustomLab) return;
-      const components = state.components.filter(component =>
-        component.id === 'custom_transformer' || component.id === 'custom_psu'
-      );
-      if (components.length === state.components.length && state.wires.length === 0) return;
+      const components = normalizePowerStack(buildCustomLabComponents([]));
+      const sourceStackAlreadyClear = state.components.length === components.length &&
+        state.wires.length === 0 &&
+        components.every(source => state.components.some(component =>
+          component.id === source.id && component.x === source.x && component.y === source.y
+        ));
+      if (sourceStackAlreadyClear) return;
       saveToHistory(state.components, state.wires);
       componentMoveStarts.clear();
       clearAllTimer6062Runtimes();

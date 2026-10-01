@@ -138,10 +138,13 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
           </text>
           <text
             x={x}
-            y={y + 10}
+            y={y + 11.5}
             fill={circuit === 'NC' ? '#86efac' : '#fca5a5'}
-            fontSize="4.6"
-            fontWeight="bold"
+            stroke="#111827"
+            strokeWidth="1.8"
+            paintOrder="stroke"
+            fontSize="7.2"
+            fontWeight="900"
             fontFamily="monospace"
             textAnchor="middle"
           >
@@ -174,7 +177,7 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
       )}
 
       {!isResetting && (
-        <g transform="translate(0, 102)" pointerEvents="none">
+        <g transform="translate(0, 108)" pointerEvents="none">
           <rect x="-51" y="-9" width="102" height="18" rx="5" fill="#070b13" stroke="#334155" />
           <text x="0" y="3" fill="#f1f5f9" fontSize="8.5" fontWeight="800" textAnchor="middle" fontFamily="monospace">
             {component.label}

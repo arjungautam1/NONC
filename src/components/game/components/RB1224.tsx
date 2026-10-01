@@ -59,7 +59,10 @@ export const RB1224: React.FC<RB1224Props> = ({ component }) => {
           x={x}
           y={y < 0 ? -49 : 53}
           fill="#ffffff"
-          fontSize="6.4"
+          stroke="#0f2570"
+          strokeWidth="1.5"
+          paintOrder="stroke"
+          fontSize="7.6"
           fontWeight="900"
           fontFamily="sans-serif"
           textAnchor="middle"

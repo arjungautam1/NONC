@@ -50,7 +50,10 @@ export const RBSNTTL: React.FC<RBSNTTLProps> = ({ component }) => {
           x={x}
           y={y < 0 ? -52 : 57}
           fill="#ffffff"
-          fontSize="5.8"
+          stroke="#0f2570"
+          strokeWidth="1.5"
+          paintOrder="stroke"
+          fontSize="7.2"
           fontWeight="900"
           fontFamily="sans-serif"
           textAnchor="middle"

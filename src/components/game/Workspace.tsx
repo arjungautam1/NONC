@@ -8,7 +8,7 @@ import { TIMER_6062_SCALE, TIMER_6062_TERMINAL_POSITIONS } from '../../simulatio
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
 import { Copy, Download, Grid2X2, Hand, Info, Maximize, MousePointer2, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { getCustomLabOptionId, MAX_CUSTOM_COMPONENTS } from '../../customLab/componentCatalog';
+import { CUSTOM_POWER_STACK_POSITIONS, getCustomLabOptionId, MAX_CUSTOM_COMPONENTS } from '../../customLab/componentCatalog';
 import { soundManager } from '../../audio/soundManager';
 import { Timer6062Panel } from './Timer6062Panel';
 
@@ -474,7 +474,17 @@ export const Workspace: React.FC = () => {
   const fitCanvas = () => {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect || !components.length) return;
-    const positions = components.map(component => {
+    const fittedComponents = isCustomLab
+      ? components.map(component => {
+          const anchor = CUSTOM_POWER_STACK_POSITIONS[component.id as keyof typeof CUSTOM_POWER_STACK_POSITIONS];
+          if (!anchor) return component;
+          if (component.x !== anchor.x || component.y !== anchor.y) {
+            updateComponentPosition(component.id, anchor.x, anchor.y);
+          }
+          return { ...component, ...anchor };
+        })
+      : components;
+    const positions = fittedComponents.map(component => {
       const p = getComponentCanvasPosition(component);
       const bounds = getSelectionHighlightBounds(component.type, getComponentEffectiveScale(component));
       return { left: p.x + bounds.x - 45, right: p.x + bounds.x + bounds.w + 45,
@@ -716,7 +726,11 @@ export const Workspace: React.FC = () => {
       drawingWireStart.componentId === target.componentId &&
       drawingWireStart.terminalId === target.terminalId;
 
-    if (isStartTerminal) return;
+    if (isStartTerminal) {
+      cancelWireDrawing();
+      setCanvasNotice('Wire cancelled.');
+      return;
+    }
     if (!isStartTerminal) {
       if (draggingWireEndpoint) {
         reconnectWire(
@@ -1995,6 +2009,19 @@ export const Workspace: React.FC = () => {
               />
             ))}
           </div>
+          {drawingWireStart && (
+            <button
+              type="button"
+              onClick={() => {
+                cancelWireDrawing();
+                setCanvasNotice('Wire cancelled.');
+              }}
+              className="flex h-7 items-center gap-1 rounded-md border border-red-400/30 bg-red-400/10 px-2 text-[10px] font-semibold text-red-200 hover:bg-red-400/20"
+              title="Cancel unfinished wire (Esc or right-click)"
+            >
+              <X size={12} /> Cancel wire
+            </button>
+          )}
         </div>
 
         <div className="h-5 w-px bg-white/10" />

@@ -80,22 +80,6 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
-    id: 'estop_nc',
-    category: 'input',
-    name: 'Normally-closed E-Stop',
-    description: 'Opens a normally-closed safety path while the button is held.',
-    terminalSummary: 'IN · OUT (NC)',
-    template: {
-      type: 'button_nc',
-      label: 'E-STOP (NC)',
-      terminals: [
-        { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-        { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
-      ],
-      state: {}
-    }
-  },
-  {
     id: 'maintained_spdt',
     category: 'input',
     name: 'Maintained SPDT switch',
@@ -108,23 +92,6 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'com', name: 'C', type: 'in', x: -42, y: 25 },
         { id: 'nc', name: 'NC', type: 'out_a', x: 42, y: 14 },
         { id: 'no', name: 'NO', type: 'out_b', x: 42, y: 38 }
-      ],
-      state: {}
-    }
-  },
-  {
-    id: 'selector_ab',
-    category: 'input',
-    name: 'A/B selector switch',
-    description: 'Routes one input to either output A or output B.',
-    terminalSummary: 'IN · A · B',
-    template: {
-      type: 'switch_selector',
-      label: 'A/B Selector',
-      terminals: [
-        { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-        { id: 'out_a', name: 'A', type: 'out_a', x: 30, y: -20 },
-        { id: 'out_b', name: 'B', type: 'out_b', x: 30, y: 20 }
       ],
       state: {}
     }
@@ -146,38 +113,6 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'neg', name: '−', type: 'neg', x: 12, y: 72 }
       ],
       state: { active: false, powered: false }
-    }
-  },
-  {
-    id: 'door_sensor',
-    category: 'input',
-    name: 'Door-position sensor',
-    description: 'A normally-closed field contact that opens when toggled.',
-    terminalSummary: 'IN · OUT (NC)',
-    template: {
-      type: 'door_sensor',
-      label: 'Door Sensor',
-      terminals: [
-        { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-        { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
-      ],
-      state: {}
-    }
-  },
-  {
-    id: 'limit_switch',
-    category: 'input',
-    name: 'Mechanical limit switch',
-    description: 'Normally-closed travel switch for end-of-motion control.',
-    terminalSummary: 'IN · OUT (NC)',
-    template: {
-      type: 'limit_switch',
-      label: 'Limit Switch',
-      terminals: [
-        { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-        { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
-      ],
-      state: {}
     }
   },
   {
@@ -295,22 +230,6 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
-    id: 'fuse',
-    category: 'control',
-    name: 'Inline fuse',
-    description: 'Protects a branch and opens when the simulator detects a short circuit.',
-    terminalSummary: 'IN · OUT',
-    template: {
-      type: 'fuse',
-      label: 'Circuit Fuse',
-      terminals: [
-        { id: 'in', name: 'IN', type: 'in', x: -30, y: 0 },
-        { id: 'out', name: 'OUT', type: 'out', x: 30, y: 0 }
-      ],
-      state: {}
-    }
-  },
-  {
     id: 'bulb',
     category: 'output',
     name: 'Lightbulb',
@@ -330,12 +249,12 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'buzzer',
     category: 'output',
-    name: 'Alarm sounder',
+    name: 'Alarm',
     description: 'Audible output that sounds while its circuit is powered.',
     terminalSummary: '+ IN · − OUT',
     template: {
       type: 'buzzer',
-      label: 'Alarm Sounder',
+      label: 'Alarm',
       terminals: [
         { id: 'in', name: '+', type: 'in', x: -50, y: 15 },
         { id: 'out', name: '-', type: 'out', x: 50, y: 15 }
@@ -591,12 +510,16 @@ export const getCustomLabOptionId = (component: CircuitComponent): string | unde
   return customLabOptions.find(option => component.id === `custom_${option.id}`)?.id;
 };
 
+export const CUSTOM_POWER_STACK_POSITIONS = {
+  custom_transformer: { x: 135, y: 155 },
+  custom_psu: { x: 135, y: 405 }
+} as const;
+
 const createPowerStack = (): CircuitComponent[] => [
   {
     id: 'custom_transformer',
     type: 'transformer',
-    x: 135,
-    y: 155,
+    ...CUSTOM_POWER_STACK_POSITIONS.custom_transformer,
     label: '24V Transformer',
     terminals: [
       { id: 'pos', name: '(+)', type: 'pos', x: -20, y: 35 },
@@ -607,8 +530,7 @@ const createPowerStack = (): CircuitComponent[] => [
   {
     id: 'custom_psu',
     type: 'power_supply',
-    x: 135,
-    y: 405,
+    ...CUSTOM_POWER_STACK_POSITIONS.custom_psu,
     label: '24V Power Supply',
     terminals: [
       { id: 'ac1', name: 'AC', type: 'in', x: -45, y: 35 },

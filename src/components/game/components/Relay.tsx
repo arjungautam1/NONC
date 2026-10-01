@@ -123,9 +123,9 @@ export const Relay: React.FC<ComponentProps> = ({ component }) => {
       <text x="-22" y="4" fill="#93c5fd" fontSize="5" fontWeight="black" fontFamily="sans-serif" textAnchor="middle" opacity="0.8">COIL</text>
 
       {/* Right side contact labels */}
-      <text x="8" y="-28" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">COM</text>
-      <text x="8" y="2" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NC</text>
-      <text x="8" y="32" fill="#64748b" fontSize="5.5" fontWeight="bold" fontFamily="monospace" textAnchor="end">NO</text>
+      <text x="8" y="-27.5" fill="#f8fafc" stroke="#0f172a" strokeWidth="1.6" paintOrder="stroke" fontSize="7.4" fontWeight="900" fontFamily="monospace" textAnchor="end">COM</text>
+      <text x="8" y="2.5" fill="#f8fafc" stroke="#0f172a" strokeWidth="1.6" paintOrder="stroke" fontSize="7.4" fontWeight="900" fontFamily="monospace" textAnchor="end">NC</text>
+      <text x="8" y="32.5" fill="#f8fafc" stroke="#0f172a" strokeWidth="1.6" paintOrder="stroke" fontSize="7.4" fontWeight="900" fontFamily="monospace" textAnchor="end">NO</text>
 
       {/* 6. Active Indicator LED */}
       <circle
@@ -208,9 +208,12 @@ export const RelayDPDT: React.FC<ComponentProps> = ({ component }) => {
         <text
           x={x}
           y={isTop ? y + 12 : y - 8.5}
-          fill="#7c8798"
-          fontSize="5.2"
-          fontWeight="bold"
+          fill="#ffffff"
+          stroke="#14171d"
+          strokeWidth="1.6"
+          paintOrder="stroke"
+          fontSize="6.8"
+          fontWeight="900"
           fontFamily="monospace"
           textAnchor="middle"
         >

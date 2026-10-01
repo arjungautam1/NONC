@@ -167,19 +167,13 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
         <path d="M 7.5 21.5 H 10.5 M 10.5 21.5 l -1.2 -0.9 M 10.5 21.5 l -1.2 0.9" fill="none" stroke="#f8fafc" strokeWidth="0.6" />
       </g>
 
-      {/* ---- Jumper legends and their cuttable links (J1/J2 top, J3 mid) ---- */}
-      <g fill="#ffffff" fontSize="2.5" fontWeight="700" fontFamily="Arial, sans-serif">
-        <text x="-36" y="-51.5">CUT J1 FOR REPEAT</text>
-        <text x="-36" y="-46.5">CUT J2 FOR DELAYED PULS</text>
-        <text x="8" y="-51.5">J1</text>
-        <text x="8" y="-46.5">J2</text>
+      {/* ---- Clear jumper legends and their cuttable links ---- */}
+      <g fill="#ffffff" fontSize="3.3" fontWeight="800" fontFamily="Arial, sans-serif">
+        <text x="-34" y="-51">J1 · REPEAT</text>
+        <text x="-34" y="-44.5">J2 · PULSE</text>
       </g>
-      <g fill="#ffffff" fontSize="2.5" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">
-        <text x="4" y="-6">CUT J3 FOR RESET</text>
-        <text x="4" y="-1.8">ON POWER-UP</text>
-      </g>
-      <g fill="#ffffff" fontSize="2.5" fontWeight="700" fontFamily="Arial, sans-serif">
-        <text x="8" y="-2.6">J3</text>
+      <g fill="#ffffff" fontSize="3.3" fontWeight="800" fontFamily="Arial, sans-serif" textAnchor="end">
+        <text x="5" y="-3">J3 · RESET</text>
       </g>
       {/* Axial link resistors — shown severed once the jumper is cut */}
       {([
@@ -208,11 +202,11 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
       ))}
 
       {/* ---- DIP function legend, printed left of the switch ---- */}
-      <g fill="#ffffff" fontSize="3.1" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">
-        <text x="11" y="-29.5">TRIG CONTROL</text>
-        <text x="11" y="-25">12V / 24V</text>
-        <text x="11" y="-20.5">SEC/MIN</text>
-        <text x="11" y="-16">RELAY CONTROL</text>
+      <g fill="#ffffff" fontSize="3.4" fontWeight="800" fontFamily="Arial, sans-serif" textAnchor="end">
+        <text x="12" y="-30">TRIGGER</text>
+        <text x="12" y="-24.8">12 / 24V</text>
+        <text x="12" y="-19.6">SEC / MIN</text>
+        <text x="12" y="-14.4">RELAY</text>
       </g>
 
       {/* ---- Altronix mark and origin silkscreen ---- */}
@@ -221,8 +215,6 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
         <path d="M -3.2 3.4 L 0 -3.8 L 3.2 3.4" fill="none" stroke="#ffffff" strokeWidth="0.9" strokeLinejoin="round" />
         <path d="M -1.9 0.9 L 1.9 0.9" stroke="#ffffff" strokeWidth="0.8" />
       </g>
-      <text x="46" y="-40" fill="#ffffff" fontSize="3.4" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">MADE IN U.S.A.</text>
-      <text x="46" y="-35.6" fill="#ffffff" fontSize="3.4" fontWeight="700" fontFamily="Arial, sans-serif" textAnchor="end">BKLYN,NY 11220</text>
 
       {/* ---- Stetron relay can ---- */}
       <g transform="translate(38, 3)">
@@ -237,9 +229,9 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
       </g>
 
       {/* CAD branding location. */}
-      <text x="-45.3" y="12" fill="#ffffff" fontSize="7" fontWeight="800" fontFamily="Arial, sans-serif">6062</text>
-      <text x="-45.3" y="19.5" fill="#ffffff" fontSize="6" fontWeight="800" fontFamily="Arial, sans-serif">TIMER</text>
-      <text x="-45.3" y="26.5" fill="#ffffff" fontSize="5" fontWeight="800" fontFamily="Arial, sans-serif">ALTRONIX CORP.</text>
+      <text x="-45.3" y="13" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="Arial, sans-serif">6062</text>
+      <text x="-45.3" y="21.5" fill="#ffffff" fontSize="6.5" fontWeight="900" fontFamily="Arial, sans-serif">TIMER</text>
+      <text x="-45.3" y="29" fill="#dbeafe" fontSize="4.4" fontWeight="800" fontFamily="Arial, sans-serif">ALTRONIX</text>
 
       {/* Compact live training status in the otherwise blank lower-right CAD area. */}
       <g transform="translate(20, 19)">
@@ -271,7 +263,7 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
             <line x1="-1" y1="2.6" x2="1" y2="-2.6" stroke="#334155" strokeWidth="0.7" />
           </g>
         ))}
-        <g fill="#ffffff" fontSize="4.6" fontWeight="800" textAnchor="middle" fontFamily="Arial, sans-serif" transform="translate(0, 14)">
+        <g fill="#ffffff" stroke="#111827" strokeWidth="1.2" paintOrder="stroke" fontSize="5.6" fontWeight="900" textAnchor="middle" fontFamily="Arial, sans-serif" transform="translate(0, 14)">
           <text x="-36" y="0">TRG</text>
           <text x="-22" y="0">−</text>
           <text x="-7" y="0">+</text>
