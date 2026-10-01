@@ -25,11 +25,10 @@ export const KR2402Relay: React.FC<KR2402RelayProps> = ({ component, isEnergized
 
   const relayCan = (x: number, active: boolean, channel: number) => (
     <g transform={`translate(${x}, 5)`}>
-      <rect x="-24" y="-17" width="48" height="34" rx="2" fill="#111827" stroke="#020617" strokeWidth="1" />
-      <rect x="-21" y="-14" width="42" height="28" rx="1.5" fill="#1f2937" />
-      <text x="0" y="-3" fill="#e5e7eb" fontSize="6.3" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">SONGLE</text>
-      <text x="0" y="5" fill="#9ca3af" fontSize="4.5" fontWeight="700" textAnchor="middle" fontFamily="monospace">SRD-24VDC-SL-C</text>
-      <text x="0" y="12" fill={active ? '#4ade80' : '#64748b'} fontSize="5" fontWeight="900" textAnchor="middle" fontFamily="monospace">CH{channel}</text>
+      <rect x="-24" y="-19" width="48" height="38" rx="2" fill="#111827" stroke="#020617" strokeWidth="1" />
+      <rect x="-21" y="-16" width="42" height="32" rx="1.5" fill="#1f2937" />
+      <text x="0" y="-4" fill="#f3f4f6" fontSize="7" fontWeight="900" letterSpacing="0.55" textAnchor="middle" fontFamily="sans-serif">GuoKe</text>
+      <text x="0" y="10" fill={active ? '#4ade80' : '#cbd5e1'} fontSize="6.2" fontWeight="900" letterSpacing="0.55" textAnchor="middle" fontFamily="sans-serif">RELAY {channel}</text>
     </g>
   );
 

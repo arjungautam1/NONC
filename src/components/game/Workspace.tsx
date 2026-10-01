@@ -429,7 +429,7 @@ export const Workspace: React.FC = () => {
         base = { x: -72, y: -64, w: 144, h: 150 };
         break;
       case 'kr2402_remote':
-        base = { x: -36, y: -64, w: 72, h: 142 };
+        base = { x: -36, y: -54, w: 72, h: 166 };
         break;
       default:
         base = { x: -50, y: -50, w: 100, h: 100 };
@@ -1295,6 +1295,7 @@ export const Workspace: React.FC = () => {
       comp.type === 'relay_dpdt' ||
       comp.type === 'terminal_block' ||
       comp.type === 'wave_sensor' ||
+      comp.type === 'wireless_relay_kr2402' ||
       comp.type === 'cx12plus'
     ) {
       if (local.y < -10) return { x: 0, y: -1 };
@@ -1441,7 +1442,7 @@ export const Workspace: React.FC = () => {
       sm500_maglock: [64, 106],
       cx12plus: [135, 120],
       wireless_transmitter: [34, 84],
-      kr2402_remote: [36, 72]
+      kr2402_remote: [40, 88]
     };
     const [halfWidth, halfHeight] = halfSizeByType[comp.type] || [54, 54];
 
@@ -1520,7 +1521,9 @@ export const Workspace: React.FC = () => {
             Math.max(Math.min(start.x, end.x), Math.min(otherStart.x, otherEnd.x));
           if (overlap <= 1) continue;
           const gap = Math.abs(start.y - otherStart.y);
-          if (gap < 0.5) penalty += 60000 + overlap * 80;
+          // A coincident run makes two independent conductors look like one.
+          // Treat it as a near-hard routing failure so a longer clear lane wins.
+          if (gap < 0.5) penalty += 750000 + overlap * 120;
           else if (gap < WIRE_ROUTE_CLEARANCE) {
             penalty += 9000 * (1 - gap / WIRE_ROUTE_CLEARANCE) + overlap * 24;
           }
@@ -1532,7 +1535,7 @@ export const Workspace: React.FC = () => {
             Math.max(Math.min(start.y, end.y), Math.min(otherStart.y, otherEnd.y));
           if (overlap <= 1) continue;
           const gap = Math.abs(start.x - otherStart.x);
-          if (gap < 0.5) penalty += 60000 + overlap * 80;
+          if (gap < 0.5) penalty += 750000 + overlap * 120;
           else if (gap < WIRE_ROUTE_CLEARANCE) {
             penalty += 9000 * (1 - gap / WIRE_ROUTE_CLEARANCE) + overlap * 24;
           }
@@ -1652,7 +1655,13 @@ export const Workspace: React.FC = () => {
     addCandidate([start, { x: end.x, y: start.y }, end]);
     addCandidate([start, { x: start.x, y: end.y }, end]);
 
-    const laneVariants = [stableOffset, stableOffset + WIRE_GRID, stableOffset - WIRE_GRID];
+    // Offer enough parallel lanes for a busy bench. Three choices caused the
+    // fourth and later conductors to fall back onto an occupied route.
+    const laneVariants = Array.from({ length: 13 }, (_, index) => {
+      if (index === 0) return stableOffset;
+      const step = Math.ceil(index / 2) * WIRE_GRID;
+      return stableOffset + (index % 2 === 1 ? step : -step);
+    });
     const sharingWires = wires.filter(candidate =>
       candidate.fromComponentId === wire.fromComponentId ||
       candidate.toComponentId === wire.fromComponentId ||
@@ -3154,7 +3163,15 @@ export const Workspace: React.FC = () => {
                       <circle 
                         cx="0" 
                         cy="0" 
-                        r={comp.type === 'junction' ? jScale * 3.5 : (comp.type === 'timer_relay' ? 7.5 : 22)}
+                        r={
+                          comp.type === 'junction'
+                            ? jScale * 3.5
+                            : comp.type === 'timer_relay'
+                              ? 7.5
+                              : comp.type === 'wireless_relay_kr2402'
+                                ? 8.5
+                                : 22
+                        }
                         fill="transparent" 
                         className="terminal-hitbox" 
                         data-component-id={comp.id}

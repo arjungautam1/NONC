@@ -581,7 +581,7 @@ const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals'
     card_reader: [60, 110], wave_sensor: [75, 140], maglock: [90, 80],
     door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100],
     cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
-    wireless_transmitter: [65, 110], kr2402_remote: [65, 110], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
+    wireless_transmitter: [65, 110], kr2402_remote: [58, 135], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
   };
   const [width, height] = sizes[component.type] ?? [80, 85];
   // These baseline sizes include the standard display scale; honour enlarged devices too.
