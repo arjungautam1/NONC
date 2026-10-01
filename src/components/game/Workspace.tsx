@@ -362,6 +362,7 @@ export const Workspace: React.FC = () => {
       case 'wireless_relay_kr2402':
       case 'transformer':
       case 'wireless_transmitter':
+      case 'kr2402_remote':
       case 'fuse':
       case 'button_no':
       case 'button_nc':
@@ -426,6 +427,9 @@ export const Workspace: React.FC = () => {
         break;
       case 'wireless_relay_kr2402':
         base = { x: -72, y: -64, w: 144, h: 150 };
+        break;
+      case 'kr2402_remote':
+        base = { x: -36, y: -64, w: 72, h: 142 };
         break;
       default:
         base = { x: -50, y: -50, w: 100, h: 100 };
@@ -1436,7 +1440,8 @@ export const Workspace: React.FC = () => {
       wireless_relay_kr2402: [100, 100],
       sm500_maglock: [64, 106],
       cx12plus: [135, 120],
-      wireless_transmitter: [34, 84]
+      wireless_transmitter: [34, 84],
+      kr2402_remote: [36, 72]
     };
     const [halfWidth, halfHeight] = halfSizeByType[comp.type] || [54, 54];
 

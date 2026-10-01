@@ -64,7 +64,8 @@ interface GameState {
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
   triggerWaveSensor: (id: string) => void;
-  triggerWirelessTransmitter: (id: string, channel?: 1 | 2, pressed?: boolean) => void;
+  triggerWirelessTransmitter: (id: string) => void;
+  triggerKR2402Remote: (id: string, button: 'A' | 'B', pressed: boolean) => void;
   configureCX12Plus: (id: string, patch: Partial<CX12PlusConfig>) => void;
   
   addWire: (
@@ -1558,29 +1559,39 @@ export const useGameStore = create<GameState>((set, get) => {
       }, 3000);
     },
 
-    triggerWirelessTransmitter: (_id, channel = 1, pressed = true) => {
+    triggerWirelessTransmitter: () => {
       const state = get();
       if (!state.isRunning) return;
       const poweredIds = state.simulation.energizedComponents;
-      const hasTarget = state.components.some(c =>
-        (c.type === 'cube_power' || c.type === 'wireless_relay_kr2402') && poweredIds.has(c.id)
+      const hasTarget = state.components.some(c => c.type === 'cube_power' && poweredIds.has(c.id));
+      if (!hasTarget) return;
+
+      soundManager.playClick();
+      const newComponents = state.components.map(c =>
+        c.type === 'cube_power' && poweredIds.has(c.id)
+          ? { ...c, state: { ...c.state, relayTriggered: !c.state.relayTriggered } }
+          : c
       );
+      runSimulation(newComponents, state.wires, state.isRunning);
+    },
+
+    triggerKR2402Remote: (_id, button, pressed) => {
+      const state = get();
+      if (!state.isRunning) return;
+      const poweredIds = state.simulation.energizedComponents;
+      const hasTarget = state.components.some(c => c.type === 'wireless_relay_kr2402' && poweredIds.has(c.id));
       if (!hasTarget) return;
 
       if (pressed) soundManager.playClick();
+      const key = button === 'A' ? 'channel1Active' : 'channel2Active';
       const newComponents = state.components.map(c => {
-        if (!poweredIds.has(c.id)) return c;
-        if (c.type === 'cube_power' && channel === 1 && pressed) {
-          return { ...c, state: { ...c.state, relayTriggered: !c.state.relayTriggered } };
-        }
-        if (c.type !== 'wireless_relay_kr2402') return c;
+        if (c.type !== 'wireless_relay_kr2402' || !poweredIds.has(c.id)) return c;
 
         const mode = c.state.wirelessMode ?? 'toggle';
-        const key = channel === 1 ? 'channel1Active' : 'channel2Active';
         if (mode === 'momentary') return { ...c, state: { ...c.state, [key]: pressed } };
         if (!pressed) return c;
         if (mode === 'latching') {
-          return { ...c, state: { ...c.state, channel1Active: channel === 1, channel2Active: channel === 2 } };
+          return { ...c, state: { ...c.state, channel1Active: button === 'A', channel2Active: button === 'B' } };
         }
         return { ...c, state: { ...c.state, [key]: !c.state[key] } };
       });

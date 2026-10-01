@@ -7,29 +7,24 @@ interface WirelessTransmitterProps {
 }
 
 /**
- * Two-button 433.92MHz keyfob. A and B operate the matching channels on a
- * powered KR2402A; A also retains compatibility with the CUBE POWER receiver.
+ * Radium/Erone-style RF keyfob dedicated to the CDVI CUBE POWER receiver.
  */
 export const WirelessTransmitter: React.FC<WirelessTransmitterProps> = ({ component }) => {
   const triggerWirelessTransmitter = useGameStore(state => state.triggerWirelessTransmitter);
-  const [pressedChannel, setPressedChannel] = useState<1 | 2 | null>(null);
+  const [pressed, setPressed] = useState(false);
 
-  const handlePointerDown = (e: React.PointerEvent, channel: 1 | 2) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    setPressedChannel(channel);
-    triggerWirelessTransmitter(component.id, channel, true);
+    setPressed(true);
   };
 
-  const handlePointerUp = (e: React.PointerEvent, channel: 1 | 2) => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     e.stopPropagation();
-    setPressedChannel(null);
-    triggerWirelessTransmitter(component.id, channel, false);
+    setPressed(false);
+    triggerWirelessTransmitter(component.id);
   };
 
-  const handlePointerLeave = () => {
-    if (pressedChannel) triggerWirelessTransmitter(component.id, pressedChannel, false);
-    setPressedChannel(null);
-  };
+  const handlePointerLeave = () => setPressed(false);
 
   return (
     <g className="select-none">
@@ -47,17 +42,12 @@ export const WirelessTransmitter: React.FC<WirelessTransmitterProps> = ({ compon
       <ellipse cx="0" cy="0" rx="30" ry="42" fill="url(#txBodyGrad)" stroke="#c9cdd6" strokeWidth="1.2" filter="drop-shadow(1px 3px 5px rgba(0,0,0,0.35))" />
       <ellipse cx="0" cy="-2" rx="25" ry="35" fill="#ffffff" opacity="0.12" />
 
-      {([[-12, -8, 1, 'A'], [12, -8, 2, 'B']] as const).map(([cx, cy, channel, label]) => {
-        const pressed = pressedChannel === channel;
-        return (
-          <g key={channel} className="cursor-pointer" onPointerDown={event => handlePointerDown(event, channel)} onPointerUp={event => handlePointerUp(event, channel)} onPointerLeave={handlePointerLeave}>
-            <circle cx={cx} cy={cy} r="11" fill="#1e3a8a" stroke="#0f2563" strokeWidth="1.4" />
-            <circle cx={cx} cy={pressed ? cy + 1.5 : cy} r="8.3" fill={pressed ? '#1d4ed8' : '#2563eb'} stroke="#0f2563" strokeWidth="1" />
-            <text x={cx} y={cy + 2.5} fill="#dbeafe" fontSize="7" fontWeight="900" textAnchor="middle" pointerEvents="none">{label}</text>
-            <circle cx={cx} cy={cy} r="11" fill="transparent" pointerEvents="all" />
-          </g>
-        );
-      })}
+      <circle cx="0" cy="-8" r="19" fill="#1e3a8a" stroke="#0f2563" strokeWidth="1.4" />
+      <circle cx="0" cy={pressed ? -6 : -8} r="15" fill={pressed ? '#1d4ed8' : '#2563eb'} stroke="#0f2563" strokeWidth="1" style={{ transition: 'cy 80ms ease, fill 80ms ease' }} />
+      <ellipse cx="-4.5" cy={pressed ? -11.5 : -13.5} rx="6" ry="3.5" fill="#93c5fd" opacity="0.55" />
+      <g className="cursor-pointer" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave}>
+        <circle cx="0" cy="-8" r="19" fill="transparent" pointerEvents="all" />
+      </g>
 
       {/* RF glyph */}
       <g transform="translate(0, 30)" opacity="0.8" stroke="#64748b" strokeWidth="1.3" fill="none" strokeLinecap="round">

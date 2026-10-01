@@ -119,12 +119,25 @@ export const customLabOptions: CustomLabOption[] = [
   {
     id: 'wireless_transmitter',
     category: 'input',
-    name: 'Two-button RF keyfob',
-    description: '433.92MHz A/B transmitter for the KR2402A receiver. Button A controls channel 1 and button B controls channel 2; button A also operates powered CUBE POWER receivers.',
+    name: 'CDVI wireless transmitter',
+    description: 'Dedicated wireless transmitter for the CDVI CUBE POWER receiver.',
     terminalSummary: 'Wireless — no terminals',
     template: {
       type: 'wireless_transmitter',
       label: 'RF Transmitter',
+      terminals: [],
+      state: {}
+    }
+  },
+  {
+    id: 'kr2402_remote',
+    category: 'input',
+    name: 'QIACHIP KR2402A remote',
+    description: 'Dedicated 433.92MHz EV1527 keyfob for the KR2402A. Its documented A and B buttons operate the receiver’s matching A and B relay outputs.',
+    terminalSummary: 'Wireless A/B buttons — no terminals',
+    template: {
+      type: 'kr2402_remote',
+      label: 'QIACHIP A/B Remote',
       terminals: [],
       state: {}
     }
@@ -568,7 +581,7 @@ const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals'
     card_reader: [60, 110], wave_sensor: [75, 140], maglock: [90, 80],
     door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100],
     cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
-    wireless_transmitter: [65, 110], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
+    wireless_transmitter: [65, 110], kr2402_remote: [65, 110], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
   };
   const [width, height] = sizes[component.type] ?? [80, 85];
   // These baseline sizes include the standard display scale; honour enlarged devices too.
