@@ -559,14 +559,14 @@ const createPowerStack = (): CircuitComponent[] => [
     id: 'custom_psu',
     type: 'power_supply',
     ...CUSTOM_POWER_STACK_POSITIONS.custom_psu,
-    label: '24V Power Supply',
+    label: 'AL600 Power Supply',
     terminals: [
       { id: 'ac1', name: 'AC', type: 'in', x: -45, y: 35 },
       { id: 'ac2', name: 'AC', type: 'in', x: -15, y: 35 },
       { id: 'pos', name: '(+)', type: 'pos', x: 15, y: 35 },
       { id: 'neg', name: '(-)', type: 'neg', x: 45, y: 35 }
     ],
-    state: { requireAcInput: true }
+    state: { requireAcInput: true, outputVoltage: 24 }
   }
 ];
 

@@ -30,6 +30,17 @@ const DIP_ROWS: Array<{
   { key: 'dip4TriggerRemoval', number: 4, label: 'Trigger control', off: 'Start on input', on: 'Start on removal' }
 ];
 
+const MODE_PRESETS: Array<{
+  label: string;
+  hint: string;
+  patch: Partial<Timer6062Config>;
+}> = [
+  { label: 'Delay ON', hint: 'Output after time', patch: { dip1RelayAtEnd: true, dip4TriggerRemoval: false, j1Cut: false, j2Cut: false, j3Cut: true } },
+  { label: 'Timed ON', hint: 'Output during time', patch: { dip1RelayAtEnd: false, dip4TriggerRemoval: false, j1Cut: false, j2Cut: false, j3Cut: true } },
+  { label: '1s Pulse', hint: 'Pulse after time', patch: { dip1RelayAtEnd: true, dip4TriggerRemoval: false, j1Cut: false, j2Cut: true, j3Cut: false } },
+  { label: 'Flasher', hint: 'Repeating output', patch: { dip1RelayAtEnd: false, dip4TriggerRemoval: false, j1Cut: true, j2Cut: false, j3Cut: false } }
+];
+
 const Toggle: React.FC<{
   active: boolean;
   disabled: boolean;
@@ -125,6 +136,67 @@ export const Timer6062Panel: React.FC<Timer6062PanelProps> = ({ component, onClo
           </div>
         )}
 
+        <section className="mt-3 rounded-lg border border-sky-300/15 bg-sky-400/[0.04] p-2.5">
+          <h3 className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-200">Quick setup</h3>
+
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div>
+              <div className="mb-1 text-[8px] font-bold uppercase tracking-wider text-slate-500">Operating voltage · DIP 3</div>
+              <div className="grid grid-cols-2 overflow-hidden rounded-md border border-white/10">
+                {[12, 24].map(voltage => {
+                  const selected = config.dip3TwelveVolt ? voltage === 12 : voltage === 24;
+                  return (
+                    <button
+                      key={voltage}
+                      type="button"
+                      disabled={isRunning}
+                      onClick={() => update({ dip3TwelveVolt: voltage === 12 })}
+                      className={`h-8 text-[10px] font-black transition ${selected ? 'bg-emerald-400/20 text-emerald-200' : 'bg-slate-950/50 text-slate-500 hover:text-white'} disabled:cursor-not-allowed disabled:opacity-45`}
+                    >
+                      {voltage}VDC
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 text-[8px] font-bold uppercase tracking-wider text-slate-500">Time range · DIP 2</div>
+              <div className="grid grid-cols-2 overflow-hidden rounded-md border border-white/10">
+                {([{ label: 'Seconds', seconds: true }, { label: 'Minutes', seconds: false }] as const).map(option => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    disabled={isRunning}
+                    onClick={() => update({ dip2Seconds: option.seconds })}
+                    className={`h-8 text-[10px] font-black transition ${config.dip2Seconds === option.seconds ? 'bg-sky-400/20 text-sky-200' : 'bg-slate-950/50 text-slate-500 hover:text-white'} disabled:cursor-not-allowed disabled:opacity-45`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2">
+            <div className="mb-1 text-[8px] font-bold uppercase tracking-wider text-slate-500">Operating mode</div>
+            <div className="grid grid-cols-4 gap-1">
+              {MODE_PRESETS.map(preset => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  disabled={isRunning}
+                  onClick={() => update(preset.patch)}
+                  title={preset.hint}
+                  className="rounded-md border border-white/[0.08] bg-slate-950/45 px-1 py-1.5 text-[8px] font-bold text-slate-300 transition hover:border-sky-300/35 hover:bg-sky-400/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {(component.state.timerPhase === 'voltage-mismatch' || resetConflict || pulseConflict) && (
           <div className="mt-2.5 flex gap-2 rounded-lg border border-red-400/20 bg-red-400/[0.07] px-2.5 py-2 text-[9px] leading-relaxed text-red-200">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -200,7 +272,11 @@ export const Timer6062Panel: React.FC<Timer6062PanelProps> = ({ component, onClo
               <h3 className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Time trimpot</h3>
               <p className="mt-0.5 text-[8px] text-slate-600">1-60 on the DIP 2 selected range</p>
             </div>
-            <span className="rounded-md bg-sky-400/10 px-2 py-1 text-xs font-mono font-bold text-sky-300">{config.adjustment}</span>
+            <div className="flex items-center gap-1">
+              <button type="button" disabled={isRunning || config.adjustment <= 1} onClick={() => update({ adjustment: config.adjustment - 1 })} className="h-7 w-7 rounded-md border border-white/10 bg-slate-950 text-base font-bold text-slate-300 hover:border-sky-300/40 disabled:opacity-35" aria-label="Decrease timer">−</button>
+              <span className="min-w-[92px] rounded-md bg-sky-400/10 px-2 py-1.5 text-center text-[11px] font-mono font-bold text-sky-200">{formatTimer6062Setting(config)}</span>
+              <button type="button" disabled={isRunning || config.adjustment >= 60} onClick={() => update({ adjustment: config.adjustment + 1 })} className="h-7 w-7 rounded-md border border-white/10 bg-slate-950 text-base font-bold text-slate-300 hover:border-sky-300/40 disabled:opacity-35" aria-label="Increase timer">+</button>
+            </div>
           </div>
           <input
             type="range"
@@ -214,6 +290,13 @@ export const Timer6062Panel: React.FC<Timer6062PanelProps> = ({ component, onClo
             aria-label="6062 trimpot time setting"
           />
           <div className="mt-1 flex justify-between text-[7px] font-mono text-slate-600"><span>1</span><span>15</span><span>30</span><span>45</span><span>60</span></div>
+          <div className="mt-2 grid grid-cols-6 gap-1">
+            {[1, 5, 10, 15, 30, 60].map(value => (
+              <button key={value} type="button" disabled={isRunning} onClick={() => update({ adjustment: value })} className={`rounded border py-1 text-[8px] font-bold transition ${config.adjustment === value ? 'border-sky-300/40 bg-sky-400/15 text-sky-200' : 'border-white/[0.07] bg-slate-950/40 text-slate-500 hover:text-white'} disabled:opacity-40`}>
+                {value}
+              </button>
+            ))}
+          </div>
         </section>
 
         <footer className="mt-3 flex items-center justify-between border-t border-white/[0.07] pt-2.5 text-[8px] text-slate-600">

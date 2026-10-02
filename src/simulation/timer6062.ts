@@ -77,6 +77,21 @@ export function getTimer6062DurationMs(config: Timer6062Config): number {
   return clampAdjustment(config.adjustment) * (config.dip2Seconds ? 1_000 : 60_000);
 }
 
+/** DIP 3 ON selects 12VDC; OFF selects 24VDC. A small tolerance accounts for
+ * regulated-supply variation while still rejecting the other voltage range. */
+export function isTimer6062SupplyVoltageValid(config: Timer6062Config, voltage: number): boolean {
+  const selectedVoltage = config.dip3TwelveVolt ? 12 : 24;
+  return Math.abs(voltage - selectedVoltage) <= 2;
+}
+
+/** Altronix specifies 7–12VDC on TRG in 12V mode and 15–24VDC in 24V mode. */
+export function isTimer6062TriggerVoltageValid(config: Timer6062Config, voltage: number): boolean {
+  const minimum = config.dip3TwelveVolt ? 7 : 15;
+  const maximum = config.dip3TwelveVolt ? 12 : 24;
+  const tolerance = 0.05;
+  return voltage >= minimum - tolerance && voltage <= maximum + tolerance;
+}
+
 export function formatTimer6062Remaining(milliseconds: number): string {
   const safeMilliseconds = Math.max(0, milliseconds);
   if (safeMilliseconds >= 60_000) {
@@ -140,4 +155,3 @@ export function getTimer6062PhaseLabel(phase: Timer6062Phase | undefined): strin
     default: return 'NO POWER';
   }
 }
- 

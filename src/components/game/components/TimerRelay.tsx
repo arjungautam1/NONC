@@ -1,11 +1,13 @@
 import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
+import { useGameStore } from '../../../store/useGameStore';
 import {
   getTimer6062Config,
   getTimer6062DurationMs,
   getTimer6062PhaseLabel,
   isTimer6062RelayActive,
-  TIMER_6062_SCALE
+  TIMER_6062_SCALE,
+  type Timer6062Config
 } from '../../../simulation/timer6062';
 
 interface TimerRelayProps {
@@ -17,6 +19,8 @@ interface TimerRelayProps {
 const CAD_TERMINAL_X = [-36, -22, -7, 7, 22, 36];
 
 export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }) => {
+  const isRunning = useGameStore(state => state.isRunning);
+  const configureTimerRelay = useGameStore(state => state.configureTimerRelay);
   const config = getTimer6062Config(component);
   const timeLeft = component.state.timeLeft || '2.0s';
   const relayActive = isTimer6062RelayActive(component);
@@ -26,11 +30,11 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
   const remaining = Number(component.state.timeLeftMs ?? duration);
   const progress = duration > 0 ? Math.min(1, Math.max(0, 1 - remaining / duration)) : 0;
   const dialAngle = 45 + ((config.adjustment - 1) / 59) * 270;
-  const dipValues = [
-    config.dip4TriggerRemoval,
-    config.dip3TwelveVolt,
-    config.dip2Seconds,
-    config.dip1RelayAtEnd
+  const dipSwitches: Array<{ key: keyof Pick<Timer6062Config, 'dip1RelayAtEnd' | 'dip2Seconds' | 'dip3TwelveVolt' | 'dip4TriggerRemoval'>; value: boolean }> = [
+    { key: 'dip4TriggerRemoval', value: config.dip4TriggerRemoval },
+    { key: 'dip3TwelveVolt', value: config.dip3TwelveVolt },
+    { key: 'dip2Seconds', value: config.dip2Seconds },
+    { key: 'dip1RelayAtEnd', value: config.dip1RelayAtEnd }
   ];
   const runtimeLabel =
     component.state.timerPhase === 'timing' ||
@@ -134,26 +138,42 @@ export const TimerRelay: React.FC<TimerRelayProps> = ({ component, isEnergized }
           stroke="#17577f"
           strokeWidth="1.7"
           strokeLinecap="round"
-          transform={`rotate(${dialAngle})`}
+          style={{
+            transform: `rotate(${dialAngle}deg)`,
+            transformOrigin: '0px 0px',
+            transition: 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)'
+          }}
         />
       </g>
 
       {/* Four-position switch block at the exact upper-right DWG location. */}
       <g transform="translate(17, -33)">
         <rect x="0" y="0" width="12" height="19" fill="#111827" stroke="#dbeafe" strokeWidth="0.65" />
-        {dipValues.map((isOn, index) => {
+        {dipSwitches.map(({ key, value: isOn }, index) => {
           const rowY = 1.6 + index * 4.2;
           return (
-            <g key={index}>
+            <g
+              key={key}
+              className={isRunning ? 'cursor-not-allowed' : 'device-control cursor-pointer'}
+              opacity={isRunning ? 0.72 : 1}
+              onPointerDown={event => {
+                event.stopPropagation();
+                if (!isRunning) configureTimerRelay(component.id, { [key]: !isOn });
+              }}
+            >
               <rect x="1.2" y={rowY} width="9.6" height="3" fill="#020617" stroke="#64748b" strokeWidth="0.35" />
               <rect
-                x={isOn ? 1.8 : 6.1}
+                x="0"
                 y={rowY + 0.35}
                 width="4"
                 height="2.3"
                 fill="#f8fafc"
                 stroke="#94a3b8"
                 strokeWidth="0.3"
+                style={{
+                  transform: `translateX(${isOn ? 1.8 : 6.1}px)`,
+                  transition: 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1)'
+                }}
               />
               <text x="-2" y={rowY + 2.5} fill="#f8fafc" fontSize="3" fontFamily="monospace" textAnchor="middle">
                 {4 - index}

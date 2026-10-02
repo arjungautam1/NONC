@@ -12,6 +12,8 @@ import {
   getTimer6062Config,
   getTimer6062DurationMs,
   getTimer6062TerminalIds,
+  isTimer6062SupplyVoltageValid,
+  isTimer6062TriggerVoltageValid,
   isTimer6062RelayActive,
   timer6062HasResetConflict,
   type Timer6062Config,
@@ -271,7 +273,7 @@ const normalizePowerStack = (components: CircuitComponent[]) => {
       type: 'power_supply',
       label: component.label && component.label !== '24V PSU' && component.label !== '24V Power Supply'
         ? component.label
-        : 'Power Supply',
+        : 'AL600 Power Supply',
       terminals: getAltronixTerminals(component),
       state: {
         ...component.state,
@@ -627,12 +629,10 @@ export const useGameStore = create<GameState>((set, get) => {
         const duration = getTimer6062DurationMs(config);
         const supplyVoltage = solverResult.nodeVoltages[`${c.id}:${terminals.positive}`] || 0;
         const hasPowerPath = solverResult.energizedComponents.has(c.id);
-        const expectedVoltage = config.dip3TwelveVolt ? 12 : 24;
-        const voltageValid = hasPowerPath && Math.abs(supplyVoltage - expectedVoltage) <= 2;
+        const voltageValid = hasPowerPath && isTimer6062SupplyVoltageValid(config, supplyVoltage);
         const boardPowered = currentIsRunning && !solverResult.shortCircuit && voltageValid;
         const triggerVoltage = solverResult.nodeVoltages[`${c.id}:${terminals.trigger}`] || 0;
-        const triggerThreshold = config.dip3TwelveVolt ? 7 : 15;
-        const triggerActive = boardPowered && triggerVoltage >= triggerThreshold;
+        const triggerActive = boardPowered && isTimer6062TriggerVoltageValid(config, triggerVoltage);
         const runtime = timer6062Runtimes.get(c.id) ?? createTimer6062Runtime();
         timer6062Runtimes.set(c.id, runtime);
 

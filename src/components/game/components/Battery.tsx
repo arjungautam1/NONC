@@ -1,5 +1,6 @@
 import React from 'react';
 import type { CircuitComponent } from '../../../types/game';
+import { useGameStore } from '../../../store/useGameStore';
 
 interface ComponentProps {
   component: CircuitComponent;
@@ -46,6 +47,14 @@ export const Battery: React.FC<ComponentProps> = () => {
 
 export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
   const isActive = component.state.active ?? true;
+  const setComponentState = useGameStore(state => state.setComponentState);
+  const outputVoltage = Number(component.state.outputVoltage ?? 24) === 12 ? 12 : 24;
+  const is12V = outputVoltage === 12;
+
+  const toggleOutputVoltage = (event: React.PointerEvent<SVGGElement>) => {
+    event.stopPropagation();
+    setComponentState(component.id, 'outputVoltage', is12V ? 24 : 12);
+  };
 
   return (
     <g transform="translate(-75, -50)">
@@ -83,8 +92,8 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
       <line x1="25" y1="14" x2="25" y2="8" stroke="#cbd5e1" strokeWidth="1.5" />
 
       {/* Orange Ceramic Disc Capacitor */}
-      <circle cx="38" cy="20" r="3.5" fill="#ea580c" stroke="#c2410c" strokeWidth="0.8" />
-      <line x1="38" y1="23.5" x2="38" y2="28" stroke="#cbd5e1" strokeWidth="1" />
+      <circle cx="88" cy="20" r="3.5" fill="#ea580c" stroke="#c2410c" strokeWidth="0.8" />
+      <line x1="88" y1="23.5" x2="88" y2="28" stroke="#cbd5e1" strokeWidth="1" />
 
       {/* Resistor 1 */}
       <g transform="translate(102, 38)">
@@ -105,7 +114,7 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
       </g>
 
       {/* Cylindrical Power Capacitor replacing T1 */}
-      <g transform="translate(68, 30)">
+      <g transform="translate(72, 29)">
         <rect x="-8" y="-14" width="16" height="28" rx="2" fill="#020617" opacity="0.4" />
         <rect x="-8" y="-14" width="16" height="28" rx="2" fill="#1e293b" stroke="#475569" strokeWidth="1" />
         <rect x="-3" y="-14" width="4" height="28" fill="#eab308" opacity="0.9" />
@@ -119,6 +128,24 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
       <rect x="109" y="10" width="2" height="4" fill="#cbd5e1" />
       <rect x="116" y="10" width="2" height="4" fill="#cbd5e1" />
 
+      {/* AL600 SW1 output selector: ON = 12VDC, OFF = 24VDC. */}
+      <g
+        transform="translate(45, 9)"
+        className="device-control cursor-pointer"
+        onPointerDown={toggleOutputVoltage}
+        role="button"
+        aria-label={`Set AL600 output to ${is12V ? '24' : '12'} volts DC`}
+      >
+        <rect x="-19" y="-7" width="38" height="48" rx="5" fill="transparent" />
+        <text x="0" y="-2.5" fill="#ffffff" stroke="#1e3a8a" strokeWidth="2" paintOrder="stroke" fontSize="5.7" fontWeight="900" textAnchor="middle">VOLTAGE</text>
+        <rect x="-14" y="1" width="28" height="36" rx="4" fill="#0f172a" stroke="#e2e8f0" strokeWidth="1.2" />
+        <rect x="-11" y="4" width="22" height="13" rx="2.5" fill={is12V ? '#059669' : '#1e293b'} stroke={is12V ? '#86efac' : '#475569'} strokeWidth="0.8" />
+        <rect x="-11" y="21" width="22" height="13" rx="2.5" fill={is12V ? '#1e293b' : '#2563eb'} stroke={is12V ? '#475569' : '#93c5fd'} strokeWidth="0.8" />
+        <text x="0" y="12.7" fill={is12V ? '#ffffff' : '#94a3b8'} fontSize="7" fontWeight="900" textAnchor="middle">12V</text>
+        <text x="0" y="29.7" fill={is12V ? '#94a3b8' : '#ffffff'} fontSize="7" fontWeight="900" textAnchor="middle">24V</text>
+        <circle cx="-8" cy={is12V ? 10.5 : 27.5} r="1.5" fill="#ffffff" style={{ transition: 'cy 180ms cubic-bezier(0.22, 1, 0.36, 1)' }} />
+      </g>
+
       {/* LED indicators */}
       {/* Green DC OK LED */}
       <circle
@@ -131,7 +158,7 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         className={isActive ? 'animate-pulse' : ''}
         style={{ filter: isActive ? 'drop-shadow(0 0 3px #22c55e)' : 'none' }}
       />
-      <text x="44" y="61" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">DC OK</text>
+      <text x="43" y="60.5" fill="#e4e4e7" fontSize="6.5" fontWeight="bold" fontFamily="monospace">DC OK</text>
 
       {/* Red AC present LED */}
       <circle
@@ -143,12 +170,14 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         strokeWidth="0.8"
         style={{ filter: isActive ? 'drop-shadow(0 0 3px #ef4444)' : 'none' }}
       />
-      <text x="104" y="61" fill="#e4e4e7" fontSize="7" fontWeight="bold" fontFamily="monospace">AC ON</text>
+      <text x="103" y="60.5" fill="#e4e4e7" fontSize="6.5" fontWeight="bold" fontFamily="monospace">AC ON</text>
 
       {/* Cabinet identification, kept clear of the terminal legends. */}
-      <text x="75" y="70" fill="#facc15" fontSize="6.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif" letterSpacing="0.4">
+      <text x="75" y="70" fill="#facc15" fontSize="6.3" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif" letterSpacing="0.25">
         ALTRONIX AL600
       </text>
+      <rect x="113" y="64" width="25" height="9" rx="4.5" fill={is12V ? '#047857' : '#1d4ed8'} stroke="#bfdbfe" strokeWidth="0.6" />
+      <text x="125.5" y="70.2" fill="#ffffff" fontSize="5.5" fontWeight="900" textAnchor="middle">{outputVoltage}V</text>
 
       {/*
         One aligned terminal strip. The interactive terminal rings rendered by
