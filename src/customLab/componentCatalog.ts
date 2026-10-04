@@ -6,6 +6,7 @@ import { rbsnttlTerminals } from '../components/game/components/rbsnttlPinout';
 import { cubePowerTerminals } from '../components/game/components/cubePowerPinout';
 import { sm500Terminals } from '../components/game/components/sm500Pinout';
 import { kr2402Terminals } from '../components/game/components/kr2402Pinout';
+import { cx12plusTerminals, DEFAULT_CX12PLUS_CONFIG } from '../components/game/components/cx12plusPinout';
 
 export type CustomLabCategory = 'input' | 'control' | 'output';
 
@@ -22,6 +23,7 @@ export interface CustomLabOption {
   name: string;
   description: string;
   terminalSummary: string;
+  signalKind?: 'dry' | 'wet';
   template: ComponentTemplate;
 }
 
@@ -64,7 +66,51 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'visionis_vis7039', category: 'input', name: 'Visionis VIS-7039 push plate',
+    signalKind: 'dry',
+    description: 'Square stainless steel momentary push plate with voltage-free SPDT contacts. Press connects COM to NO; release connects COM to NC.',
+    terminalSummary: 'COM · NO · NC',
+    template: {
+      type: 'button_no', label: 'Visionis VIS-7039',
+      terminals: [
+        { id: 'com', name: 'COM', type: 'com', x: -32, y: 62 },
+        { id: 'no', name: 'NO', type: 'no', x: 0, y: 62 },
+        { id: 'nc', name: 'NC', type: 'nc', x: 32, y: 62 }
+      ],
+      state: { appearance: 'vis7039' }
+    }
+  },
+  {
+    id: 'powered_request_momentary', category: 'input', name: 'Powered signal · momentary', signalKind: 'wet',
+    description: 'Generic training input, not a branded product. Power +V/0V from the supply; press SEND to apply that supply voltage across OUT/COM. Connect OUT/COM to a CX-12 WET pair.',
+    terminalSummary: '+V · 0V supply / OUT · COM powered output',
+    template: {
+      type: 'powered_signal', label: 'Powered request',
+      terminals: [
+        { id: 'pos', name: '+V', type: 'pos', x: -30, y: -58 },
+        { id: 'neg', name: '0V', type: 'neg', x: 30, y: -58 },
+        { id: 'out', name: 'OUT', type: 'out', x: -30, y: 58 },
+        { id: 'com', name: 'COM', type: 'com', x: 30, y: 58 }
+      ], state: { signalMode: 'momentary', pressed: false, powered: false }
+    }
+  },
+  {
+    id: 'powered_request_maintained', category: 'input', name: 'Powered signal · maintained', signalKind: 'wet',
+    description: 'Generic maintained powered output for access-control/time-clock or fire-panel training. Power +V/0V; ON applies the supply voltage across OUT/COM until switched OFF.',
+    terminalSummary: '+V · 0V supply / OUT · COM powered output',
+    template: {
+      type: 'powered_signal', label: 'Maintained powered signal',
+      terminals: [
+        { id: 'pos', name: '+V', type: 'pos', x: -30, y: -58 },
+        { id: 'neg', name: '0V', type: 'neg', x: 30, y: -58 },
+        { id: 'out', name: 'OUT', type: 'out', x: -30, y: 58 },
+        { id: 'com', name: 'COM', type: 'com', x: 30, y: 58 }
+      ], state: { signalMode: 'maintained', toggled: false, powered: false }
+    }
+  },
+  {
     id: 'momentary_spdt',
+    signalKind: 'dry',
     category: 'input',
     name: 'Momentary switch',
     description: 'Spring-return SPDT input with COM, NC, and NO contacts.',
@@ -81,7 +127,24 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'maintained_key_switch', category: 'input', name: 'Key switch',
+    signalKind: 'dry',
+    description: 'Simulator powered key switch. Requires 12/24VDC on +/− before turning activates its isolated SPDT contacts. This power interlock is a teaching feature, not a claim about a mechanical Camden key switch.',
+    terminalSummary: '+ · − power / COM · NO · NC contacts',
+    template: {
+      type: 'key_switch', label: 'Key switch',
+      terminals: [
+        { id: 'pos', name: '+', type: 'pos', x: -28, y: -78 },
+        { id: 'neg', name: '−', type: 'neg', x: 28, y: -78 },
+        { id: 'com', name: 'COM', type: 'com', x: -32, y: 78 },
+        { id: 'no', name: 'NO', type: 'no', x: 0, y: 78 },
+        { id: 'nc', name: 'NC', type: 'nc', x: 32, y: 78 }
+      ], state: { toggled: false, powered: false }
+    }
+  },
+  {
     id: 'maintained_spdt',
+    signalKind: 'dry',
     category: 'input',
     name: 'Maintained SPDT switch',
     description: 'Stays in the selected position and transfers COM between NC and NO.',
@@ -99,6 +162,7 @@ export const customLabOptions: CustomLabOption[] = [
   },
   {
     id: 'wave_sensor',
+    signalKind: 'dry',
     category: 'input',
     name: 'Wave sensor',
     description: '12/24VDC powered touchless switch with a Form C (SPDT) relay output.',
@@ -144,6 +208,7 @@ export const customLabOptions: CustomLabOption[] = [
   },
   {
     id: 'nascom_n282txg',
+    signalKind: 'dry',
     category: 'input',
     name: 'NASCOM N282TXG SPDT door contact',
     description: 'N282TXGW/STSD white extra-wide-gap surface-mount magnetic contact. Click the set to open or close the door; its SPDT dry contact transfers COM between NC and NO.',
@@ -271,6 +336,24 @@ export const customLabOptions: CustomLabOption[] = [
         { id: 'nc', name: 'NC', type: 'nc', x: 40, y: 40 }
       ],
       state: { timer6062Config: { ...DEFAULT_6062_CONFIG } }
+    }
+  },
+  {
+    id: 'cx12plus',
+    category: 'control',
+    name: 'Camden CX-12 Plus',
+    description: '12/24V AC/DC door interface relay with two Form-C outputs, two powered inputs, two dry-contact inputs, eight operating modes, and three adjustable 1-30 second delays.',
+    terminalSummary: '1-2 power · 3-5 lock relay · 6-8 operator relay · Wet 1/2 · Dry 1/2',
+    template: {
+      type: 'cx12plus',
+      label: 'Camden CX-12 Plus',
+      terminals: cx12plusTerminals(),
+      state: {
+        cx12Config: { ...DEFAULT_CX12PLUS_CONFIG, sw: [...DEFAULT_CX12PLUS_CONFIG.sw] },
+        boardPowered: false,
+        relay1Active: false,
+        relay2Active: false
+      }
     }
   },
   {
@@ -464,6 +547,22 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
+    id: 'automatic_door_operator',
+    category: 'output',
+    name: 'ASSA ABLOY swing operator',
+    description: 'Door operator activation input. Close ACT to COM from a relay dry contact to open the door.',
+    terminalSummary: 'ACT · COM dry input',
+    template: {
+      type: 'automatic_door_operator',
+      label: 'ASSA ABLOY swing operator',
+      terminals: [
+        { id: 'act', name: 'ACT', type: 'in', x: -32, y: 94 },
+        { id: 'com', name: 'COM', type: 'com', x: 32, y: 94 }
+      ],
+      state: { active: false, travel: 0 }
+    }
+  },
+  {
     id: 'sti_sa5500_b',
     category: 'output',
     name: 'Blue Strobe',
@@ -578,8 +677,8 @@ const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals'
     transformer: [160, 100], power_supply: [100, 90], timer_relay: [95, 120],
     relay: [70, 95], relay_dpdt: [85, 120], relay_rb1224: [85, 115],
     relay_rbsnttl: [95, 120], pull_station: [85, 145], key_switch: [80, 105],
-    card_reader: [60, 110], wave_sensor: [75, 140], maglock: [90, 80],
-    door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100],
+    card_reader: [60, 110], wave_sensor: [75, 140], powered_signal: [100, 150], maglock: [90, 80],
+    door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100], automatic_door_operator: [145, 120],
     cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
     wireless_transmitter: [65, 110], kr2402_remote: [58, 135], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
   };

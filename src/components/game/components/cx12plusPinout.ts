@@ -13,18 +13,17 @@ import type { CircuitComponent } from '../../../types/game';
  *   7  Relay2 - COM      15  Dry2 Input (non-powered)
  *   8  Relay2 - NC       16  Dry2 Input
  *
- * Per spec all four inputs (2 wet, 2 dry) are "3-30V AC/DC, optically
- * isolated, non-polarity sensitive" — electrically identical at the
- * terminals, the wet/dry naming only describes whether the field device
- * supplies its own power. The simulator treats every pair the same way:
- * either leg going high triggers that input.
+ * Wet inputs accept 3-30V AC/DC across the pair and are nonpolar. Dry inputs
+ * are internally sensed, voltage-free contact inputs:
+ * closing the circuit between the pair activates the input without an
+ * external voltage source.
  */
 const SPACING = 15;
-const START_X = -(15 * SPACING) / 2;
+const START_X = -112.5;
 const Y = 62;
 
 export const CX12PLUS_PINS = [
-  { id: 'pos', label: 'PWR', name: '1', x: START_X + 0 * SPACING, y: Y },
+  { id: 'pos', label: 'PWR', name: '1', x: START_X, y: Y },
   { id: 'neg', label: 'PWR', name: '2', x: START_X + 1 * SPACING, y: Y },
   { id: 'no1', label: 'NO', name: '3', x: START_X + 2 * SPACING, y: Y },
   { id: 'com1', label: 'COM', name: '4', x: START_X + 3 * SPACING, y: Y },

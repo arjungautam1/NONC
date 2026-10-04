@@ -21,6 +21,7 @@ import {
 } from '../simulation/timer6062';
 import { getCX12PlusConfig, getCX12PlusMode, type CX12PlusConfig } from '../components/game/components/cx12plusPinout';
 import { soundManager } from '../audio/soundManager';
+import { buildCX12Example, type CX12ExampleId } from '../customLab/cx12Examples';
 import {
   buildCustomLabComponents,
   createCustomLabComponent,
@@ -79,6 +80,7 @@ interface GameState {
     waypoints?: { x: number; y: number }[]
   ) => void;
   removeWire: (id: string) => void;
+  updateWireColor: (id: string, color: Wire['color']) => void;
   updateWireWaypoints: (id: string, waypoints: { x: number; y: number }[]) => void;
   reconnectWire: (
     id: string,
@@ -128,6 +130,7 @@ interface GameState {
   customLabSelection: string[];
   setCustomLabSelection: (selection: string[]) => void;
   startCustomLab: (selection?: string[]) => void;
+  loadCX12Example: (id: CX12ExampleId) => void;
   addCustomLabComponent: (optionId: string, position?: { x: number; y: number }) => string | null;
   duplicateCustomLabComponent: (componentId: string, position?: { x: number; y: number }) => string | null;
   removeCustomLabComponent: (componentId: string) => void;
@@ -190,20 +193,23 @@ interface CX12PlusRuntime {
   interiorPulseActive: boolean;
   // Mode 4 Latching: Relay2's latched-on state, toggled by WET1/DRY1.
   latchRelay2: boolean;
+  pendingLatchRelay2: boolean;
   // Mode 4 Ratchet: Relay1 & Relay2's shared latched-on state, toggled by WET2/DRY2.
   ratchetOn: boolean;
   // Mode 6 (Maintained Bi-Directional Sequencer): whether channel A's/B's
   // delayed leg is currently holding the *other* relay on.
   secondaryFromA: boolean;
   secondaryFromB: boolean;
-  // Modes 7/8 (Restroom Control): true while the strike (Relay1) is
-  // securing the door against the exterior switch/access device.
+  primaryPulseA: boolean;
+  primaryPulseB: boolean;
+  // Modes 7/8 (Restroom Control): true while the occupant's Push-to-Lock
+  // state disables the exterior switch/access device.
   washroomLocked: boolean;
 }
 
 const cx12PlusRuntimes = new Map<string, CX12PlusRuntime>();
 
-const createCX12PlusRuntime = (mode?: string): CX12PlusRuntime => ({
+const createCX12PlusRuntime = (): CX12PlusRuntime => ({
   lastWet1: false,
   lastDry1: false,
   lastWet2: false,
@@ -211,10 +217,13 @@ const createCX12PlusRuntime = (mode?: string): CX12PlusRuntime => ({
   gen: {},
   interiorPulseActive: false,
   latchRelay2: false,
+  pendingLatchRelay2: false,
   ratchetOn: false,
   secondaryFromA: false,
   secondaryFromB: false,
-  washroomLocked: mode === '8'
+  primaryPulseA: false,
+  primaryPulseB: false,
+  washroomLocked: false
 });
 
 const clearCX12PlusRuntime = (componentId: string) => {
@@ -537,7 +546,7 @@ export const useGameStore = create<GameState>((set, get) => {
     const generation = runtime.gen[key];
     setTimeout(() => {
       const liveRuntime = cx12PlusRuntimes.get(componentId);
-      if (!liveRuntime || liveRuntime.gen[key] !== generation) return;
+      if (liveRuntime !== runtime || liveRuntime.gen[key] !== generation) return;
       if (!get().simulation.energizedComponents.has(componentId)) return;
       action(liveRuntime);
     }, Math.max(0, delaySeconds) * 1000);
@@ -572,6 +581,20 @@ export const useGameStore = create<GameState>((set, get) => {
   };
 
   const runSimulation = (currentComponents: CircuitComponent[], currentWires: Wire[], currentIsRunning: boolean) => {
+    currentComponents = currentComponents.map(component => {
+      if (component.type === 'key_switch' && !component.terminals.some(t => t.id === 'pos')) {
+        return { ...component, terminals: [
+          ...component.terminals,
+          { id: 'pos', name: '+', type: 'pos' as const, x: -28, y: -78 },
+          { id: 'neg', name: '−', type: 'neg' as const, x: 28, y: -78 }
+        ] };
+      }
+      if (component.type !== 'door_sensor' || !component.state.doorOperatorId) return component;
+      const door = currentComponents.find(item => item.id === component.state.doorOperatorId);
+      if (!door || door.type !== 'automatic_door_operator') return component;
+      const toggled = Boolean(door.state.manualOpen) || Number(door.state.travel) > 0;
+      return { ...component, state: { ...component.state, toggled } };
+    });
     // Solve circuit
     const solverResult = solveCircuit(currentComponents, currentWires, currentIsRunning);
 
@@ -584,7 +607,11 @@ export const useGameStore = create<GameState>((set, get) => {
     // Update relay mechanics and advance each 6062 from real terminal voltages,
     // trigger edges, DIP selections, jumper cuts, and trimpot setting.
     let timerContactChanged = false;
-    const updatedComponents = currentComponents.map(c => {
+    let updatedComponents = currentComponents.map(c => {
+      if (c.type === 'powered_signal' || c.type === 'key_switch') {
+        const powered = currentIsRunning && solverResult.energizedComponents.has(c.id);
+        return { ...c, state: { ...c.state, powered } };
+      }
       if (c.type === 'wave_sensor') {
         const powered = currentIsRunning && solverResult.energizedComponents.has(c.id);
         if (powered !== Boolean(c.state.powered) || (!powered && c.state.active)) {
@@ -747,17 +774,43 @@ export const useGameStore = create<GameState>((set, get) => {
           }
         };
       }
+      if (c.type === 'automatic_door_operator') {
+        const actKey = `${c.id}:act`;
+        const comKey = `${c.id}:com`;
+        const actGroup = solverResult.terminalGroups[actKey];
+        const comGroup = solverResult.terminalGroups[comKey];
+        const active = actGroup !== undefined && actGroup === comGroup;
+        return { ...c, state: { ...c.state, active } };
+      }
       if (c.type === 'cx12plus') {
         const config = getCX12PlusConfig(c);
         const activeMode = getCX12PlusMode(config.sw).mode;
         const boardPowered = solverResult.energizedComponents.has(c.id);
-        const v = (terminalId: string) => solverResult.nodeVoltages[`${c.id}:${terminalId}`] || 0;
-        const wet1Active = boardPowered && Math.max(v('wet1_a'), v('wet1_b')) > 2;
-        const dry1Active = boardPowered && Math.max(v('dry1_a'), v('dry1_b')) > 2;
-        const wet2Active = boardPowered && Math.max(v('wet2_a'), v('wet2_b')) > 2;
-        const dry2Active = boardPowered && Math.max(v('dry2_a'), v('dry2_b')) > 2;
+        const terminalKey = (terminalId: string) => `${c.id}:${terminalId}`;
+        const terminalVoltage = (terminalId: string) => solverResult.nodeVoltages[terminalKey(terminalId)] || 0;
+        const isSourceReferenced = (terminalId: string) =>
+          terminalVoltage(terminalId) > 0 || solverResult.groundedTerminals.has(terminalKey(terminalId));
+        const isWetInputActive = (terminalA: string, terminalB: string) => {
+          const voltageAcrossPair = Math.abs(terminalVoltage(terminalA) - terminalVoltage(terminalB));
+          return isSourceReferenced(terminalA) && isSourceReferenced(terminalB)
+            && voltageAcrossPair >= 3 && voltageAcrossPair <= 30;
+        };
+        const isDryInputClosed = (terminalA: string, terminalB: string) => {
+          const groupA = solverResult.terminalGroups[terminalKey(terminalA)];
+          const groupB = solverResult.terminalGroups[terminalKey(terminalB)];
+          return groupA !== undefined && groupA === groupB;
+        };
 
-        const runtime = cx12PlusRuntimes.get(c.id) ?? createCX12PlusRuntime(activeMode);
+        // Wet inputs are non-polar 3-30V AC/DC inputs: both terminals must be
+        // source-referenced and the voltage must be present across the pair.
+        // Dry inputs instead sense a voltage-free contact closure, so continuity
+        // between the two terminals is sufficient and no external voltage is needed.
+        const wet1Active = boardPowered && isWetInputActive('wet1_a', 'wet1_b');
+        const dry1Active = boardPowered && isDryInputClosed('dry1_a', 'dry1_b');
+        const wet2Active = boardPowered && isWetInputActive('wet2_a', 'wet2_b');
+        const dry2Active = boardPowered && isDryInputClosed('dry2_a', 'dry2_b');
+
+        const runtime = cx12PlusRuntimes.get(c.id) ?? createCX12PlusRuntime();
         cx12PlusRuntimes.set(c.id, runtime);
 
         const relay1WasActive = Boolean(c.state.relay1Active);
@@ -776,10 +829,13 @@ export const useGameStore = create<GameState>((set, get) => {
           runtime.lastDry2 = false;
           runtime.interiorPulseActive = false;
           runtime.latchRelay2 = false;
+          runtime.pendingLatchRelay2 = false;
           runtime.ratchetOn = false;
           runtime.secondaryFromA = false;
           runtime.secondaryFromB = false;
-          runtime.washroomLocked = activeMode === '8';
+          runtime.primaryPulseA = false;
+          runtime.primaryPulseB = false;
+          runtime.washroomLocked = false;
           relay1Active = false;
           relay2Active = false;
         } else {
@@ -795,14 +851,13 @@ export const useGameStore = create<GameState>((set, get) => {
 
           switch (activeMode) {
             case '1': {
-              // Standard Timer / Momentary Apartment (Diagram 1, 2b, 2c):
-              // WET1/DRY1 pulses the strike then auto-chains the operator
-              // after D.O.O.RL2. WET2/DRY2 is a courtesy/vestibule switch
-              // that only does anything while the strike is already
-              // energized, firing the operator immediately (skips the wait).
-              const primaryRising = risingWet1 || risingDry1;
-              const secondaryRising = risingWet2 || risingDry2;
-              if (primaryRising) {
+              // Standard Timer / Momentary Apartment (Diagrams 1, 2b, 2c):
+              // DRY1 or WET2 runs the normal strike-then-operator sequence.
+              // The apartment/interphone WET1 input operates only the strike;
+              // DRY2 is the vestibule courtesy input and operates only the
+              // door operator, and only while Relay1 is already energized.
+              const standardSequenceRising = risingDry1 || risingWet2;
+              if (standardSequenceRising) {
                 soundManager.playClick();
                 relay1Active = true;
                 pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
@@ -812,7 +867,12 @@ export const useGameStore = create<GameState>((set, get) => {
                   pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
                 }, runtime);
               }
-              if (secondaryRising && relay1Active) {
+              if (risingWet1) {
+                soundManager.playClick();
+                relay1Active = true;
+                pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
+              }
+              if (risingDry2 && relay1Active) {
                 soundManager.playClick();
                 relay2Active = true;
                 pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
@@ -832,8 +892,11 @@ export const useGameStore = create<GameState>((set, get) => {
                   live.interiorPulseActive = false;
                   setCX12Relays(c.id, { relay1Active: live.lastWet1 });
                 }, runtime);
-                relay2Active = true;
-                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay2Active: true });
+                  pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
+                }, runtime);
               }
               if (risingDry2 && (wet1Active || runtime.interiorPulseActive)) {
                 soundManager.playClick();
@@ -853,8 +916,16 @@ export const useGameStore = create<GameState>((set, get) => {
                 soundManager.playClick();
                 relay1Active = true;
                 pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  if (!live.lastWet2 && !live.lastDry1) return;
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay2Active: true });
+                }, runtime);
               }
-              relay2Active = fireActive;
+              if (!fireActive) {
+                cancelCX12Action(runtime, 'chainA');
+                relay2Active = false;
+              }
               break;
             }
             case '4': {
@@ -863,17 +934,20 @@ export const useGameStore = create<GameState>((set, get) => {
               const latchRising = risingWet1 || risingDry1;
               if (latchRising) {
                 soundManager.playClick();
-                if (runtime.latchRelay2) {
+                if (runtime.latchRelay2 || runtime.pendingLatchRelay2) {
                   cancelCX12Action(runtime, 'latchOn');
+                  runtime.pendingLatchRelay2 = false;
                   runtime.latchRelay2 = false;
                   relay2Active = runtime.ratchetOn;
                 } else {
                   relay1Active = true;
+                  runtime.pendingLatchRelay2 = true;
                   scheduleCX12Action(c.id, 'relay1Pulse', config.dorRl1, (live) => {
                     setCX12Relays(c.id, { relay1Active: live.ratchetOn });
                   }, runtime);
                   scheduleCX12Action(c.id, 'latchOn', config.dooRl2, (live) => {
                     soundManager.playClick();
+                    live.pendingLatchRelay2 = false;
                     live.latchRelay2 = true;
                     setCX12Relays(c.id, { relay2Active: true });
                   }, runtime);
@@ -930,43 +1004,43 @@ export const useGameStore = create<GameState>((set, get) => {
               break;
             }
             case '6': {
-              // Bi-Directional Sequencer — Maintained: each side's relay
-              // mirrors its switch directly, and the far relay follows
-              // D.O.O.RL2 later as long as the switch is still held.
+              // Maintained sequencing: only the requesting door is held by
+              // its switch. The far door still receives its timed pulse.
+              // A short request must also complete the sequence.
               const aActive = wet1Active || dry1Active;
               const bActive = wet2Active || dry2Active;
-              const aRising = risingWet1 || risingDry1;
-              const bRising = risingWet2 || risingDry2;
-
-              if (aRising) {
-                soundManager.playClick();
-                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
-                  if (!live.lastWet1 && !live.lastDry1) return;
-                  soundManager.playClick();
+              if (risingWet1 || risingDry1) {
+                runtime.primaryPulseA = true;
+                scheduleCX12Action(c.id, 'primaryA', config.dorRl1, live => {
+                  live.primaryPulseA = false;
+                  setCX12Relays(c.id, {});
+                }, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, live => {
                   live.secondaryFromA = true;
-                  setCX12Relays(c.id, { relay2Active: true });
+                  scheduleCX12Action(c.id, 'secondaryA', config.dorRl2, end => {
+                    end.secondaryFromA = false;
+                    setCX12Relays(c.id, {});
+                  }, live);
+                  setCX12Relays(c.id, {});
                 }, runtime);
               }
-              if (!aActive) {
-                cancelCX12Action(runtime, 'chainA');
-                runtime.secondaryFromA = false;
-              }
-              if (bRising) {
-                soundManager.playClick();
-                scheduleCX12Action(c.id, 'chainB', config.dooRl2, (live) => {
-                  if (!live.lastWet2 && !live.lastDry2) return;
-                  soundManager.playClick();
+              if (risingWet2 || risingDry2) {
+                runtime.primaryPulseB = true;
+                scheduleCX12Action(c.id, 'primaryB', config.dorRl2, live => {
+                  live.primaryPulseB = false;
+                  setCX12Relays(c.id, {});
+                }, runtime);
+                scheduleCX12Action(c.id, 'chainB', config.dooRl2, live => {
                   live.secondaryFromB = true;
-                  setCX12Relays(c.id, { relay1Active: true });
+                  scheduleCX12Action(c.id, 'secondaryB', config.dorRl1, end => {
+                    end.secondaryFromB = false;
+                    setCX12Relays(c.id, {});
+                  }, live);
+                  setCX12Relays(c.id, {});
                 }, runtime);
               }
-              if (!bActive) {
-                cancelCX12Action(runtime, 'chainB');
-                runtime.secondaryFromB = false;
-              }
-
-              relay1Active = aActive || runtime.secondaryFromB;
-              relay2Active = bActive || runtime.secondaryFromA;
+              relay1Active = aActive || runtime.primaryPulseA || runtime.secondaryFromB;
+              relay2Active = bActive || runtime.primaryPulseB || runtime.secondaryFromA;
               break;
             }
             case '7': {
@@ -980,8 +1054,9 @@ export const useGameStore = create<GameState>((set, get) => {
                 relay2Active = true;
                 pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
               }
-              if (risingDry1) {
+              if (risingDry1 && dry2Active) {
                 soundManager.playClick();
+                cancelCX12Action(runtime, 'relay1Pulse');
                 runtime.washroomLocked = true;
                 relay1Active = true;
               }
@@ -989,8 +1064,11 @@ export const useGameStore = create<GameState>((set, get) => {
                 soundManager.playClick();
                 runtime.washroomLocked = false;
                 relay1Active = false;
-                relay2Active = true;
-                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+                scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay2Active: true });
+                  pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
+                }, runtime);
               }
               if (fallingDry2) {
                 // Manual exit via the lever handle — the door contact
@@ -1003,12 +1081,15 @@ export const useGameStore = create<GameState>((set, get) => {
             case '8': {
               // Restroom Control — Normally Locked. Same terminal mapping as
               // Mode 7, except WET1 is the access-granted signal from a
-              // card/keypad reader rather than a plain wall switch, and the
-              // door starts (and re-arms) secured.
-              if (risingWet1 && runtime.washroomLocked) {
+              // card/keypad reader. The fail-secure lock keeps the door
+              // physically secured at rest; washroomLocked tracks only the
+              // occupied lockout that disables that exterior access signal.
+              const unlockAndOpenRising = (risingWet1 && !runtime.washroomLocked) || risingWet2;
+              if (unlockAndOpenRising) {
                 soundManager.playClick();
                 relay1Active = true;
                 runtime.washroomLocked = false;
+                ['lockClickOff1', 'lockClickOn2', 'lockClickOff2'].forEach(key => cancelCX12Action(runtime, key));
                 pulseCX12Relay(c.id, 'relay1Active', config.dorRl1, runtime);
                 scheduleCX12Action(c.id, 'chainA', config.dooRl2, (live) => {
                   soundManager.playClick();
@@ -1016,21 +1097,27 @@ export const useGameStore = create<GameState>((set, get) => {
                   pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
                 }, runtime);
               }
-              if (risingDry1 && !runtime.washroomLocked) {
-                // Push-to-Lock: a brief double-click of the strike, then secured.
-                soundManager.playClick();
+              if (risingDry1 && dry2Active && !runtime.washroomLocked) {
+                // The manual specifies a brief double click to acknowledge locking.
+                cancelCX12Action(runtime, 'relay1Pulse');
+                cancelCX12Action(runtime, 'chainA');
+                runtime.washroomLocked = true;
                 relay1Active = true;
-                pulseCX12Relay(c.id, 'relay1Active', Math.min(1, config.dorRl1), runtime);
-                runtime.washroomLocked = true;
-              }
-              if (risingWet2) {
                 soundManager.playClick();
-                relay2Active = true;
-                pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
+                scheduleCX12Action(c.id, 'lockClickOff1', 0.15, () => setCX12Relays(c.id, { relay1Active: false }), runtime);
+                scheduleCX12Action(c.id, 'lockClickOn2', 0.3, live => {
+                  if (!live.washroomLocked) return;
+                  soundManager.playClick();
+                  setCX12Relays(c.id, { relay1Active: true });
+                }, runtime);
+                scheduleCX12Action(c.id, 'lockClickOff2', 0.45, () => setCX12Relays(c.id, { relay1Active: false }), runtime);
               }
-              if (risingDry2) {
-                // Door re-closed after an exit — re-secure from the exterior.
-                runtime.washroomLocked = true;
+              if (fallingDry2) {
+                // Manual exit opens the N.C. magnetic contact and resets the
+                // occupancy lockout so the next valid access signal can enter.
+                runtime.washroomLocked = false;
+                ['lockClickOff1', 'lockClickOn2', 'lockClickOff2', 'relay1Pulse'].forEach(key => cancelCX12Action(runtime, key));
+                relay1Active = false;
               }
               break;
             }
@@ -1043,7 +1130,8 @@ export const useGameStore = create<GameState>((set, get) => {
           timerContactChanged = true;
         }
 
-        return { ...c, state: { ...c.state, cx12Config: config, boardPowered, relay1Active, relay2Active } };
+        return { ...c, state: { ...c.state, cx12Config: config, boardPowered, relay1Active, relay2Active,
+          occupied: runtime.washroomLocked, wet1Active, dry1Active, wet2Active, dry2Active } };
       }
       return c;
     });
@@ -1051,6 +1139,15 @@ export const useGameStore = create<GameState>((set, get) => {
     const effectiveSolverResult = timerContactChanged
       ? solveCircuit(updatedComponents, currentWires, currentIsRunning)
       : solverResult;
+    updatedComponents = updatedComponents.map(component => {
+      if (component.type !== 'automatic_door_operator') return component;
+      const actKey = `${component.id}:act`;
+      const comKey = `${component.id}:com`;
+      const actGroup = effectiveSolverResult.terminalGroups[actKey];
+      const comGroup = effectiveSolverResult.terminalGroups[comKey];
+      const active = actGroup !== undefined && actGroup === comGroup;
+      return component.state.active === active ? component : { ...component, state: { ...component.state, active } };
+    });
     effectiveSolverResult.energizedComponents = new Set(
       [...effectiveSolverResult.energizedComponents].filter(componentId => {
         const component = updatedComponents.find(candidate => candidate.id === componentId);
@@ -1206,6 +1303,7 @@ export const useGameStore = create<GameState>((set, get) => {
     simulation: {
       nodeVoltages: {},
       groundedTerminals: new Set(),
+      terminalGroups: {},
       energizedComponents: new Set(),
       shortCircuit: false,
       shortCircuitNodes: new Set(),
@@ -1288,6 +1386,16 @@ export const useGameStore = create<GameState>((set, get) => {
       runSimulation(newComponents, state.wires, state.isRunning);
       soundManager.playClick();
       return component.id;
+    },
+    loadCX12Example: (id) => {
+      const state = get();
+      const example = buildCX12Example(id);
+      const snapshot = createSnapshot(state.components, state.wires);
+      get().startCustomLab([]);
+      set({ components: example.components, wires: example.wires,
+        customLabSelection: getCustomLabSelection(example.components),
+        history: [...state.history, snapshot].slice(-30), redoHistory: [] });
+      runSimulation(example.components, example.wires, false);
     },
     duplicateCustomLabComponent: (componentId, position) => {
       const state = get();
@@ -1467,30 +1575,30 @@ export const useGameStore = create<GameState>((set, get) => {
 
     configureCX12Plus: (id, patch) => {
       const current = get();
-      // The DIP bank and the three trimpots are field-adjustable on a live
-      // board — an installer sets the timers with the door running — so this
-      // stays available while the bench is powered.
       const device = current.components.find(component => component.id === id && component.type === 'cx12plus');
       if (!device) return;
 
-      const config: CX12PlusConfig = { ...getCX12PlusConfig(device), ...patch };
+      const currentConfig = getCX12PlusConfig(device);
+      const swChanged = patch.sw !== undefined &&
+        (patch.sw[0] !== currentConfig.sw[0] || patch.sw[1] !== currentConfig.sw[1] || patch.sw[2] !== currentConfig.sw[2]);
+      if (swChanged && device.state.boardPowered) return;
+
+      const config: CX12PlusConfig = { ...currentConfig, ...patch };
       const components = current.components.map(component => component.id === id
         ? {
             ...component,
             state: {
               ...component.state,
               cx12Config: config,
-              relay1Active: false,
-              relay2Active: false,
-              boardPowered: false
+              relay1Active: swChanged ? false : component.state.relay1Active,
+              relay2Active: swChanged ? false : component.state.relay2Active,
+              boardPowered: component.state.boardPowered
             }
           }
         : component
       );
 
-      // Pending pulse/chain timers belong to the old settings — drop them so a
-      // stale callback can't fire against the new mode.
-      clearCX12PlusRuntime(id);
+      if (swChanged) clearCX12PlusRuntime(id);
       saveToHistory(current.components, current.wires);
       soundManager.playClick();
       runSimulation(components, current.wires, current.isRunning);
@@ -1514,6 +1622,8 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     toggleSwitch: (id) => {
+      const device = get().components.find(component => component.id === id);
+      if (device?.type === 'key_switch' && !device.state.powered) return;
       soundManager.playClick();
       const newComponents = get().components.map(c => 
         c.id === id ? { ...c, state: { ...c.state, toggled: !c.state.toggled } } : c
@@ -1650,6 +1760,14 @@ export const useGameStore = create<GameState>((set, get) => {
       const newWires = get().wires.filter(w => w.id !== id);
       set({ wires: newWires });
       runSimulation(get().components, newWires, get().isRunning);
+    },
+
+    updateWireColor: (id, color) => {
+      const state = get();
+      const wire = state.wires.find(w => w.id === id);
+      if (!wire || wire.color === color) return;
+      saveToHistory(state.components, state.wires);
+      set({ wires: state.wires.map(w => w.id === id ? { ...w, color } : w) });
     },
 
     updateWireWaypoints: (id, waypoints) => {
@@ -1941,6 +2059,23 @@ export const useGameStore = create<GameState>((set, get) => {
 
       let hasChanges = false;
       const updatedComponents = components.map(c => {
+        if (c.type === 'automatic_door_operator') {
+          const currentTravel = c.state.travel || 0;
+          const newTravel = c.state.active || c.state.manualOpen
+            ? Math.min(100, currentTravel + 5)
+            : Math.max(0, currentTravel - 5);
+
+          if (newTravel !== currentTravel) {
+            hasChanges = true;
+            soundManager.startHum(c.id, 'motor');
+            return {
+              ...c,
+              state: { ...c.state, travel: newTravel }
+            };
+          }
+          soundManager.stopHum(c.id);
+        }
+
         if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
           const posKey = `${c.id}:pos`;
           const negKey = `${c.id}:neg`;

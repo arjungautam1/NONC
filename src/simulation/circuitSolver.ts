@@ -7,6 +7,9 @@ export interface SolverResult {
   // terminal also reads 0 V in nodeVoltages, so this is the only way to tell
   // "wired to ground" apart from "not wired at all".
   groundedTerminals: Set<string>;
+  // Terminals in the same numbered group have a direct conductive path through
+  // wires and closed contacts. Loads and other resistive paths do not join groups.
+  terminalGroups: Record<string, number>;
   energizedComponents: Set<string>; // component IDs
   shortCircuit: boolean;
   shortCircuitNodes: Set<string>; // terminal keys in short
@@ -46,6 +49,8 @@ export function solveCircuit(
   components.forEach(c => {
     if (c.type === 'relay' || c.type === 'relay_dpdt' || c.type === 'relay_rb1224' || c.type === 'relay_rbsnttl') {
       coilStates[c.id] = c.state.energized || false;
+    } else if (c.type === 'powered_signal' || c.type === 'key_switch') {
+      coilStates[c.id] = c.state.powered || false;
     } else if (c.type === 'sm500_maglock') {
       coilStates[c.id] = c.state.active || false;
     } else if (c.type === 'cx12plus') {
@@ -55,6 +60,7 @@ export function solveCircuit(
 
   let nodeVoltages: Record<string, number> = {};
   let groundedTerminals = new Set<string>();
+  let terminalGroups: Record<string, number> = {};
 
   while (statesChanged && iterations < 10) {
     iterations++;
@@ -123,7 +129,7 @@ export function solveCircuit(
         }
       } else if (c.type === 'key_switch') {
         const targetOut = c.state.toggled ? 'no' : 'nc';
-        addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
+        if (coilStates[c.id]) addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
       } else if (c.type === 'relay') {
         const isEnergized = coilStates[c.id];
         if (isEnergized) {
@@ -170,6 +176,11 @@ export function solveCircuit(
       } else if (c.type === 'card_reader') {
         const isActive = c.state.active || false;
         if (isActive) {
+          addConnection(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+        }
+      } else if (c.type === 'powered_signal') {
+        addConnection(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, 'com'));
+        if (coilStates[c.id] && (c.state.signalMode === 'maintained' ? c.state.toggled : c.state.pressed)) {
           addConnection(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
         }
       } else if (c.type === 'wave_sensor') {
@@ -224,6 +235,28 @@ export function solveCircuit(
         }
       }
       // Note: loads (bulb, led, motor, buzzer, coil) are NOT shorted internally. They act as resistance loads.
+    });
+
+    // Capture the ideal-conductor groups from this solver pass. Consumers use
+    // these groups to distinguish a closed dry-contact loop from two floating,
+    // unconnected terminals, which both otherwise read 0 V.
+    terminalGroups = {};
+    let nextGroup = 0;
+    Object.keys(adjList).forEach(start => {
+      if (terminalGroups[start] !== undefined) return;
+
+      const group = nextGroup++;
+      const queue = [start];
+      terminalGroups[start] = group;
+
+      while (queue.length > 0) {
+        const key = queue.shift()!;
+        (adjList[key] || new Set<string>()).forEach(neighbor => {
+          if (terminalGroups[neighbor] !== undefined) return;
+          terminalGroups[neighbor] = group;
+          queue.push(neighbor);
+        });
+      }
     });
 
     // 2. Identify AC sources and find if any transformer input is powered
@@ -537,6 +570,10 @@ export function solveCircuit(
       } else if (c.type === 'wireless_relay_kr2402') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'powered_signal' || c.type === 'key_switch') {
+        isCoil = true;
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'wave_sensor') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
@@ -593,6 +630,17 @@ export function solveCircuit(
           const supply = propagatedPositiveVoltage[inPos ? inKey : outKey] ?? 0;
           const expected = c.state.dip12v ? 12 : 24;
           if (Math.abs(supply - expected) > 2) isPowered = false;
+        }
+
+        if (c.type === 'key_switch') {
+          isPowered = connectedToRegulatedPos.has(inKey) && connectedToRegulatedNeg.has(outKey);
+        }
+
+        if (isPowered && (c.type === 'cx12plus' || c.type === 'key_switch')) {
+          const supply = propagatedPositiveVoltage[inPos ? inKey : outKey] ?? 0;
+          // The CX-12 is a 12/24V board, not a 3-30V board. That wider
+          // specification applies only to its optically isolated wet inputs.
+          if (Math.abs(supply - 12) > 2 && Math.abs(supply - 24) > 2) isPowered = false;
         }
 
         if (isPowered && !shortCircuit) {
@@ -673,6 +721,7 @@ export function solveCircuit(
   return {
     nodeVoltages,
     groundedTerminals,
+    terminalGroups,
     energizedComponents,
     shortCircuit,
     shortCircuitNodes,
@@ -787,7 +836,7 @@ function checkPathBetween(
       }
     } else if (c.type === 'key_switch') {
       const targetOut = c.state.toggled ? 'no' : 'nc';
-      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
+      if (c.state.powered) addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
     } else if (c.type === 'relay') {
       // Connect coil
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
@@ -848,6 +897,11 @@ function checkPathBetween(
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {
+        addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+      }
+    } else if (c.type === 'powered_signal') {
+      addConn(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, 'com'));
+      if (c.state.powered && (c.state.signalMode === 'maintained' ? c.state.toggled : c.state.pressed)) {
         addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
       }
     } else if (c.type === 'wave_sensor') {
@@ -965,7 +1019,7 @@ function getComponentsInPath(
       }
     } else if (c.type === 'key_switch') {
       const targetOut = c.state.toggled ? 'no' : 'nc';
-      addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
+      if (c.state.powered) addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, targetOut));
     } else if (c.type === 'relay') {
       addConn(getTerminalKey(c.id, 'coil_a'), getTerminalKey(c.id, 'coil_b'));
       const isEnergized = c.state.energized;
@@ -1013,6 +1067,11 @@ function getComponentsInPath(
     } else if (c.type === 'card_reader') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.active) {
+        addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
+      }
+    } else if (c.type === 'powered_signal') {
+      addConn(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, 'com'));
+      if (c.state.powered && (c.state.signalMode === 'maintained' ? c.state.toggled : c.state.pressed)) {
         addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'out'));
       }
     } else if (c.type === 'wave_sensor') {

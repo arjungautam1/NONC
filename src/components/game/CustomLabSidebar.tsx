@@ -25,7 +25,7 @@ import { ComponentRenderer } from './components/ComponentRenderer';
 
 const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   pull_station: '-78 -84 156 212',
-  key_switch: '-78 -86 156 172',
+  key_switch: '-60 -100 120 195',
   relay: '-60 -60 120 120',
   relay_dpdt: '-76 -80 152 184',
   relay_rb1224: '-72 -76 144 172',
@@ -37,7 +37,9 @@ const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
   door_strike: '-50 -50 100 120',
   led_strip: '-76 -52 152 104',
   sliding_gate: '-148 -86 296 172',
+  automatic_door_operator: '-105 -90 210 210',
   wave_sensor: '-52 -92 104 200',
+  powered_signal: '-65 -82 130 164',
   cube_power: '-96 -78 166 168',
   wireless_transmitter: '-40 -50 80 155',
   kr2402_remote: '-42 -58 84 175',
@@ -72,7 +74,7 @@ const LibraryThumbnail = React.memo(({ component, selected = false }: {
     {/* Soft top-left key light so both dark and light devices separate from the tile */}
     <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_22%,rgba(255,255,255,0.28),transparent_65%)]" />
     <svg
-      viewBox={thumbnailViewBoxes[component.type] ?? '-76 -72 152 144'}
+      viewBox={component.state.appearance === 'vis7039' ? '-54 -56 108 130' : thumbnailViewBoxes[component.type] ?? '-76 -72 152 144'}
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
       className="relative h-[44px] w-[48px] overflow-hidden pointer-events-none [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.45))]"
@@ -238,6 +240,10 @@ export const CustomLabSidebar: React.FC = () => {
                                 <LibraryThumbnail selected={count > 0} component={libraryPreviews[option.id]} />
                                 <div className="min-w-0 flex-1">
                                   <p className="text-xs font-semibold leading-4 text-slate-100">{option.name}</p>
+                                  {option.signalKind && <span className="text-[10px] font-medium text-sky-300"
+                                    title={option.signalKind === 'dry' ? 'Voltage-free contact output. Can switch an external supply into a wet input.' : 'Powered voltage output. Connect supply first, then OUT/COM to WET.'}>
+                                    {option.signalKind === 'dry' ? 'Dry contact' : 'Wet output'}
+                                  </span>}
                                 </div>
                                 <button type="button" onClick={() => addDevice(option.id, option.name)} disabled={atCapacity} aria-label={`Add ${option.name}${count ? ' again' : ''}`} title={atCapacity ? `Your bench holds ${MAX_CUSTOM_COMPONENTS} devices` : `Add ${option.name} to your bench`} className={`flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/15 px-3 text-xs font-semibold text-sky-100 transition hover:border-sky-300/60 hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:border-white/5 disabled:bg-white/5 disabled:text-slate-600 ${focusRing}`}>
                                   <Plus className="h-3.5 w-3.5" /> Add

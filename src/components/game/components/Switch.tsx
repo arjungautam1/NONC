@@ -151,6 +151,22 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   const noNode = { x: 66, y: 96 };
   const spstOut = { x: 66, y: 85 };
 
+  if (component.state.appearance === 'vis7039') return (
+    <g className="select-none">
+      <defs><linearGradient id={`plate-${component.id}`}><stop stopColor="#969a9c"/><stop offset=".5" stopColor="#e2e3e2"/><stop offset="1" stopColor="#969a9c"/></linearGradient></defs>
+      <g className="cursor-grab active:cursor-grabbing" onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pressButton(component.id, true); } }} onKeyUp={() => pressButton(component.id, false)} onBlur={() => pressButton(component.id, false)} role="button" tabIndex={0} aria-label="Press Visionis push plate">
+        <rect x="-46" y="-50" width="92" height="92" rx="9" fill="#090b0d" stroke="#45494c" strokeWidth="2"/>
+        <rect x={isPressed?-39:-41} y={isPressed?-43:-45} width={isPressed?78:82} height={isPressed?78:82} rx="5" fill={`url(#plate-${component.id})`} stroke="#555"/>
+        <text x="34" y="-34" textAnchor="end" fontSize="5" fontWeight="800" fill="#181b1d">VISIONIS</text>
+        <circle cx="0" cy="-33" r="1.8" fill="#161819"/>
+        <g transform="translate(0, -4) scale(.78)" fill="#243b75"><circle cx="-2" cy="-24" r="4"/><path d="M-6 -18 Q-11 -18 -9 -10 L-6 1 H9 L16 15 Q19 19 22 15 L14 -3 H0 V-11 H9 Q12 -14 9 -15 H0 V-18 Z"/><path d="M-11 -9 A17 17 0 1 0 9 14" fill="none" stroke="#243b75" strokeWidth="3"/></g>
+        <text x="0" y="25" textAnchor="middle" fontSize="12" letterSpacing="1" fontWeight="900" fill="#243b75">PRESS</text>
+        <text x="0" y="34" textAnchor="middle" fontSize="7" letterSpacing="1" fontWeight="900" fill="#243b75">TO OPEN</text>
+      </g>
+      {component.terminals.map(t=><g key={t.id} transform={`translate(${t.x},${t.y})`}><circle r="6" fill="#17212c" stroke="#a6b4c4"/></g>)}
+    </g>
+  );
+
   return (
     <g transform="translate(-42, -50)" className="select-none">
       {/* ---------- Housing ---------- */}

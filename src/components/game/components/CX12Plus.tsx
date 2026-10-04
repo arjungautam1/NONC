@@ -130,6 +130,7 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
 
   const toggleSwitch = (index: 0 | 1 | 2) => (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isEnergized) return;
     const sw: [boolean, boolean, boolean] = [...config.sw];
     sw[index] = !sw[index];
     configureCX12Plus(component.id, { sw });
@@ -199,7 +200,7 @@ export const CX12Plus: React.FC<CX12PlusProps> = ({ component, isEnergized }) =>
         {[0, 1, 2].map(i => (
           <g
             key={i}
-            className="device-control cursor-pointer"
+            className={`device-control ${isEnergized ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
             onPointerDown={e => e.stopPropagation()}
             onClick={toggleSwitch(i as 0 | 1 | 2)}
           >

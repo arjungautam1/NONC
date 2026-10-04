@@ -21,6 +21,8 @@ import { Transformer } from './Transformer';
 import { RolandFan } from './RolandFan';
 import { ParkingGate } from './ParkingGate';
 import { SlidingGate } from './SlidingGate';
+import { AutomaticDoorOperator } from './AutomaticDoorOperator';
+import { PoweredSignal } from './PoweredSignal';
 import { DoorSensor } from './DoorSensor';
 import { KeySwitch, PullStation } from './FieldControls';
 import { CubePower } from './CubePower';
@@ -78,6 +80,8 @@ export const ComponentRenderer = React.memo(function ComponentRenderer({ compone
       return <CardReader component={component} />;
     case 'wave_sensor':
       return <WaveSensor component={component} isEnergized={isEnergized} />;
+    case 'powered_signal':
+      return <PoweredSignal component={component} />;
     case 'door_sensor':
       return <DoorSensor component={component} />;
     case 'terminal_block':
@@ -100,6 +104,8 @@ export const ComponentRenderer = React.memo(function ComponentRenderer({ compone
       return <ParkingGate component={component} />;
     case 'sliding_gate':
       return <SlidingGate component={component} />;
+    case 'automatic_door_operator':
+      return <AutomaticDoorOperator component={component} />;
     case 'junction': {
       // Fetch wires to see which ports have active connections
       const wires = useGameStore.getState().wires;

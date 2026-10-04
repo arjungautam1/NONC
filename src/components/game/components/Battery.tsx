@@ -141,9 +141,8 @@ export const PowerSupply: React.FC<ComponentProps> = ({ component }) => {
         <rect x="-14" y="1" width="28" height="36" rx="4" fill="#0f172a" stroke="#e2e8f0" strokeWidth="1.2" />
         <rect x="-11" y="4" width="22" height="13" rx="2.5" fill={is12V ? '#059669' : '#1e293b'} stroke={is12V ? '#86efac' : '#475569'} strokeWidth="0.8" />
         <rect x="-11" y="21" width="22" height="13" rx="2.5" fill={is12V ? '#1e293b' : '#2563eb'} stroke={is12V ? '#475569' : '#93c5fd'} strokeWidth="0.8" />
-        <text x="0" y="12.7" fill={is12V ? '#ffffff' : '#94a3b8'} fontSize="7" fontWeight="900" textAnchor="middle">12V</text>
-        <text x="0" y="29.7" fill={is12V ? '#94a3b8' : '#ffffff'} fontSize="7" fontWeight="900" textAnchor="middle">24V</text>
-        <circle cx="-8" cy={is12V ? 10.5 : 27.5} r="1.5" fill="#ffffff" style={{ transition: 'cy 180ms cubic-bezier(0.22, 1, 0.36, 1)' }} />
+        <text x="0" y="10.5" dominantBaseline="central" fill={is12V ? '#ffffff' : '#cbd5e1'} fontSize="8" fontWeight="800" fontFamily="Arial, sans-serif" textAnchor="middle">12V</text>
+        <text x="0" y="27.5" dominantBaseline="central" fill={is12V ? '#cbd5e1' : '#ffffff'} fontSize="8" fontWeight="800" fontFamily="Arial, sans-serif" textAnchor="middle">24V</text>
       </g>
 
       {/* LED indicators */}

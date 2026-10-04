@@ -190,44 +190,65 @@ export const PullStation: React.FC<FieldControlProps> = ({ component }) => {
 
 export const KeySwitch: React.FC<FieldControlProps> = ({ component }) => {
   const toggleSwitch = useGameStore(state => state.toggleSwitch);
+  const powered = Boolean(component.state.powered);
   const isOn = Boolean(component.state.toggled);
 
   const handleToggle = (event: React.MouseEvent<SVGGElement>) => {
     event.stopPropagation();
-    toggleSwitch(component.id);
+    if (powered) toggleSwitch(component.id);
   };
 
+  const metalId = `key-plate-${component.id}`;
   return (
     <g className="select-none">
-      <rect x="-46" y="-52" width="92" height="104" rx="9" fill="#e5e7eb" stroke="#94a3b8" strokeWidth="2.5" />
-      <rect x="-39" y="-45" width="78" height="90" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
-      <text x="0" y="-32" fill="#475569" fontSize="6.5" fontWeight="900" textAnchor="middle">MAINTAINED KEY</text>
-
-      <g className="device-control cursor-pointer" role="button" tabIndex={0} aria-label={`Turn ${component.label} ${isOn ? 'off' : 'on'}`}
+      <defs>
+        <linearGradient id={metalId} x1="0" y1="0" x2="1" y2=".15">
+          <stop stopColor="#909598" /><stop offset=".28" stopColor="#d8dcdd" />
+          <stop offset=".6" stopColor="#b8bdc0" /><stop offset="1" stopColor="#e0e2e2" />
+        </linearGradient>
+        <linearGradient id={`${metalId}-edge`} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#666a6c"/><stop offset=".08" stopColor="#f0f1f1"/><stop offset=".2" stopColor="#929698"/><stop offset=".85" stopColor="#a2a6a7"/><stop offset=".95" stopColor="#e3e6e6"/><stop offset="1" stopColor="#4a4e50"/></linearGradient>
+        <linearGradient id={`${metalId}-brass`}><stop stopColor="#8b6522"/><stop offset=".35" stopColor="#eed586"/><stop offset=".7" stopColor="#b18c36"/><stop offset="1" stopColor="#e6c66c"/></linearGradient>
+      </defs>
+      <title>Requires 12/24VDC on + and −. COM/NO/NC are isolated contacts.</title>
+      {component.terminals.filter(t => t.id === 'pos' || t.id === 'neg').map(t => <g key={t.id} transform={`translate(${t.x},${t.y})`}>
+        <circle r="7" fill="#17212c" stroke="#94a3b8"/><circle r="3" fill={powered && t.id === 'pos' ? '#ef4444' : '#64748b'}/>
+      </g>)}
+      <rect x="-36" y="-60" width="72" height="120" rx="5" fill={`url(#${metalId}-edge)`} stroke="#92999c" strokeWidth="1.5" />
+      <rect x="-32" y="-54" width="64" height="108" rx="5" fill={`url(#${metalId})`} stroke="#eceeee" strokeWidth=".6" />
+      {[-45, 44].map(y => <g key={y}><circle cx="0" cy={y} r="3.6" fill="#6b7479" stroke="#edf0f0" /><circle cx="0" cy={y} r="2.2" fill="#252e35" /><path d={`M-1.8 ${y} H1.8`} stroke="#c7cdd0" strokeWidth=".7" /></g>)}
+      <g className="device-control cursor-pointer" role="button" tabIndex={0} aria-disabled={!powered} aria-label={`Turn ${component.label} ${isOn ? 'off' : 'on'}`}
         onPointerDown={event => event.stopPropagation()} onClick={handleToggle}
-        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); toggleSwitch(component.id); } }}>
-      <circle cx="0" cy="0" r="24" fill="#1e293b" stroke="#64748b" strokeWidth="3" />
-      <circle cx="0" cy="0" r="15" fill="#0f172a" stroke={isOn ? '#22c55e' : '#94a3b8'} strokeWidth="2" />
-      <g
-        transform={`rotate(${isOn ? 42 : -42})`}
-        style={{ transition: 'transform 160ms cubic-bezier(0.2, 0.9, 0.3, 1)' }}
-      >
-        <rect x="-4" y="-7" width="29" height="14" rx="5" fill="#d1d5db" stroke="#64748b" strokeWidth="1.5" />
-        <circle cx="-1" cy="0" r="4" fill="#475569" />
-        <circle cx="20" cy="0" r="2.5" fill="#0f172a" />
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); if (powered) toggleSwitch(component.id); } }}>
+        <circle cy="-17" r="18.5" fill="#252b2e" stroke="#d9dcdc" strokeWidth=".8" />
+        <circle cy="-17" r="17.5" fill="#81878a" stroke="#b9bfc0" />
+        <circle cy="-11" r="8" fill={`url(#${metalId})`} stroke="#424a4f" strokeWidth="1.2" />
+        <circle cy="-11" r="7" fill="none" stroke="#dde1e2" strokeWidth=".6" />
+        <g transform="translate(0,-11)">
+          <g transform={`rotate(${isOn ? -90 : 0})`} style={{ transition: 'transform 420ms cubic-bezier(.25,.65,.3,1)' }}>
+            <circle r="7" fill={`url(#${metalId})`} stroke="#d8dddf" strokeWidth=".6" />
+            <path d="M-.5 -5 L1 -5 V-2 L-1 0 L1 2 V5 H-1 V2 L-2 0 L-.5 -2 Z" fill="#171a1d" />
+            {/* A generous hit area makes the lower key bow easy to turn. */}
+            <rect x="-13" y="-3" width="26" height="39" rx="10" fill="transparent" pointerEvents="all" />
+            <g transform={`scale(${isOn ? .62 : 1}, 1)`} style={{ transition: 'transform 420ms cubic-bezier(.25,.65,.3,1)' }}>
+              <g transform="translate(1.5, 1)" opacity=".65" pointerEvents="none">
+                <path d="M-2 0 V21 H2 V0 Z M-3 18 Q-10 19 -10 26 Q-10 33 0 34 Q10 33 10 26 Q10 19 3 18 Z" fill="#73501d" stroke="#4c3515" strokeWidth="1.2" />
+              </g>
+            <path d="M-2 0 V14 H-4 V17 H-2 V21 H2 V0 Z" fill={`url(#${metalId}-brass)`} stroke="#846024" strokeWidth=".6" />
+            <path d="M-3 18 Q-10 19 -10 26 Q-10 33 0 34 Q10 33 10 26 Q10 19 3 18 Z" fill={`url(#${metalId}-brass)`} stroke="#79551e" strokeWidth=".9" />
+            <path d="M-6 23 Q0 19 6 23" fill="none" stroke="#f5e0a0" strokeWidth="1" />
+            <ellipse cy="28" rx="3.4" ry="2.2" fill="#667075" stroke="#e5c979" strokeWidth=".8" />
+            <path d="M-5 25 H5" stroke="#b29247" strokeWidth=".6" />
+              <path d="M8 24 Q10 28 6 31" fill="none" stroke="#f8e9ba" strokeWidth="1" opacity={isOn ? .9 : .45} style={{transition:'opacity 420ms ease'}} />
+            </g>
+          </g>
+        </g>
       </g>
-      </g>
-
-      <text x="-24" y="32" fill={!isOn ? '#0f172a' : '#94a3b8'} fontSize="7" fontWeight="900">OFF</text>
-      <text x="15" y="32" fill={isOn ? '#15803d' : '#94a3b8'} fontSize="7" fontWeight="900">ON</text>
-      <circle cx="0" cy="39" r="3" fill={isOn ? '#22c55e' : '#64748b'} className={isOn ? 'animate-pulse' : ''} />
-
-      <g transform="translate(0, 67)" pointerEvents="none">
-        <rect x="-50" y="-9" width="100" height="18" rx="5" fill="#070b13" stroke="#334155" />
-        <text x="0" y="3" fill="#f1f5f9" fontSize="8.2" fontWeight="800" textAnchor="middle" fontFamily="monospace">
-          {component.label}
-        </text>
-      </g>
+      <circle cx="-15" cy="27" r="3.8" fill="#101b19" stroke="#555f5f" />
+      <circle cx="-15" cy="27" r="2.7" fill={powered && isOn ? '#22c55e' : '#14532d'} />
+      <circle cx="15" cy="27" r="3.8" fill="#201516" stroke="#555f5f" />
+      <circle cx="15" cy="27" r="2.7" fill={powered && !isOn ? '#ef4444' : '#7f1d1d'} />
+      <text x="-15" y="38" textAnchor="middle" fontSize="5" fontWeight="800" fill="#26363b">ON</text>
+      <text x="15" y="38" textAnchor="middle" fontSize="5" fontWeight="800" fill="#26363b">OFF</text>
     </g>
   );
 };
