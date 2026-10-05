@@ -52,10 +52,10 @@ export function buildCX12Example(id: CX12ExampleId) {
     wire(sw, 'no', board, `${input}_b`);
   };
   const wet = (role: string, label: string, input: 'wet1' | 'wet2', x: number, y: number, maintained = false) => {
-    if (id === 'apartment-key' && role === 'interphone') {
+    if ((id === 'apartment-key' && role === 'interphone') || (id.startsWith('washroom') && !(id === 'washroom-locked' && role === 'outside'))) {
       // Diagram 2c converts a dry interphone contact into a wet request by
       // switching the supply through it; the contact itself stays voltage-free.
-      const sw = add('visionis_vis7039', role, label + ' · dry contact', x, y);
+      const sw = add('visionis_vis7039', role, label, x, y);
       wire('custom_psu', 'pos', sw, 'com', 'red');
       wire(sw, 'no', board, `${input}_a`, 'red');
       wire('custom_psu', 'neg', board, `${input}_b`, 'black');
@@ -86,11 +86,15 @@ export function buildCX12Example(id: CX12ExampleId) {
     wire('custom_psu', 'pos', board, 'com1', 'red');
     wire(board, 'no1', strike, 'in', 'red');
     wire('custom_psu', 'neg', strike, 'out', 'black');
+    components.find(c => c.id === operator)!.state.lockComponentId = strike;
+    components.find(c => c.id === operator)!.state.locked = !normallyUnlocked;
   }
   if (washroom) {
+    components.find(c => c.id === operator)!.state.doorLabel = 'WASHROOM';
     wet('outside', id === 'washroom-locked' ? 'Access granted' : 'Outside', 'wet1', 345, 155);
     wet('inside', 'Inside', 'wet2', 345, 375);
     dry('lock', 'Push to lock', 'dry1', 600, 435);
+    components.find(c => c.id === 'cx12_example_lock')!.state.controlRole = 'lock';
     const contact = add('nascom_n282txg', 'contact', 'Door contact · follows door', 820, 445);
     components.find(c => c.id === contact)!.state.doorOperatorId = operator;
     // NASCOM marks reed-rest contacts: COM-NO is closed with the magnet present.
@@ -99,8 +103,8 @@ export function buildCX12Example(id: CX12ExampleId) {
     wire(contact, 'no', board, 'dry2_b');
   } else if (id === 'access') {
     wet('access', 'Access ON / OFF', 'wet1', 345, 155, true);
-    dry('inside', 'Inside', 'dry1', 345, 375);
-    dry('outside', 'Outside', 'dry2', 600, 435);
+    dry('inside', 'Inside', 'dry1', 1100, 360);
+    dry('outside', 'Outside', 'dry2', 1100, 600);
   } else if (id === 'smoke') {
     wet('fire', 'Fire signal ON / OFF', 'wet2', 345, 155, true);
     dry('presence', 'Presence ON / OFF', 'dry1', 345, 375, true);

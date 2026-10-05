@@ -56,6 +56,7 @@ export function LabHome() {
   const isCustomLab = useGameStore(state => state.isCustomLab);
   const benchComponents = useGameStore(state => state.components);
   const startCustomLab = useGameStore(state => state.startCustomLab);
+  const loadCX12Example = useGameStore(state => state.loadCX12Example);
   const setViewMode = useGameStore(state => state.setViewMode);
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -81,7 +82,13 @@ export function LabHome() {
   };
 
   const handleLaunchPreset = (preset: LabPreset) => {
-    requestLaunch(() => startCustomLab(preset.deviceCatalogIds));
+    if (preset.cx12ExampleId) {
+      requestLaunch(() => {
+        loadCX12Example(preset.cx12ExampleId!);
+      });
+    } else {
+      requestLaunch(() => startCustomLab(preset.deviceCatalogIds));
+    }
   };
 
   const handleAddDeviceAndOpen = (optionId: string) => {

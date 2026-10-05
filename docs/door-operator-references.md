@@ -10,11 +10,11 @@ The manufacturer identifies NC, COM and NO outputs. The simulation uses the exis
 
 ## ASSA ABLOY swing operator
 
-The supplied photo shows a silver overhead housing, dark end cap and pull-side sliding arm/track. The rendering follows that reference and opens by swinging rather than translating like a sliding gate.
+The supplied photo shows a silver overhead housing, dark end cap and pull-side sliding arm/track. The main rendering shows the overhead housing, drive arm and slide track. A smaller side preview illustrates the door swing and strike state without making a full door the main device visual. Click that preview to operate the inside lever for manual exit.
 
 Official family reference: https://www.assaabloyentrance.com/global/en/solutions/products/automatic-doors/swing-doors
 
-The exact model cannot be established from the supplied photo alone. The simulator deliberately does not assign SW100 or SW200, physical terminal numbers, dimensions or model-specific timing. ACT/COM are a simplified teaching interface; mains power and onboard operator controls are not simulated. A closed activation contact commands opening; releasing it commands closing in this simplified model.
+The exact model cannot be established from the supplied photo alone. The simulator deliberately does not assign SW100 or SW200, physical terminal numbers, dimensions or model-specific timing. ACT/COM are a simplified teaching interface; mains power and onboard operator controls are not simulated. A closed activation contact commands opening. An illustrative internal 3-second hold follows release, then the closer shuts the door. Opening takes about 2.7 seconds and closing about 4 seconds; these are teaching timings, not model-specific specifications. In the CX examples, the door shows the wired strike status and will not automatically open against a secured strike. The inside lever provides mechanical free egress.
 
 For CX-12 Plus operation, wire relay 2 NO/COM (6/7) across the operator activation pair. A push plate COM/NO pair can drive the CX dry input. The plate itself does not create a timed hold or a voltage output.
 

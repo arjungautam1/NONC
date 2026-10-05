@@ -1,3 +1,5 @@
+import type { CX12ExampleId } from './cx12Examples';
+
 export interface LabPreset {
   id: string;
   title: string;
@@ -8,9 +10,22 @@ export interface LabPreset {
   deviceCatalogIds: string[];
   features: string[];
   iconType: 'fan' | 'lock' | 'timer' | 'blank';
+  cx12ExampleId?: CX12ExampleId;
 }
 
 export const LAB_PRESETS: LabPreset[] = [
+  {
+    id: 'cx12_access_control',
+    title: 'Camden CX-12 Plus · Access Control',
+    badge: 'Pre-Wired · Diagram 7',
+    category: 'Access Control',
+    description: 'Fully wired Camden CX-12 Plus circuit from Page 7 (DRG-CX-12PLUS-02). Includes maintained access input, fail-secure electric strike, door operator, and interior/exterior switches.',
+    componentsCount: 8,
+    deviceCatalogIds: ['cx12plus', 'automatic_door_operator', 'door_strike_fail_secure', 'visionis_vis7039', 'visionis_vis7039', 'powered_request_maintained'],
+    features: ['Pre-wired exactly per Diagram 2a', 'Maintained WET 1 access unlock signal', 'Interior & exterior dry request switches'],
+    iconType: 'lock',
+    cx12ExampleId: 'access'
+  },
   {
     id: 'blank',
     title: 'Clean Workbench',

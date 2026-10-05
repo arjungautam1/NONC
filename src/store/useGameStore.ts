@@ -592,7 +592,7 @@ export const useGameStore = create<GameState>((set, get) => {
       if (component.type !== 'door_sensor' || !component.state.doorOperatorId) return component;
       const door = currentComponents.find(item => item.id === component.state.doorOperatorId);
       if (!door || door.type !== 'automatic_door_operator') return component;
-      const toggled = Boolean(door.state.manualOpen) || Number(door.state.travel) > 0;
+      const toggled = Number(door.state.travel) > 0;
       return { ...component, state: { ...component.state, toggled } };
     });
     // Solve circuit
@@ -1054,7 +1054,7 @@ export const useGameStore = create<GameState>((set, get) => {
                 relay2Active = true;
                 pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, runtime);
               }
-              if (risingDry1 && dry2Active) {
+              if (risingDry1 && dry2Active && !relay2Active && !runtime.washroomLocked) {
                 soundManager.playClick();
                 cancelCX12Action(runtime, 'relay1Pulse');
                 runtime.washroomLocked = true;
@@ -1097,7 +1097,7 @@ export const useGameStore = create<GameState>((set, get) => {
                   pulseCX12Relay(c.id, 'relay2Active', config.dorRl2, live);
                 }, runtime);
               }
-              if (risingDry1 && dry2Active && !runtime.washroomLocked) {
+              if (risingDry1 && dry2Active && !relay2Active && !runtime.washroomLocked) {
                 // The manual specifies a brief double click to acknowledge locking.
                 cancelCX12Action(runtime, 'relay1Pulse');
                 cancelCX12Action(runtime, 'chainA');
@@ -1140,13 +1140,19 @@ export const useGameStore = create<GameState>((set, get) => {
       ? solveCircuit(updatedComponents, currentWires, currentIsRunning)
       : solverResult;
     updatedComponents = updatedComponents.map(component => {
+      if (component.type === 'door_strike' || component.type === 'maglock' || component.type === 'sm500_maglock') {
+        return { ...component, state: { ...component.state, active: effectiveSolverResult.energizedComponents.has(component.id) } };
+      }
       if (component.type !== 'automatic_door_operator') return component;
       const actKey = `${component.id}:act`;
       const comKey = `${component.id}:com`;
       const actGroup = effectiveSolverResult.terminalGroups[actKey];
       const comGroup = effectiveSolverResult.terminalGroups[comKey];
       const active = actGroup !== undefined && actGroup === comGroup;
-      return component.state.active === active ? component : { ...component, state: { ...component.state, active } };
+      const lock = updatedComponents.find(item => item.id === component.state.lockComponentId);
+      const lockEnergized = lock ? effectiveSolverResult.energizedComponents.has(lock.id) : false;
+      const locked = lock ? (lock.type === 'door_strike' && lock.state.failSecure ? !lockEnergized : lockEnergized) : false;
+      return { ...component, state: { ...component.state, active, locked } };
     });
     effectiveSolverResult.energizedComponents = new Set(
       [...effectiveSolverResult.energizedComponents].filter(componentId => {
@@ -1286,11 +1292,15 @@ export const useGameStore = create<GameState>((set, get) => {
     });
   };
 
+  const initialCircuit = buildCX12Example('access');
+
   return {
-    components: [],
-    wires: [],
+    components: initialCircuit.components,
+    wires: initialCircuit.wires,
     history: [],
     redoHistory: [],
+    isCustomLab: true,
+    customLabSelection: getCustomLabSelection(initialCircuit.components),
     
     multimeter: {
       mode: 'OFF',
@@ -1325,8 +1335,6 @@ export const useGameStore = create<GameState>((set, get) => {
       } else get().startTimer();
       set({ viewMode: mode, ...(mode === 'lab' ? { sidebarOpen: false } : {}) });
     },
-    isCustomLab: false,
-    customLabSelection: [],
     setCustomLabSelection: (selection) => set({
       customLabSelection: selection.filter(id => getCustomLabOption(id)).slice(0, MAX_CUSTOM_COMPONENTS)
     }),
@@ -2061,19 +2069,27 @@ export const useGameStore = create<GameState>((set, get) => {
       const updatedComponents = components.map(c => {
         if (c.type === 'automatic_door_operator') {
           const currentTravel = c.state.travel || 0;
-          const newTravel = c.state.active || c.state.manualOpen
-            ? Math.min(100, currentTravel + 5)
-            : Math.max(0, currentTravel - 5);
+          // The operator has its own hold-open timer, independent of the
+          // CX relay pulse. Travel times are illustrative, not model specs.
+          const now = Date.now();
+          const holdUntil = c.state.active ? now + 3000 : Number(c.state.holdUntil) || 0;
+          const wantsOpen = c.state.active || c.state.manualOpen || holdUntil > now;
+          const canOpen = currentTravel > 0 || !c.state.locked || c.state.manualOpen;
+          const newTravel = wantsOpen && canOpen
+            ? Math.min(100, currentTravel + 3)
+            : Math.max(0, currentTravel - 2);
+          if (holdUntil !== c.state.holdUntil) hasChanges = true;
 
           if (newTravel !== currentTravel) {
             hasChanges = true;
             soundManager.startHum(c.id, 'motor');
             return {
               ...c,
-              state: { ...c.state, travel: newTravel }
+              state: { ...c.state, travel: newTravel, holdUntil }
             };
           }
           soundManager.stopHum(c.id);
+          if (holdUntil !== c.state.holdUntil) return { ...c, state: { ...c.state, holdUntil } };
         }
 
         if (c.type === 'actuator' || c.type === 'elevator_motor' || c.type === 'parking_gate' || c.type === 'sliding_gate') {
