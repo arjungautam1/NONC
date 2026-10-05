@@ -81,11 +81,11 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
-    id: 'powered_request_momentary', category: 'input', name: 'Powered signal · momentary', signalKind: 'wet',
-    description: 'Generic training input, not a branded product. Power +V/0V from the supply; press SEND to apply that supply voltage across OUT/COM. Connect OUT/COM to a CX-12 WET pair.',
+    id: 'powered_request_momentary', category: 'input', name: 'Intercom · powered unlock output', signalKind: 'wet',
+    description: 'Generic powered-output intercom model. Connect +V/0V to its DC supply and OUT/COM to a CX-12 WET input. Press the door-release key to send an unlock request. For an intercom with a dry relay, use COM/NO contacts instead.',
     terminalSummary: '+V · 0V supply / OUT · COM powered output',
     template: {
-      type: 'powered_signal', label: 'Powered request',
+      type: 'powered_signal', label: 'Powered-output intercom',
       terminals: [
         { id: 'pos', name: '+V', type: 'pos', x: -30, y: -58 },
         { id: 'neg', name: '0V', type: 'neg', x: 30, y: -58 },
@@ -95,11 +95,11 @@ export const customLabOptions: CustomLabOption[] = [
     }
   },
   {
-    id: 'powered_request_maintained', category: 'input', name: 'Powered signal · maintained', signalKind: 'wet',
-    description: 'Generic maintained powered output for access-control/time-clock or fire-panel training. Power +V/0V; ON applies the supply voltage across OUT/COM until switched OFF.',
+    id: 'powered_request_maintained', category: 'input', name: 'Control panel · maintained voltage output', signalKind: 'wet',
+    description: 'Generic control-panel model with a maintained voltage output. Connect +V/0V to the DC supply and OUT/COM to the controller WET input. Enable or clear the simulated panel request. This models a voltage output, not a dry relay or reader data connection.',
     terminalSummary: '+V · 0V supply / OUT · COM powered output',
     template: {
-      type: 'powered_signal', label: 'Maintained powered signal',
+      type: 'powered_signal', label: 'Control panel voltage output',
       terminals: [
         { id: 'pos', name: '+V', type: 'pos', x: -30, y: -58 },
         { id: 'neg', name: '0V', type: 'neg', x: 30, y: -58 },
