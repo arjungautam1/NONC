@@ -156,7 +156,7 @@ export const SwitchNO: React.FC<ComponentProps> = ({ component }) => {
   if (component.state.appearance === 'vis7039') return (
     <g className="select-none">
       <defs><linearGradient id={`plate-${component.id}`}><stop stopColor="#969a9c"/><stop offset=".5" stopColor="#e2e3e2"/><stop offset="1" stopColor="#969a9c"/></linearGradient></defs>
-      <g className="device-control cursor-pointer" onPointerDown={handlePointerDown} onClick={e => e.stopPropagation()} onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pressButton(component.id, true); } }} onKeyUp={() => pressButton(component.id, false)} onBlur={() => pressButton(component.id, false)} role="button" tabIndex={0} aria-label={`Press ${component.label}`} aria-pressed={isPressed}>
+      <g className="cursor-grab active:cursor-grabbing" onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pressButton(component.id, true); } }} onKeyUp={() => pressButton(component.id, false)} onBlur={() => pressButton(component.id, false)} role="button" tabIndex={0} aria-label={`Press ${component.label}`} aria-pressed={isPressed}>
         <rect x="-46" y="-50" width="92" height="92" rx="9" fill="#090b0d" stroke="#45494c" strokeWidth="2"/>
         <rect x={isPressed?-39:-41} y={isPressed?-43:-45} width={isPressed?78:82} height={isPressed?78:82} rx="5" fill={`url(#plate-${component.id})`} stroke="#555"/>
         <text x="34" y="-34" textAnchor="end" fontSize="5" fontWeight="800" fill="#181b1d">{component.state.controlRole === 'lock' ? 'PRIVACY' : 'VISIONIS'}</text>
