@@ -67,10 +67,11 @@ try {
     advance(1999); relays(true, false); advance(1); relays(true, true);
     advance(3000); relays(false, true); advance(1000); relays(false, false);
   }
-  load('standard'); press('powered'); relays(true, false); advance(2000); relays(true, true);
-  // A stuck momentary input expires; another isolated input still operates.
+  load('standard'); press('outside'); relays(true, false); advance(2000); relays(true, true);
+  // A stuck wall button expires; release it before another parallel button can trigger.
   load('standard'); state().pressButton(component('start').id, true); advance(7000); relays(false, false);
-  press('powered'); relays(true, false);
+  state().pressButton(component('start').id, false);
+  press('outside'); relays(true, false);
   for (const id of ['apartment', 'apartment-key'] as const) {
     load(id); press('courtesy'); relays(false, false);
     press('interphone'); relays(true, false); advance(2000); relays(true, false);
@@ -133,20 +134,29 @@ try {
     assert.equal(component('key').state.powered, true);
     relays(true, false);
   }
-  // A powered output needs both supply rails; dry contacts need no supply.
+  // Real wall plates have no supply wires and both operate the dry input.
   load('standard');
-  const powered = component('powered');
+  assert(state().components.every(c => c.type !== 'powered_signal'));
+  for (const role of ['start', 'outside']) {
+    assert.equal(component(role).type, 'button_no');
+    const connections = state().wires.filter(w => w.fromComponentId === component(role).id || w.toComponentId === component(role).id);
+    assert.equal(connections.length, 2);
+    assert(connections.every(w => w.toComponentId === component('board').id && w.toTerminalId.startsWith('dry1_')));
+  }
+  // A real panel's powered output needs both supply rails.
+  load('apartment');
+  const powered = component('interphone');
   state().pressButton(powered.id, true);
   assert.equal(powered.type, 'powered_signal');
-  assert.equal(component('board').state.wet2Active, true);
+  assert.equal(component('board').state.wet1Active, true);
   assert.equal(state().simulation.nodeVoltages[`${powered.id}:out`], 24);
   state().pressButton(powered.id, false); advance(8000);
   const supplyWire = state().wires.find(w => w.toComponentId === powered.id && w.toTerminalId === 'neg')!;
   state().removeWire(supplyWire.id); state().pressButton(powered.id, true);
-  assert.equal(component('powered').state.powered, false);
-  assert.equal(component('board').state.wet2Active, false);
+  assert.equal(component('interphone').state.powered, false);
+  assert.equal(component('board').state.wet1Active, false);
   relays(false, false);
-  press('start'); relays(true, false);
+  press('inside'); relays(true, false);
   load('access'); toggle('access');
   state().toggleSimulation();
   assert.equal(component('access').state.powered, false);

@@ -3,7 +3,7 @@ import { buildCustomLabComponents, getCustomLabOption } from './componentCatalog
 import { CX12PLUS_MODES } from '../components/game/components/cx12plusPinout';
 
 export const CX12_EXAMPLES = [
-  { id: 'standard', mode: '1', title: 'Single door', page: 6, steps: 'Press Inside: the strike releases, then the operator opens. Both outputs time out.' },
+  { id: 'standard', mode: '1', title: 'Single door', page: 6, steps: 'Press Inside or Outside: their COM/NO contacts connect to DRY1 in parallel. The strike releases, then the operator opens. Both outputs time out.' },
   { id: 'apartment', mode: '1', title: 'Apartment · powered interphone', page: 8, steps: 'Press Interphone to release the strike only. Courtesy opens the door while the strike is released. Inside always unlocks and opens.' },
   { id: 'apartment-key', mode: '1', title: 'Apartment · dry interphone + key', page: 9, steps: 'Interphone or the key supplies a switched powered signal to WET1. Courtesy opens only during the unlock window. Turn the maintained key back OFF to re-arm.' },
   { id: 'one-way', mode: '1', title: 'Two doors · one direction', page: 3, steps: 'Press Start: Door 1 opens first; Door 2 opens after the sequence delay.' },
@@ -124,7 +124,8 @@ export function buildCX12Example(id: CX12ExampleId) {
     dry('side2', 'Side 2', 'dry2', 345, 375, id === 'maintained');
   } else {
     dry('start', id === 'standard' ? 'Inside' : 'Start', id === 'ratchet' ? 'dry2' : 'dry1', 345, 155);
-    if (id === 'standard' || id === 'latch') wet('powered', 'Powered request', id === 'standard' ? 'wet2' : 'wet1', 345, 375);
+    // Real wall buttons use isolated COM/NO contacts in parallel on DRY1.
+    if (id === 'standard' || id === 'latch') dry('outside', 'Outside', 'dry1', 345, 375);
   }
   components.find(c => c.id === board)!.state.cx12ExampleId = id;
   return { components, wires };
