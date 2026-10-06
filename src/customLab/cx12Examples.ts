@@ -103,8 +103,8 @@ export function buildCX12Example(id: CX12ExampleId) {
     wire(contact, 'no', board, 'dry2_b');
   } else if (id === 'access') {
     wet('access', 'Access ON / OFF', 'wet1', 345, 155, true);
-    dry('inside', 'Inside', 'dry1', 1100, 360);
-    dry('outside', 'Outside', 'dry2', 1100, 600);
+    dry('inside', 'Inside', 'dry1', 345, 375);
+    dry('outside', 'Outside', 'dry2', 345, 600);
   } else if (id === 'smoke') {
     wet('fire', 'Fire signal ON / OFF', 'wet2', 345, 155, true);
     dry('presence', 'Presence ON / OFF', 'dry1', 345, 375, true);

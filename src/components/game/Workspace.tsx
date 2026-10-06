@@ -1796,6 +1796,21 @@ export const Workspace: React.FC = () => {
       fittedExample.current = null;
       return;
     }
+    // Upgrade untouched placements from the older access-control preset.
+    // Preserve positions the user has deliberately moved.
+    if (currentExampleId === 'access') {
+      const replacements = [
+        { id: 'cx12_example_inside', oldY: 360, y: 375 },
+        { id: 'cx12_example_outside', oldY: 600, y: 600 }
+      ];
+      const overlapping = replacements.filter(item => components.some(component =>
+        component.id === item.id && component.x === 1100 && component.y === item.oldY));
+      if (overlapping.length) {
+        overlapping.forEach(item => updateComponentPosition(item.id, 345, item.y));
+        pendingExampleFit.current = true;
+        return;
+      }
+    }
     if (!pendingExampleFit.current && fittedExample.current === currentExampleId) return;
     const frame = requestAnimationFrame(() => {
       fitCanvas();
