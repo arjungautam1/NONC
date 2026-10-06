@@ -8,7 +8,7 @@ import { TIMER_6062_SCALE, TIMER_6062_TERMINAL_POSITIONS } from '../../simulatio
 import type { CircuitComponent, Wire } from '../../types/game';
 import { getTerminalKey } from '../../simulation/circuitSolver';
 import { Copy, Download, Grid2X2, Hand, Info, Maximize, MousePointer2, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { CUSTOM_POWER_STACK_POSITIONS, getCustomLabOptionId, MAX_CUSTOM_COMPONENTS } from '../../customLab/componentCatalog';
+import { getCustomLabOptionId, MAX_CUSTOM_COMPONENTS } from '../../customLab/componentCatalog';
 import { soundManager } from '../../audio/soundManager';
 import { Timer6062Panel } from './Timer6062Panel';
 import { CX12PlusPanel } from './CX12PlusPanel';
@@ -499,30 +499,31 @@ export const Workspace: React.FC = () => {
     setZoomScale(scale);
   };
 
+  const pendingExampleFit = useRef(false);
+  const fittedExample = useRef<string | null>(null);
+
   const fitCanvas = () => {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect || !components.length) return;
-    const fittedComponents = isCustomLab
-      ? components.map(component => {
-          const anchor = CUSTOM_POWER_STACK_POSITIONS[component.id as keyof typeof CUSTOM_POWER_STACK_POSITIONS];
-          if (!anchor) return component;
-          if (component.x !== anchor.x || component.y !== anchor.y) {
-            updateComponentPosition(component.id, anchor.x, anchor.y);
-          }
-          return { ...component, ...anchor };
-        })
-      : components;
-    const positions = fittedComponents.map(component => {
+    const positions = components.map(component => {
       const p = getComponentCanvasPosition(component);
       const bounds = getSelectionHighlightBounds(component.type, getComponentEffectiveScale(component));
       return { left: p.x + bounds.x - 45, right: p.x + bounds.x + bounds.w + 45,
         top: p.y + Math.min(bounds.y - 40, -125), bottom: p.y + bounds.y + bounds.h + 55 };
     });
+    // Include the actual rendered routes, not just device bodies. Parallel
+    // lanes, terminal leads and user bends can extend beyond the equipment.
+    for (const wire of wires) {
+      for (const point of getWireSegmentsPoints(wire)) {
+        positions.push({ left: point.x - 24, right: point.x + 24,
+          top: point.y - 24, bottom: point.y + 24 });
+      }
+    }
     const left = Math.min(...positions.map(p => p.left));
     const right = Math.max(...positions.map(p => p.right));
     const top = Math.min(...positions.map(p => p.top));
     const bottom = Math.max(...positions.map(p => p.bottom));
-    const scale = Math.max(0.25, Math.min(1.1, (rect.width - 48) / (right - left), (rect.height - 64) / (bottom - top)));
+    const scale = Math.max(0.01, Math.min(1.1, Math.max(1, rect.width - 80) / (right - left), Math.max(1, rect.height - 96) / (bottom - top)));
     setZoomScale(scale);
     setOffsets({ shiftX: rect.width / 2 - (left + right) / 2 * scale, shiftY: rect.height / 2 - (top + bottom) / 2 * scale });
   };
@@ -1789,6 +1790,21 @@ export const Workspace: React.FC = () => {
     return simplifiedRoute;
   };
 
+  const currentExampleId = components.find(component => component.type === 'cx12plus')?.state.cx12ExampleId;
+  useEffect(() => {
+    if (!isCustomLab || !currentExampleId) {
+      fittedExample.current = null;
+      return;
+    }
+    if (!pendingExampleFit.current && fittedExample.current === currentExampleId) return;
+    const frame = requestAnimationFrame(() => {
+      fitCanvas();
+      fittedExample.current = currentExampleId;
+      pendingExampleFit.current = false;
+    });
+    return () => cancelAnimationFrame(frame);
+  });
+
   // Compute detailed path with arches/bridges for intersecting wires
   const getWirePathWithCrossings = (wireIndex: number, currentWires: Wire[]) => {
     const wire = currentWires[wireIndex];
@@ -2003,7 +2019,7 @@ export const Workspace: React.FC = () => {
               <Hand size={15} /> Pan
             </button>
           </div>
-          <button onClick={fitCanvas} title="Fit all devices on screen" aria-label="Fit all devices on screen" className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs hover:bg-white/10"><Maximize size={15} /> Fit</button>
+          <button onClick={fitCanvas} title="Fit all devices and wires on screen" aria-label="Fit all devices and wires on screen" className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs hover:bg-white/10"><Maximize size={15} /> Fit</button>
           {/* Zoom controls */}
           <div className="flex h-9 items-center gap-0.5 bg-black/20 p-0.5 rounded-md border border-white/[0.08]">
             <button
@@ -2118,7 +2134,7 @@ export const Workspace: React.FC = () => {
             </summary>
             <div className="absolute left-2 right-2 top-12 z-50 rounded-lg border border-white/15 bg-[#101722] p-3 text-xs leading-relaxed text-slate-300 shadow-xl">
               Drag devices to move · Click two terminals to connect · Drag empty space to pan.
-              <br />Select a device to resize, duplicate, or remove it. Ctrl / ⌘ + scroll to zoom. Use Fit to show all devices.
+              <br />Select a device to resize, duplicate, or remove it. Ctrl / ⌘ + scroll to zoom. Use Fit to show all devices and wires.
             </div>
           </details>
         </div>
@@ -3701,6 +3717,7 @@ export const Workspace: React.FC = () => {
           component={components.find(c => c.id === selectedCX12Id && c.type === 'cx12plus')!}
           onClose={() => setSelectedCX12Id(null)}
           onLoadExample={id => {
+            pendingExampleFit.current = true;
             useGameStore.getState().loadCX12Example(id);
             setSelectedCompId('cx12_example_board');
             setSelectedCX12Id('cx12_example_board');
