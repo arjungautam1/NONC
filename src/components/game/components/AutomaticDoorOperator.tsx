@@ -3,6 +3,8 @@ import type { CircuitComponent } from '../../../types/game';
 import { useGameStore } from '../../../store/useGameStore';
 
 export const AutomaticDoorOperator: React.FC<{ component: CircuitComponent }> = ({ component }) => {
+  const lockDevice = useGameStore(state => state.components.find(item => item.id === component.state.lockComponentId));
+  const hasStrike = lockDevice?.type === 'door_strike';
   const travel = Math.max(0, Math.min(100, Number(component.state.travel) || 0));
   const angle = travel / 100 * Math.PI * .46;
   const width = 44 * Math.cos(angle);
@@ -18,7 +20,7 @@ export const AutomaticDoorOperator: React.FC<{ component: CircuitComponent }> = 
       <linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop stopColor="#f1f3f4"/><stop offset=".13" stopColor="#cdd2d5"/><stop offset=".55" stopColor="#9aa3a9"/><stop offset=".9" stopColor="#c0c7cb"/><stop offset="1" stopColor="#667179"/></linearGradient>
       <linearGradient id={`${id}-door`}><stop stopColor="#dfd8c8"/><stop offset="1" stopColor="#b4aa96"/></linearGradient>
     </defs>
-    <title>ASSA ABLOY swing operator with a small door movement preview. Preview lever allows manual exit.</title>
+    <title>Swing operator mounted above the preview door with its arm connected to the leaf. A connected electric strike sits in the latch-side jamb. Preview lever allows manual exit.</title>
     {/* The header motor, drive arm and slide track are the device itself. */}
     <rect x="-104" y="-28" width="145" height="44" rx="5" fill="#030712" opacity=".4" transform="translate(2,4)"/>
     <rect x="-104" y="-28" width="145" height="44" rx="4" fill={`url(#${id})`} stroke="#d4dade" strokeWidth="1.1"/>
@@ -54,7 +56,25 @@ export const AutomaticDoorOperator: React.FC<{ component: CircuitComponent }> = 
         <path d="M8 11 H36 L8 28 Z" fill="#a8c8d0" opacity=".18"/>
         <rect x="5" y="43" width="34" height="16" fill="none" stroke="#958b76" strokeWidth=".6"/>
       </g>
-      <rect x="111" y="21" width="3" height="10" rx=".7" fill={component.state.lockComponentId && locked?'#fb7185':'#6ee7b7'}/>
+      {/* The left jamb carries the hinges; the right jamb receives the latch. */}
+      {[0, 38].map(y => <rect key={y} x="64" y={y} width="2.5" height="7" rx=".5" fill="#a8b2b9" />)}
+      {hasStrike && <g pointerEvents="none">
+        <title>Electric strike in the latch-side frame at handle height</title>
+        <rect x="110.5" y="19" width="4" height="16" rx=".6" fill={`url(#${id})`} stroke="#64748b" strokeWidth=".5" />
+        <circle cx="112.5" cy="21" r=".6" fill="#475569" />
+        <circle cx="112.5" cy="33" r=".6" fill="#475569" />
+        <rect x="110.5" y="24" width="2.5" height="6" fill={locked ? '#fb7185' : '#6ee7b7'} />
+      </g>}
+      {/* Header-mounted motor and slide arm, drawn over the moving leaf. */}
+      <g pointerEvents="none">
+        <title>Automatic operator on the header; arm and slide track attached to the door</title>
+        <rect x="63" y="-21" width="51" height="7" rx="1" fill={`url(#${id})`} stroke="#64748b" strokeWidth=".6" />
+        <rect x="109" y="-21" width="5" height="7" rx=".7" fill="#30393e" />
+        <circle cx="70" cy="-13" r="1.8" fill="#475569" />
+        <path d={`M${66 + width * .15} ${-7 + depth * .15} L${66 + width * .85} ${-7 + depth * .85}`} stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
+        <path d={`M70 -13 L${72 + width * .22} ${-4 + depth * .2} L${66 + width * .65} ${-7 + depth * .65}`} fill="none" stroke="#dce3e7" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={72 + width * .22} cy={-4 + depth * .2} r="1.2" fill="#64748b" />
+      </g>
       <path d={`M${edge-4} ${28+depth} l-6 ${component.state.manualOpen ? 3 : 0}`} stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round"/>
       <text x="89" y="64" textAnchor="middle" fontSize="6" fontWeight="800" fill={travel>=100?'#86efac':'#cbd5e1'}>{status}</text>
       <rect x="57" y="-33" width="64" height="106" rx="6" fill="transparent" pointerEvents="all"/>
