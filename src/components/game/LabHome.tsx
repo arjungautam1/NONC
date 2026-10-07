@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { 
-  customLabOptions, 
-  customLabCategories
+  customLabCategories,
+  getWorkspaceOptions
 } from '../../customLab/componentCatalog';
 import { LAB_PRESETS, type LabPreset } from '../../customLab/presets';
 import { Logo } from './components/Logo';
@@ -53,17 +53,18 @@ const workflowSteps = [
 ];
 
 export function LabHome() {
+  const workspaceKind = useGameStore(state => state.workspaceKind);
+  const electronicsOptions = getWorkspaceOptions('electronics');
   const isCustomLab = useGameStore(state => state.isCustomLab);
   const benchComponents = useGameStore(state => state.components);
   const startCustomLab = useGameStore(state => state.startCustomLab);
   const loadCX12Example = useGameStore(state => state.loadCX12Example);
-  const setViewMode = useGameStore(state => state.setViewMode);
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [pendingLaunch, setPendingLaunch] = useState<{ action: () => void } | null>(null);
 
-  const hasBench = isCustomLab && benchComponents.length > 0;
+  const hasBench = workspaceKind === 'electronics' && isCustomLab && benchComponents.length > 0;
   const deviceCount = benchComponents.length;
 
   const requestLaunch = (action: () => void) => {
@@ -77,17 +78,17 @@ export function LabHome() {
     action?.();
   };
 
-  const openLab = () => {
-    requestLaunch(() => hasBench ? setViewMode('lab') : startCustomLab([]));
-  };
+  const openLab = () => requestLaunch(() => useGameStore.getState().openElectronicsWorkspace());
 
   const handleLaunchPreset = (preset: LabPreset) => {
-    if (preset.cx12ExampleId) {
+    if (preset.accessControllerExample) {
+      requestLaunch(() => useGameStore.getState().loadAccessControllerExample());
+    } else if (preset.cx12ExampleId) {
       requestLaunch(() => {
-        loadCX12Example(preset.cx12ExampleId!);
+        loadCX12Example(preset.cx12ExampleId!, preset.category === 'Access Control' ? 'access' : 'electronics');
       });
     } else {
-      requestLaunch(() => startCustomLab(preset.deviceCatalogIds));
+      requestLaunch(() => startCustomLab(preset.deviceCatalogIds, preset.category === 'Access Control' ? 'access' : 'electronics'));
     }
   };
 
@@ -95,7 +96,7 @@ export function LabHome() {
     requestLaunch(() => startCustomLab([optionId]));
   };
 
-  const filteredDevices = customLabOptions.filter(device => {
+  const filteredDevices = electronicsOptions.filter(device => {
     const matchesCategory = activeCategory === 'all' || device.category === activeCategory;
     const matchesSearch = !searchQuery || 
       device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,7 +138,7 @@ export function LabHome() {
               onClick={openLab}
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-400 px-4 text-xs font-semibold text-slate-950 transition hover:bg-sky-300 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
             >
-              <span>{hasBench ? 'Resume Workbench' : 'Enter Custom Lab'}</span>
+              <span>{hasBench ? 'Resume Workbench' : 'Enter Electronics Lab'}</span>
               <ArrowRight size={14} />
             </button>
           </div>
@@ -165,7 +166,7 @@ export function LabHome() {
 
             {/* Subheading */}
             <p className="mt-6 max-w-[480px] text-base leading-relaxed text-slate-300">
-              Build, wire, and test real-world low-voltage circuits with complete freedom. Place industrial relays, timers, access-control hardware, and motors on an interactive workbench powered by a real Kirchhoff electrical engine.
+              Build, wire, and test real-world low-voltage circuits with complete freedom. Place industrial relays, timers, and motors on an interactive workbench powered by a real Kirchhoff electrical engine.
             </p>
 
             {/* CTA Group */}
@@ -215,13 +216,32 @@ export function LabHome() {
           <BenchPreview />
         </section>
 
+        <section id="access-control" className="mb-14 rounded-2xl border border-teal-400/25 bg-teal-400/[0.05] p-6 sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-teal-300">Separate installation workspace</p>
+              <h2 className="mt-2 text-2xl font-bold text-white">Access control lab</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">Wire readers, request-to-exit devices, door contacts and locks. Program the DELMI AC-2 training controller using the shared concepts of Atrium and RBH UNC100.</p>
+              <p className="mt-2 text-xs text-slate-400">Your access and electronics benches keep separate devices, wiring and Undo history.</p>
+            </div>
+            <button onClick={() => requestLaunch(() => useGameStore.getState().openAccessWorkspace())} className="min-h-11 rounded-xl bg-teal-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-teal-200">Open access control lab</button>
+          </div>
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {LAB_PRESETS.filter(preset => preset.category === 'Access Control').map(preset => <button key={preset.id} onClick={() => handleLaunchPreset(preset)} className="rounded-xl border border-white/10 bg-[#0b121e] p-4 text-left hover:border-teal-300/40">
+              <span className="text-sm font-semibold text-white">{preset.title}</span>
+              <span className="mt-2 block text-xs leading-relaxed text-slate-400">{preset.description}</span>
+              <span className="mt-3 block text-xs font-semibold text-teal-300">Load in access lab →</span>
+            </button>)}
+          </div>
+        </section>
+
         {/* SECTION 1: QUICK START PRESETS */}
         <section id="presets" className="scroll-mt-20 border-t border-white/[0.08] pt-14 pb-14">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">
                 <Sliders size={14} />
-                <span>Jumpstart Your Bench</span>
+                <span>Electronics & relays bench</span>
               </div>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                 Start with a curated template or blank slate.
@@ -233,7 +253,7 @@ export function LabHome() {
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {LAB_PRESETS.map((preset) => (
+            {LAB_PRESETS.filter(preset => preset.category !== 'Access Control').map((preset) => (
               <div 
                 key={preset.id}
                 className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c1320] p-6 transition-all duration-300 hover:border-sky-400/40 hover:bg-[#0e1727] hover:shadow-[0_12px_40px_-15px_rgba(56,189,248,0.25)] hover:-translate-y-1"
@@ -289,7 +309,7 @@ export function LabHome() {
                 <span>Modular Device Catalog</span>
               </div>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                Over 30+ industrial components ready to place.
+                {electronicsOptions.length} electronics components ready to place.
               </h2>
             </div>
             
@@ -300,7 +320,7 @@ export function LabHome() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search relays, motors, locks..."
+                placeholder="Search relays, timers, motors..."
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:border-sky-400 focus:bg-white/[0.07] focus:outline-none"
               />
             </div>
@@ -316,10 +336,10 @@ export function LabHome() {
                   : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:text-white'
               }`}
             >
-              All Devices ({customLabOptions.length})
+              All Devices ({electronicsOptions.length})
             </button>
             {customLabCategories.map((cat) => {
-              const count = customLabOptions.filter(d => d.category === cat.id).length;
+              const count = electronicsOptions.filter(d => d.category === cat.id).length;
               return (
                 <button
                   key={cat.id}

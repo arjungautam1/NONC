@@ -15,9 +15,11 @@ import { soundManager } from '../../audio/soundManager';
 
 interface ControlPanelProps {
   onHide: () => void;
+  title?: string;
+  subtitle?: string;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({ onHide }) => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({ onHide, title = 'Electronics & relays lab', subtitle = 'Build your own circuit' }) => {
   const canUndo = useGameStore(state => state.history.length > 0);
   const canRedo = useGameStore(state => state.redoHistory.length > 0);
   const undo = useGameStore(state => state.undo);
@@ -49,10 +51,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ onHide }) => {
           <Logo variant="horizontal" size="sm" />
           <div className="border-l border-white/10 pl-4 hidden lg:block">
             <h2 className="text-sm font-semibold text-white">
-              Custom lab
+              {title}
             </h2>
             <span className="text-[11px] text-slate-400">
-              Build your own circuit
+              {subtitle}
             </span>
           </div>
         </div>

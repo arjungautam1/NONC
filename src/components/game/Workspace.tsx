@@ -12,6 +12,7 @@ import { getCustomLabOptionId, MAX_CUSTOM_COMPONENTS } from '../../customLab/com
 import { soundManager } from '../../audio/soundManager';
 import { Timer6062Panel } from './Timer6062Panel';
 import { CX12PlusPanel } from './CX12PlusPanel';
+import { AccessControllerPanel } from './AccessControllerPanel';
 
 const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
 const SPLICE_CONNECTOR_MAX_SCALE = 2.4;
@@ -203,6 +204,11 @@ export const Workspace: React.FC = () => {
   const [hoveredCompId, setHoveredCompId] = useState<string | null>(null);
   const [selectedTimerId, setSelectedTimerId] = useState<string | null>(null);
   const [selectedCX12Id, setSelectedCX12Id] = useState<string | null>(null);
+
+  const [selectedAccessId, setSelectedAccessId] = useState<string | null>(null);
+  useEffect(() => {
+    if (selectedAccessId && !components.some(c => c.id === selectedAccessId && c.type === 'access_controller')) setSelectedAccessId(null);
+  }, [components, selectedAccessId]);
 
   // Wire size adjust state
   const [wireSize, setWireSize] = useState<'normal' | 'thin'>('thin');
@@ -404,6 +410,12 @@ export const Workspace: React.FC = () => {
   const getSelectionHighlightBounds = (type: string, scale: number = 1.0) => {
     let base = { x: -50, y: -50, w: 100, h: 100 };
     switch (type) {
+      case 'access_controller':
+        base = { x: -190, y: -190, w: 380, h: 420 };
+        break;
+      case 'access_reader':
+        base = { x: -75, y: -95, w: 170, h: 235 };
+        break;
       case 'cx12plus':
         base = { x: -130, y: -70, w: 260, h: 190 };
         break;
@@ -1324,6 +1336,11 @@ export const Workspace: React.FC = () => {
       if (local.y > 10) return { x: 0, y: 1 };
     }
 
+    if (comp.type === 'access_controller') {
+      if (Math.abs(local.x) >= 170) return { x: local.x < 0 ? -1 : 1, y: 0 };
+      return { x: 0, y: local.y < 0 ? -1 : 1 };
+    }
+    if (comp.type === 'access_reader') return { x: 0, y: 1 };
     if (comp.type === 'automatic_door_operator') return { x: 0, y: 1 };
 
     // Top-edge wiring is visually ambiguous because it can look like the route is
@@ -1449,6 +1466,8 @@ export const Workspace: React.FC = () => {
       relay_rbsnttl: [68, 92],
       pull_station: [58, 112],
       key_switch: [56, 98],
+      access_controller: [190, 230],
+      access_reader: [85, 135],
       card_reader: [30, 82],
       wave_sensor: [48, 106],
       powered_signal: [60, 85],
@@ -1790,7 +1809,8 @@ export const Workspace: React.FC = () => {
     return simplifiedRoute;
   };
 
-  const currentExampleId = components.find(component => component.type === 'cx12plus')?.state.cx12ExampleId;
+  const currentExampleId = components.find(component => component.type === 'cx12plus')?.state.cx12ExampleId
+    || components.find(component => component.type === 'access_controller')?.state.accessExampleId;
   useEffect(() => {
     if (!isCustomLab || !currentExampleId) {
       fittedExample.current = null;
@@ -2178,6 +2198,9 @@ export const Workspace: React.FC = () => {
                   >
                     Door setup
                   </button>
+                )}
+                {selectedComp.type === 'access_controller' && (
+                  <button onClick={() => setSelectedAccessId(selectedComp.id)} className="ml-2 h-8 rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 text-sky-200">Controller setup</button>
                 )}
                 {isCustomLab && getCustomLabOptionId(selectedComp) && (
                   <button onClick={duplicateSelected} title="Duplicate selected device (Ctrl/Cmd+D)" className="ml-2 flex h-8 items-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-xs text-blue-200 hover:bg-blue-400/20"><Copy size={14} /> Duplicate</button>
@@ -2805,7 +2828,9 @@ export const Workspace: React.FC = () => {
                   useGameStore.getState().pressButton(comp.id, true);
                   window.setTimeout(() => useGameStore.getState().pressButton(comp.id, false), 180);
                 }
-                if (comp.type === 'timer_relay') {
+                if (comp.type === 'access_controller') {
+                  setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
+                } else if (comp.type === 'timer_relay') {
                   setSelectedCX12Id(null);
                   setSelectedTimerId(comp.id);
                 } else if (comp.type === 'cx12plus') {
@@ -2820,9 +2845,11 @@ export const Workspace: React.FC = () => {
                 else setSelectedCompId(comp.id);
               }}
               onKeyDown={(e) => {
-                if ((comp.type === 'timer_relay' || comp.type === 'cx12plus') && (e.key === 'Enter' || e.key === ' ')) {
+                if ((comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller') && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
-                  if (comp.type === 'timer_relay') {
+                  if (comp.type === 'access_controller') {
+                    setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
+                  } else if (comp.type === 'timer_relay') {
                     setSelectedCX12Id(null);
                     setSelectedTimerId(comp.id);
                   } else {
@@ -2831,9 +2858,9 @@ export const Workspace: React.FC = () => {
                   }
                 }
               }}
-              role={comp.type === 'timer_relay' || comp.type === 'cx12plus' ? 'button' : undefined}
-              aria-label={comp.type === 'timer_relay' || comp.type === 'cx12plus' ? `Configure ${comp.label}` : undefined}
-              tabIndex={comp.type === 'timer_relay' || comp.type === 'cx12plus' ? 0 : undefined}
+              role={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? 'button' : undefined}
+              aria-label={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? `Configure ${comp.label}` : undefined}
+              tabIndex={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? 0 : undefined}
               className="cursor-grab active:cursor-grabbing group"
             >
               {/* Landing pad: the slot the device drops into, drawn under it */}
@@ -3374,7 +3401,7 @@ export const Workspace: React.FC = () => {
                         </g>
                       )}
 
-                      {!isHovered && comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'wireless_relay_kr2402' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && (
+                      {!isHovered && comp.type !== 'timer_relay' && comp.type !== 'power_supply' && comp.type !== 'transformer' && comp.type !== 'junction' && comp.type !== 'relay_dpdt' && comp.type !== 'pull_station' && comp.type !== 'relay_rb1224' && comp.type !== 'relay_rbsnttl' && comp.type !== 'cube_power' && comp.type !== 'wireless_relay_kr2402' && comp.type !== 'sm500_maglock' && comp.type !== 'cx12plus' && comp.type !== 'access_controller' && comp.type !== 'access_reader' && (
                         <g transform="translate(0, -10)">
                           {/* High contrast dark stroke background outline */}
                           <text
@@ -3721,6 +3748,9 @@ export const Workspace: React.FC = () => {
         </div>
       )}
 
+      {selectedAccessId && components.some(c => c.id === selectedAccessId && c.type === 'access_controller') && (
+        <AccessControllerPanel component={components.find(c => c.id === selectedAccessId)!} onClose={() => setSelectedAccessId(null)} />
+      )}
       {selectedTimerId && components.some(c => c.id === selectedTimerId && c.type === 'timer_relay') && (
         <Timer6062Panel
           component={components.find(c => c.id === selectedTimerId && c.type === 'timer_relay')!}
@@ -3733,7 +3763,7 @@ export const Workspace: React.FC = () => {
           onClose={() => setSelectedCX12Id(null)}
           onLoadExample={id => {
             pendingExampleFit.current = true;
-            useGameStore.getState().loadCX12Example(id);
+            useGameStore.getState().loadCX12Example(id, 'access');
             setSelectedCompId('cx12_example_board');
             setSelectedCX12Id('cx12_example_board');
             setSelectedTimerId(null);

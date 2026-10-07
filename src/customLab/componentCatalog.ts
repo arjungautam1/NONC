@@ -8,6 +8,8 @@ import { sm500Terminals } from '../components/game/components/sm500Pinout';
 import { kr2402Terminals } from '../components/game/components/kr2402Pinout';
 import { cx12plusTerminals, DEFAULT_CX12PLUS_CONFIG } from '../components/game/components/cx12plusPinout';
 
+import { accessControllerTerminals, accessReaderTerminals, DEFAULT_ACCESS_CONTROLLER_CONFIG } from '../components/game/components/accessControllerPinout';
+
 export type CustomLabCategory = 'input' | 'control' | 'output';
 
 type ComponentTemplate = {
@@ -52,6 +54,20 @@ export const customLabCategories: Array<{
 ];
 
 export const customLabOptions: CustomLabOption[] = [
+  {
+    id: 'delmi_access_controller', category: 'control', name: 'DELMI AC-2 access controller',
+    description: 'Custom two-door training controller inspired by Atrium and RBH UNC100 wiring concepts. 12V DC supply, two Wiegand reader ports, REX and door-contact inputs, and isolated SPDT lock relays. Click to configure unlock timing and door monitoring.',
+    terminalSummary: '12V/GND · 2× reader +/−/D0/D1/LED/BUZ · 2× REX/DC/GND · 2× COM/NO/NC',
+    template: { type: 'access_controller', label: 'DELMI AC-2', terminals: accessControllerTerminals(),
+      state: { accessConfig: structuredClone(DEFAULT_ACCESS_CONTROLLER_CONFIG), boardPowered: false } }
+  },
+  {
+    id: 'delmi_wiegand_reader', category: 'input', name: 'DELMI Wiegand training reader',
+    description: 'Powered credential reader with separate D0/D1 data, LED and buzzer connections. Wire to a DELMI AC-2 reader port; choose an allowed or denied card, then scan. This reader sends data to the controller and has no lock relay.',
+    terminalSummary: '+12V · GND · D0 · D1 · LED · BUZ',
+    template: { type: 'access_reader', label: 'Wiegand reader', terminals: accessReaderTerminals(),
+      state: { authorized: true, scanSequence: 0, powered: false } }
+  },
   {
     id: 'emergency_pull_station',
     category: 'input',
@@ -677,7 +693,7 @@ const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals'
     transformer: [160, 100], power_supply: [100, 90], timer_relay: [95, 120],
     relay: [70, 95], relay_dpdt: [85, 120], relay_rb1224: [85, 115],
     relay_rbsnttl: [95, 120], pull_station: [85, 145], key_switch: [80, 105],
-    card_reader: [60, 110], wave_sensor: [75, 140], powered_signal: [100, 150], maglock: [90, 80],
+    access_controller: [200, 210], access_reader: [80, 145], card_reader: [60, 110], wave_sensor: [75, 140], powered_signal: [100, 150], maglock: [90, 80],
     door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100], automatic_door_operator: [145, 120],
     cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
     wireless_transmitter: [65, 110], kr2402_remote: [58, 135], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]
@@ -790,3 +806,14 @@ export const buildCustomLabComponents = (selectedIds: string[]): CircuitComponen
 
   return components;
 };
+
+/** Only installation devices appear in the dedicated access-control library. */
+export const ACCESS_CONTROL_CATALOG_IDS = new Set([
+  'delmi_access_controller', 'delmi_wiegand_reader', 'visionis_vis7039', 'wave_sensor',
+  'nascom_n282txg', 'emergency_pull_station', 'maglock_fail_safe', 'sm500_maglock',
+  'door_strike_fail_secure', 'door_strike_fail_safe', 'automatic_door_operator', 'cx12plus',
+  'powered_request_momentary', 'powered_request_maintained'
+]);
+export const getWorkspaceOptions = (kind: 'electronics' | 'access') => customLabOptions.filter(option =>
+  kind === 'access' ? ACCESS_CONTROL_CATALOG_IDS.has(option.id)
+    : !ACCESS_CONTROL_CATALOG_IDS.has(option.id));

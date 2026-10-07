@@ -16,6 +16,7 @@ import { useGameStore } from '../../store/useGameStore';
 import type { CircuitComponent, ComponentType } from '../../types/game';
 import {
   customLabCategories,
+  getWorkspaceOptions,
   customLabOptions,
   getCustomLabOptionId,
   MAX_CUSTOM_COMPONENTS,
@@ -24,6 +25,8 @@ import {
 import { ComponentRenderer } from './components/ComponentRenderer';
 
 const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
+  access_controller: '-205 -205 410 440',
+  access_reader: '-90 -100 180 240',
   pull_station: '-78 -84 156 212',
   key_switch: '-60 -100 120 195',
   relay: '-60 -60 120 120',
@@ -110,7 +113,9 @@ const categoryMeta: Record<CustomLabCategory, {
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1220]';
 
-export const CustomLabSidebar: React.FC = () => {
+export const CustomLabSidebar: React.FC<{ workspaceKind?: 'electronics' | 'access' }> = ({ workspaceKind = 'electronics' }) => {
+  const availableOptions = getWorkspaceOptions(workspaceKind);
+  const access = workspaceKind === 'access';
   const {
     components, isRunning, wires, sidebarOpen, toggleSidebar,
     toggleSimulation, addCustomLabComponent, removeCustomLabComponent
@@ -131,7 +136,7 @@ export const CustomLabSidebar: React.FC = () => {
     }
     return result;
   }, [components]);
-  const matchingOptions = customLabOptions.filter(option =>
+  const matchingOptions = availableOptions.filter(option =>
     (activeCategory === 'all' || option.category === activeCategory) &&
     (!normalizedQuery || [option.name, option.description, option.terminalSummary]
       .some(value => value.toLowerCase().includes(normalizedQuery)))
@@ -185,10 +190,10 @@ export const CustomLabSidebar: React.FC = () => {
           <span className="rounded-full bg-sky-400/10 px-1.5 py-0.5 text-[10px] text-sky-300">{benchComponents.length}</span>
         </button>
       ) : (
-        <aside aria-label="Custom lab device library" className="flex h-full w-full flex-col overflow-hidden border-b border-white/10 bg-[#0b1220] md:w-[380px] md:border-b-0 md:border-r">
+        <aside aria-label={access ? 'Access control device library' : 'Electronics device library'} className="flex h-full w-full flex-col overflow-hidden border-b border-white/10 bg-[#0b1220] md:w-[380px] md:border-b-0 md:border-r">
           <div className="shrink-0 border-b border-white/10 px-3 py-2 md:px-4 md:pb-3 md:pt-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold tracking-tight text-white">Devices</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-white">{access ? 'Access control devices' : 'Devices'}</h2>
               <button type="button" onClick={toggleSimulation} aria-pressed={isRunning} aria-label={isRunning ? 'Turn circuit power off' : 'Turn circuit power on'} className={`ml-auto flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold ${isRunning ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'border-white/10 bg-white/5 text-slate-300'} ${focusRing}`}><Zap className="h-3.5 w-3.5" /> {isRunning ? 'On' : 'Off'}</button>
               <button type="button" onClick={toggleSidebar} aria-label="Hide device library" title="Hide device library" className={`flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white ${focusRing}`}>
                 <ChevronLeft className="h-4 w-4" />
@@ -208,7 +213,7 @@ export const CustomLabSidebar: React.FC = () => {
               <div aria-label="Device categories" className="mt-2 flex flex-wrap gap-1.5 md:mt-2.5">
                 {(['all', ...customLabCategories.map(category => category.id)] as const).map(category => (
                   <button key={category} type="button" aria-pressed={activeCategory === category} onClick={() => setActiveCategory(category)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${focusRing} ${activeCategory === category ? 'border-sky-400/30 bg-sky-400/15 text-sky-200' : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white'}`}>
-                    {category === 'all' ? 'All' : category === 'input' ? 'Inputs' : category === 'control' ? 'Relays' : 'Outputs'}
+                    {category === 'all' ? 'All' : category === 'input' ? 'Inputs' : category === 'control' ? (access ? 'Controllers' : 'Relays') : (access ? 'Locks & doors' : 'Outputs')}
                   </button>
                 ))}
               </div>
@@ -226,7 +231,7 @@ export const CustomLabSidebar: React.FC = () => {
                     <section key={category.id} className="mb-5 last:mb-0">
                       <div className="mb-2 flex items-center gap-2">
                         <Icon className={`h-3.5 w-3.5 ${iconClass}`} />
-                        <h3 className="text-[11px] font-semibold text-slate-300">{category.label}</h3>
+                        <h3 className="text-[11px] font-semibold text-slate-300">{access ? category.id === 'input' ? 'Readers & inputs' : category.id === 'control' ? 'Controllers' : 'Locks & doors' : category.label}</h3>
                       </div>
                       <div className="space-y-1.5">
                         {options.map(option => {

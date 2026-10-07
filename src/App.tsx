@@ -2,11 +2,13 @@ import { lazy, Suspense, useEffect } from 'react';
 import { useGameStore } from './store/useGameStore';
 import { LabHome } from './components/game/LabHome';
 
+const AccessControlLab = lazy(() => import('./components/game/AccessControlLab'));
 const CustomLab = lazy(() => import('./components/game/CustomLab'));
 
 function App() {
   const undo = useGameStore(state => state.undo);
   const redo = useGameStore(state => state.redo);
+  const workspaceKind = useGameStore(state => state.workspaceKind);
   const viewMode = useGameStore(state => state.viewMode);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ function App() {
 
   return viewMode === 'home' ? <LabHome /> : (
     <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#080b12] text-slate-300" role="status">Opening your lab…</div>}>
-      <CustomLab />
+      {workspaceKind === 'access' ? <AccessControlLab /> : <CustomLab />}
     </Suspense>
   );
 }

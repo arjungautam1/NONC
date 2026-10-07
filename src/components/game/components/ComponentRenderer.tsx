@@ -34,6 +34,7 @@ import { SecoLarmSirenStrobe } from './SecoLarmSirenStrobe';
 import { DCCoolingFan } from './DCCoolingFan';
 import { KR2402Relay } from './KR2402Relay';
 import { KR2402Remote } from './KR2402Remote';
+import { AccessController, AccessReader } from './AccessController';
 
 const SPLICE_CONNECTOR_DEFAULT_SCALE = 1.67;
 
@@ -78,6 +79,10 @@ export const ComponentRenderer = React.memo(function ComponentRenderer({ compone
       return <DoorStrike component={component} />;
     case 'card_reader':
       return <CardReader component={component} />;
+    case 'access_controller':
+      return <AccessController component={component} />;
+    case 'access_reader':
+      return <AccessReader component={component} />;
     case 'wave_sensor':
       return <WaveSensor component={component} isEnergized={isEnergized} />;
     case 'powered_signal':

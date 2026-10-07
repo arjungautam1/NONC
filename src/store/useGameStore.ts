@@ -20,14 +20,18 @@ import {
   type Timer6062Phase
 } from '../simulation/timer6062';
 import { getCX12PlusConfig, getCX12PlusMode, type CX12PlusConfig } from '../components/game/components/cx12plusPinout';
+import { getAccessControllerConfig, type AccessControllerConfig } from '../components/game/components/accessControllerPinout';
+import { advanceAccessControllers, accessControllersNeedTick, clearAccessControllerRuntime, clearAllAccessControllerRuntimes } from '../simulation/accessController';
 import { soundManager } from '../audio/soundManager';
 import { buildCX12Example, type CX12ExampleId } from '../customLab/cx12Examples';
+import { buildAccessControllerExample } from '../customLab/accessControllerExample';
 import {
   buildCustomLabComponents,
   createCustomLabComponent,
   findCustomLabPlacement,
   getCustomLabOption,
   getCustomLabOptionId,
+  getWorkspaceOptions,
   MAX_CUSTOM_COMPONENTS
 } from '../customLab/componentCatalog';
 
@@ -36,6 +40,7 @@ const createCircuitEntityId = (prefix: 'wire' | 'junction') =>
   `${prefix}_${Date.now()}_${circuitEntitySequence++}`;
 
 interface GameState {
+  workspaceKind: 'electronics' | 'access';
   components: CircuitComponent[];
   wires: Wire[];
   history: { components: CircuitComponent[]; wires: Wire[] }[];
@@ -66,6 +71,8 @@ interface GameState {
   pressButton: (id: string, pressed: boolean) => void;
   toggleSwitch: (id: string) => void;
   triggerCardReader: (id: string) => void;
+  scanAccessReader: (id: string) => void;
+  configureAccessController: (id: string, patch: Partial<AccessControllerConfig>) => void;
   triggerWaveSensor: (id: string) => void;
   triggerWirelessTransmitter: (id: string) => void;
   triggerKR2402Remote: (id: string, button: 'A' | 'B', pressed: boolean) => void;
@@ -129,8 +136,11 @@ interface GameState {
   isCustomLab: boolean;
   customLabSelection: string[];
   setCustomLabSelection: (selection: string[]) => void;
-  startCustomLab: (selection?: string[]) => void;
-  loadCX12Example: (id: CX12ExampleId) => void;
+  startCustomLab: (selection?: string[], workspaceKind?: 'electronics' | 'access') => void;
+  loadCX12Example: (id: CX12ExampleId, workspaceKind?: 'electronics' | 'access') => void;
+  loadAccessControllerExample: () => void;
+  openAccessWorkspace: () => void;
+  openElectronicsWorkspace: () => void;
   addCustomLabComponent: (optionId: string, position?: { x: number; y: number }) => string | null;
   duplicateCustomLabComponent: (componentId: string, position?: { x: number; y: number }) => string | null;
   removeCustomLabComponent: (componentId: string) => void;
@@ -342,6 +352,36 @@ const normalizePowerStack = (components: CircuitComponent[]) => {
 
 export const useGameStore = create<GameState>((set, get) => {
   const componentMoveStarts = new Map<string, { x: number; y: number }>();
+  type BenchSnapshot = Pick<GameState, 'components' | 'wires' | 'history' | 'redoHistory' | 'customLabSelection' | 'multimeter'>;
+  const workspaceSnapshots: Partial<Record<GameState['workspaceKind'], BenchSnapshot>> = {};
+  const rememberWorkspace = () => {
+    const state = get();
+    workspaceSnapshots[state.workspaceKind] = structuredClone({ components: state.components, wires: state.wires,
+      history: state.history, redoHistory: state.redoHistory, customLabSelection: state.customLabSelection,
+      multimeter: state.multimeter });
+  };
+  const restoreWorkspace = (workspaceKind: GameState['workspaceKind']) => {
+    if (get().workspaceKind === workspaceKind) {
+      if (!get().isCustomLab) {
+        get().startCustomLab([], workspaceKind);
+        return true;
+      }
+      get().setViewMode('lab');
+      return true;
+    }
+    const snapshot = workspaceSnapshots[workspaceKind];
+    if (!snapshot) return false;
+    rememberWorkspace();
+    get().stopTimer(); soundManager.stopAllHums();
+    clearAllTimer6062Runtimes(); clearAllCX12PlusRuntimes(); clearAllAccessControllerRuntimes();
+    componentMoveStarts.clear();
+    const restored = structuredClone(snapshot);
+    set({ ...restored, workspaceKind, isRunning: false, isCustomLab: true, viewMode: 'lab', sidebarOpen: false,
+      bottomPanelOpen: false, probeMode: null, shortCircuitPopup: null, shortCircuitSmoke: null });
+    runSimulation(restored.components, restored.wires, false);
+    get().startTimer();
+    return true;
+  };
   const getCustomLabSelection = (components: CircuitComponent[]) =>
     components.map(getCustomLabOptionId).filter((id): id is string => Boolean(id));
   const createSnapshot = (components: CircuitComponent[], wires: Wire[]) => ({
@@ -1136,6 +1176,9 @@ export const useGameStore = create<GameState>((set, get) => {
       return c;
     });
 
+    const accessResult = advanceAccessControllers(updatedComponents, currentWires, solverResult, currentIsRunning);
+    updatedComponents = accessResult.components;
+    timerContactChanged = timerContactChanged || accessResult.contactsChanged;
     const effectiveSolverResult = timerContactChanged
       ? solveCircuit(updatedComponents, currentWires, currentIsRunning)
       : solverResult;
@@ -1292,9 +1335,10 @@ export const useGameStore = create<GameState>((set, get) => {
     });
   };
 
-  const initialCircuit = buildCX12Example('access');
+  const initialCircuit = { components: normalizePowerStack(buildCustomLabComponents([])), wires: [] as Wire[] };
 
   return {
+    workspaceKind: 'electronics',
     components: initialCircuit.components,
     wires: initialCircuit.wires,
     history: [],
@@ -1336,11 +1380,13 @@ export const useGameStore = create<GameState>((set, get) => {
       set({ viewMode: mode, ...(mode === 'lab' ? { sidebarOpen: false } : {}) });
     },
     setCustomLabSelection: (selection) => set({
-      customLabSelection: selection.filter(id => getCustomLabOption(id)).slice(0, MAX_CUSTOM_COMPONENTS)
+      customLabSelection: selection.filter(id => getWorkspaceOptions(get().workspaceKind).some(option => option.id === id)).slice(0, MAX_CUSTOM_COMPONENTS)
     }),
-    startCustomLab: (selection) => {
+    startCustomLab: (selection, workspaceKind = 'electronics') => {
+      if (get().workspaceKind !== workspaceKind) rememberWorkspace();
+      const allowed = new Set(getWorkspaceOptions(workspaceKind).map(option => option.id));
       const selectedIds = [...(selection ?? get().customLabSelection)]
-        .filter(optionId => Boolean(getCustomLabOption(optionId)))
+        .filter(optionId => allowed.has(optionId))
         .slice(0, MAX_CUSTOM_COMPONENTS);
       const customComponents = normalizePowerStack(buildCustomLabComponents(selectedIds));
 
@@ -1348,6 +1394,7 @@ export const useGameStore = create<GameState>((set, get) => {
       soundManager.stopAllHums();
       clearAllTimer6062Runtimes();
       clearAllCX12PlusRuntimes();
+      clearAllAccessControllerRuntimes();
       componentMoveStarts.clear();
 
       set({
@@ -1367,6 +1414,7 @@ export const useGameStore = create<GameState>((set, get) => {
         sidebarOpen: false,
         bottomPanelOpen: false,
         isCustomLab: true,
+        workspaceKind,
         customLabSelection: [...selectedIds],
         viewMode: 'lab'
       });
@@ -1379,6 +1427,7 @@ export const useGameStore = create<GameState>((set, get) => {
       if (
         !state.isCustomLab ||
         !getCustomLabOption(optionId) ||
+        !getWorkspaceOptions(state.workspaceKind).some(option => option.id === optionId) ||
         getCustomLabSelection(state.components).length >= MAX_CUSTOM_COMPONENTS
       ) return null;
 
@@ -1395,21 +1444,40 @@ export const useGameStore = create<GameState>((set, get) => {
       soundManager.playClick();
       return component.id;
     },
-    loadCX12Example: (id) => {
+    loadCX12Example: (id, workspaceKind = 'access') => {
       const state = get();
       const example = buildCX12Example(id);
-      const snapshot = createSnapshot(state.components, state.wires);
-      get().startCustomLab([]);
+      const prior = state.workspaceKind === workspaceKind ? state : workspaceSnapshots[workspaceKind];
+      const history = prior ? [...prior.history, createSnapshot(prior.components, prior.wires)].slice(-30) : [];
+      get().startCustomLab([], workspaceKind);
       set({ components: example.components, wires: example.wires,
         customLabSelection: getCustomLabSelection(example.components),
-        history: [...state.history, snapshot].slice(-30), redoHistory: [] });
+        history, redoHistory: [] });
       runSimulation(example.components, example.wires, false);
+    },
+    loadAccessControllerExample: () => {
+      const state = get();
+      const example = buildAccessControllerExample();
+      const prior = state.workspaceKind === 'access' ? state : workspaceSnapshots.access;
+      const history = prior ? [...prior.history, createSnapshot(prior.components, prior.wires)].slice(-30) : [];
+      get().startCustomLab([], 'access');
+      set({ components: example.components, wires: example.wires,
+        customLabSelection: getCustomLabSelection(example.components),
+        history, redoHistory: [] });
+      runSimulation(example.components, example.wires, false);
+    },
+    openAccessWorkspace: () => {
+      if (!restoreWorkspace('access')) get().loadAccessControllerExample();
+    },
+    openElectronicsWorkspace: () => {
+      if (!restoreWorkspace('electronics')) get().startCustomLab([], 'electronics');
     },
     duplicateCustomLabComponent: (componentId, position) => {
       const state = get();
       const source = state.components.find(component => component.id === componentId);
       const optionId = source && getCustomLabOptionId(source);
       if (!state.isCustomLab || !source || !optionId ||
+        !getWorkspaceOptions(state.workspaceKind).some(option => option.id === optionId) ||
         getCustomLabSelection(state.components).length >= MAX_CUSTOM_COMPONENTS) return null;
       const instance = createCustomLabComponent(optionId, state.components, position ?? {
         x: source.x + 60, y: source.y + 60
@@ -1447,9 +1515,9 @@ export const useGameStore = create<GameState>((set, get) => {
     shortCircuitSmoke: null,
 
     resetLab: () => {
-      const { startCustomLab, components, wires, history } = get();
+      const { startCustomLab, components, wires, history, workspaceKind } = get();
       const snapshot = createSnapshot(components, wires);
-      startCustomLab(getCustomLabSelection(components));
+      startCustomLab(getCustomLabSelection(components), workspaceKind);
       set({ history: [...history, snapshot].slice(-30), redoHistory: [] });
       soundManager.playButton();
     },
@@ -1468,6 +1536,7 @@ export const useGameStore = create<GameState>((set, get) => {
       componentMoveStarts.clear();
       clearAllTimer6062Runtimes();
       clearAllCX12PlusRuntimes();
+      clearAllAccessControllerRuntimes();
       soundManager.stopAllHums();
       set({ components, wires: [], customLabSelection: [], isRunning: false,
         multimeter: { ...state.multimeter, redProbe: null, blackProbe: null },
@@ -1489,6 +1558,7 @@ export const useGameStore = create<GameState>((set, get) => {
       saveToHistory(get().components, get().wires);
       clearTimer6062Runtime(id);
       clearCX12PlusRuntime(id);
+      clearAccessControllerRuntime(id);
       // Remove component and any wires snapped to it
       const newComponents = get().components.filter(c => c.id !== id);
       const newWires = get().wires.filter(w => w.fromComponentId !== id && w.toComponentId !== id);
@@ -1576,6 +1646,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
       clearTimer6062Runtime(id);
       clearCX12PlusRuntime(id);
+      clearAccessControllerRuntime(id);
       saveToHistory(current.components, current.wires);
       soundManager.playClick();
       runSimulation(components, current.wires, false);
@@ -1610,6 +1681,20 @@ export const useGameStore = create<GameState>((set, get) => {
       saveToHistory(current.components, current.wires);
       soundManager.playClick();
       runSimulation(components, current.wires, current.isRunning);
+    },
+
+    configureAccessController: (id, patch) => {
+      const current = get();
+      const board = current.components.find(component => component.id === id && component.type === 'access_controller');
+      if (!board) return;
+      const config = getAccessControllerConfig(board);
+      const configured = { ...board, state: { ...board.state, accessConfig: {
+        door1: { ...config.door1, ...patch.door1 }, door2: { ...config.door2, ...patch.door2 }
+      }, relay1Active: false, relay2Active: false } };
+      configured.state.accessConfig = getAccessControllerConfig(configured);
+      clearAccessControllerRuntime(id);
+      saveToHistory(current.components, current.wires);
+      runSimulation(current.components.map(component => component.id === id ? configured : component), current.wires, current.isRunning);
     },
 
     pressButton: (id, pressed) => {
@@ -1655,6 +1740,17 @@ export const useGameStore = create<GameState>((set, get) => {
         );
         runSimulation(resetComps, get().wires, get().isRunning);
       }, 3000);
+    },
+
+    scanAccessReader: (id) => {
+      const state = get();
+      const reader = state.components.find(component => component.id === id && component.type === 'access_reader');
+      if (!reader) return;
+      if (state.isRunning && reader.state.powered) soundManager.playCardScan();
+      const components = state.components.map(component => component.id === id ? { ...component,
+        state: { ...component.state, scanSequence: (Number(component.state.scanSequence) || 0) + 1,
+          feedback: state.isRunning && reader.state.powered ? 'wiring-fault' : 'unpowered', feedbackUntil: 0 } } : component);
+      runSimulation(components, state.wires, state.isRunning);
     },
 
     triggerWaveSensor: (id) => {
@@ -1967,6 +2063,7 @@ export const useGameStore = create<GameState>((set, get) => {
       componentMoveStarts.clear();
       clearAllTimer6062Runtimes();
       clearAllCX12PlusRuntimes();
+      clearAllAccessControllerRuntimes();
       const validIds = new Set(prev.components.map(component => component.id));
       const { multimeter } = get();
 
@@ -1994,6 +2091,7 @@ export const useGameStore = create<GameState>((set, get) => {
       componentMoveStarts.clear();
       clearAllTimer6062Runtimes();
       clearAllCX12PlusRuntimes();
+      clearAllAccessControllerRuntimes();
       const validIds = new Set(next.components.map(component => component.id));
       const { multimeter } = get();
 
@@ -2126,7 +2224,7 @@ export const useGameStore = create<GameState>((set, get) => {
         return c;
       });
 
-      if (hasChanges) {
+      if (hasChanges || accessControllersNeedTick(updatedComponents)) {
         const elevator = updatedComponents.find(c => c.type === 'elevator_motor' || c.type === 'actuator' || c.type === 'parking_gate' || c.type === 'sliding_gate');
         const elevatorTravel = elevator?.state.travel ?? 0;
 

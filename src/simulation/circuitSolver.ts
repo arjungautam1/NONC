@@ -53,7 +53,7 @@ export function solveCircuit(
       coilStates[c.id] = c.state.powered || false;
     } else if (c.type === 'sm500_maglock') {
       coilStates[c.id] = c.state.active || false;
-    } else if (c.type === 'cx12plus') {
+    } else if (c.type === 'cx12plus' || c.type === 'access_controller') {
       coilStates[c.id] = c.state.boardPowered || false;
     }
   });
@@ -214,6 +214,19 @@ export function solveCircuit(
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
         } else {
           addConnection(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+        }
+      } else if (c.type === 'access_controller') {
+        // Custom training panel: regulated reader power and shared signal
+        // ground, with two isolated dry Form C lock relays. Input/data pins
+        // are sensed signals and must never become voltage sources.
+        for (const door of [1, 2]) {
+          addConnection(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, `reader${door}_gnd`));
+          addConnection(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, `input_gnd${door}`));
+          if (coilStates[c.id] && isRunning) {
+            addConnection(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, `reader${door}_pos`));
+          }
+          const active = coilStates[c.id] && isRunning && c.state[`relay${door}Active`];
+          addConnection(getTerminalKey(c.id, `com${door}`), getTerminalKey(c.id, `${active ? 'no' : 'nc'}${door}`));
         }
       } else if (c.type === 'cx12plus') {
         // Two independent Form C outputs, driven by the pulse-timer runtime
@@ -581,8 +594,11 @@ export function solveCircuit(
         isCoil = true;
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
-      } else if (c.type === 'cx12plus') {
+      } else if (c.type === 'cx12plus' || c.type === 'access_controller') {
         isCoil = true;
+        inKey = getTerminalKey(c.id, 'pos');
+        outKey = getTerminalKey(c.id, 'neg');
+      } else if (c.type === 'access_reader') {
         inKey = getTerminalKey(c.id, 'pos');
         outKey = getTerminalKey(c.id, 'neg');
       } else if (c.type === 'sti_siren_strobe') {
@@ -634,6 +650,12 @@ export function solveCircuit(
 
         if (c.type === 'key_switch') {
           isPowered = connectedToRegulatedPos.has(inKey) && connectedToRegulatedNeg.has(outKey);
+        }
+
+        if (c.type === 'access_controller' || c.type === 'access_reader') {
+          const supply = propagatedPositiveVoltage[inKey] ?? 0;
+          isPowered = isRunning && connectedToRegulatedPos.has(inKey) && connectedToRegulatedNeg.has(outKey)
+            && supply >= 11 && supply <= 15;
         }
 
         if (isPowered && (c.type === 'cx12plus' || c.type === 'key_switch')) {
@@ -927,6 +949,14 @@ function checkPathBetween(
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
       }
+    } else if (c.type === 'access_controller') {
+      for (const door of [1, 2]) {
+        addConn(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, `reader${door}_gnd`));
+        addConn(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, `input_gnd${door}`));
+        if (c.state.boardPowered) addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, `reader${door}_pos`));
+        const active = c.state.boardPowered && c.state[`relay${door}Active`];
+        addConn(getTerminalKey(c.id, `com${door}`), getTerminalKey(c.id, `${active ? 'no' : 'nc'}${door}`));
+      }
     } else if (c.type === 'cx12plus') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));
       if (c.state.relay1Active) {
@@ -1096,6 +1126,14 @@ function getComponentsInPath(
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'no'));
       } else {
         addConn(getTerminalKey(c.id, 'com'), getTerminalKey(c.id, 'nc'));
+      }
+    } else if (c.type === 'access_controller') {
+      for (const door of [1, 2]) {
+        addConn(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, `reader${door}_gnd`));
+        addConn(getTerminalKey(c.id, 'neg'), getTerminalKey(c.id, `input_gnd${door}`));
+        if (c.state.boardPowered) addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, `reader${door}_pos`));
+        const active = c.state.boardPowered && c.state[`relay${door}Active`];
+        addConn(getTerminalKey(c.id, `com${door}`), getTerminalKey(c.id, `${active ? 'no' : 'nc'}${door}`));
       }
     } else if (c.type === 'cx12plus') {
       addConn(getTerminalKey(c.id, 'pos'), getTerminalKey(c.id, 'neg'));

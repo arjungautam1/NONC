@@ -17,6 +17,8 @@ export type ComponentType =
   | 'maglock'
   | 'door_strike'
   | 'card_reader'
+  | 'access_reader'
+  | 'access_controller'
   | 'lamp_indicator'
   | 'timer_relay'
   | 'actuator'
