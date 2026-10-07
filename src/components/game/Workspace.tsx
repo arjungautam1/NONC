@@ -411,10 +411,10 @@ export const Workspace: React.FC = () => {
     let base = { x: -50, y: -50, w: 100, h: 100 };
     switch (type) {
       case 'access_controller':
-        base = { x: -190, y: -190, w: 380, h: 420 };
+        base = { x: -195, y: -205, w: 390, h: 440 };
         break;
       case 'access_reader':
-        base = { x: -75, y: -95, w: 170, h: 235 };
+        base = { x: -85, y: -140, w: 170, h: 280 };
         break;
       case 'cx12plus':
         base = { x: -130, y: -70, w: 260, h: 190 };
@@ -1467,7 +1467,7 @@ export const Workspace: React.FC = () => {
       pull_station: [58, 112],
       key_switch: [56, 98],
       access_controller: [190, 230],
-      access_reader: [85, 135],
+      access_reader: [90, 140],
       card_reader: [30, 82],
       wave_sensor: [48, 106],
       powered_signal: [60, 85],
@@ -2193,14 +2193,14 @@ export const Workspace: React.FC = () => {
                 {selectedComp.type === 'cx12plus' && (
                   <button
                     type="button"
-                    onClick={() => { setSelectedTimerId(null); setSelectedCX12Id(selectedComp.id); }}
+                    onClick={() => { setSelectedTimerId(null); setSelectedAccessId(null); setSelectedCX12Id(selectedComp.id); }}
                     className="ml-2 flex h-8 items-center rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 text-xs font-semibold text-sky-200 hover:bg-sky-400/20"
                   >
                     Door setup
                   </button>
                 )}
                 {selectedComp.type === 'access_controller' && (
-                  <button onClick={() => setSelectedAccessId(selectedComp.id)} className="ml-2 h-8 rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 text-sky-200">Controller setup</button>
+                  <button onClick={() => { setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(selectedComp.id); }} className="ml-2 h-8 rounded-lg border border-sky-400/25 bg-sky-400/10 px-3 text-sky-200">Controller setup</button>
                 )}
                 {isCustomLab && getCustomLabOptionId(selectedComp) && (
                   <button onClick={duplicateSelected} title="Duplicate selected device (Ctrl/Cmd+D)" className="ml-2 flex h-8 items-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-xs text-blue-200 hover:bg-blue-400/20"><Copy size={14} /> Duplicate</button>
@@ -2831,9 +2831,11 @@ export const Workspace: React.FC = () => {
                 if (comp.type === 'access_controller') {
                   setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
                 } else if (comp.type === 'timer_relay') {
+                  setSelectedAccessId(null);
                   setSelectedCX12Id(null);
                   setSelectedTimerId(comp.id);
                 } else if (comp.type === 'cx12plus') {
+                  setSelectedAccessId(null);
                   setSelectedTimerId(null);
                   setSelectedCX12Id(comp.id);
                 }
@@ -2850,9 +2852,11 @@ export const Workspace: React.FC = () => {
                   if (comp.type === 'access_controller') {
                     setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
                   } else if (comp.type === 'timer_relay') {
+                    setSelectedAccessId(null);
                     setSelectedCX12Id(null);
                     setSelectedTimerId(comp.id);
                   } else {
+                    setSelectedAccessId(null);
                     setSelectedTimerId(null);
                     setSelectedCX12Id(comp.id);
                   }

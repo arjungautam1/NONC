@@ -693,7 +693,7 @@ const getPlacementSize = (component: Pick<CircuitComponent, 'type' | 'terminals'
     transformer: [160, 100], power_supply: [100, 90], timer_relay: [95, 120],
     relay: [70, 95], relay_dpdt: [85, 120], relay_rb1224: [85, 115],
     relay_rbsnttl: [95, 120], pull_station: [85, 145], key_switch: [80, 105],
-    access_controller: [200, 210], access_reader: [80, 145], card_reader: [60, 110], wave_sensor: [75, 140], powered_signal: [100, 150], maglock: [90, 80],
+    access_controller: [200, 225], access_reader: [95, 150], card_reader: [60, 110], wave_sensor: [75, 140], powered_signal: [100, 150], maglock: [90, 80],
     door_strike: [70, 80], actuator: [180, 80], sliding_gate: [145, 100], automatic_door_operator: [145, 120],
     cube_power: [120, 105], sm500_maglock: [90, 135], cx12plus: [185, 165],
     wireless_transmitter: [65, 110], kr2402_remote: [58, 135], wireless_relay_kr2402: [105, 105], seco_larm_strobe_siren: [80, 115]

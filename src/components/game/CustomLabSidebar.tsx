@@ -25,8 +25,8 @@ import {
 import { ComponentRenderer } from './components/ComponentRenderer';
 
 const thumbnailViewBoxes: Partial<Record<ComponentType, string>> = {
-  access_controller: '-205 -205 410 440',
-  access_reader: '-90 -100 180 240',
+  access_controller: '-205 -215 410 455',
+  access_reader: '-95 -145 190 290',
   pull_station: '-78 -84 156 212',
   key_switch: '-60 -100 120 195',
   relay: '-60 -60 120 120',

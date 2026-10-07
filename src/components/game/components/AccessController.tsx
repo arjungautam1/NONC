@@ -4,92 +4,103 @@ import { useGameStore } from '../../../store/useGameStore';
 import { ACCESS_CONTROLLER_PINS, ACCESS_READER_PINS, accessDoorStatusLabel } from './accessControllerPinout';
 
 const alarmStatus = (status: string) => ['forced-open', 'held-open', 'wiring-fault'].includes(status);
-/** Terminals remain managed by Workspace; this screw artwork aligns with the shared pinout. */
-const Screw: React.FC<{ x: number; y: number; color?: string }> = ({ x, y, color = '#245d3e' }) => (
+
+/** Workspace supplies the live terminal hit targets at these same coordinates. */
+const Screw: React.FC<{ x: number; y: number; color?: string }> = ({ x, y, color = '#347658' }) => (
   <g pointerEvents="none">
-    <rect x={x - 11} y={y - 11} width="22" height="22" rx="2" fill={color} stroke="#0d2d1c" strokeWidth="1" />
-    <circle cx={x} cy={y} r="6.4" fill="#cbd5d9" stroke="#566877" strokeWidth="0.8" />
-    <line x1={x - 3.8} y1={y + 1.1} x2={x + 3.8} y2={y - 1.1} stroke="#354453" strokeWidth="1.6" strokeLinecap="round" />
+    <rect x={x - 10} y={y - 10} width="20" height="20" rx="2.5" fill={color} stroke="#253941" strokeWidth="0.8" />
+    <rect x={x - 8} y={y - 8} width="16" height="3" rx="1" fill="#ffffff" fillOpacity="0.15" />
+    <circle cx={x} cy={y} r="6.5" fill="#d7e0e2" stroke="#65767b" strokeWidth="0.8" />
+    <circle cx={x} cy={y} r="4.8" fill="#aab9be" />
+    <line x1={x - 3.7} y1={y + 1.4} x2={x + 3.7} y2={y - 1.4} stroke="#43515b" strokeWidth="1.7" strokeLinecap="round" />
   </g>
 );
 
 export const AccessController: React.FC<{ component: CircuitComponent }> = ({ component }) => {
   const powered = Boolean(component.state.boardPowered);
-  const gradientId = `access-controller-${component.id}`;
+  const faceId = `access-controller-face-${component.id}`;
+  const metalId = `access-controller-metal-${component.id}`;
 
-  return (
-    <g className="select-none">
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#192a2c" />
-          <stop offset="100%" stopColor="#091719" />
-        </linearGradient>
-      </defs>
-      <rect x="-173" y="-168" width="346" height="336" rx="9" fill={`url(#${gradientId})`} stroke="#567077" strokeWidth="1.7" filter="drop-shadow(0 5px 9px rgba(0,0,0,0.6))" />
-      <rect x="-165" y="-160" width="330" height="320" rx="5" fill="none" stroke="#294d47" strokeWidth="0.7" />
-      {[[-159, -151], [159, -151], [-159, 151], [159, 151]].map(([x, y]) => (
-        <g key={`${x}-${y}`} pointerEvents="none">
-          <circle cx={x} cy={y} r="4" fill="#778687" />
-          <circle cx={x} cy={y} r="2" fill="#101b20" />
-        </g>
-      ))}
+  return <g className="select-none">
+    <defs>
+      <linearGradient id={faceId} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#fafbf7" /><stop offset="55%" stopColor="#eef1eb" /><stop offset="100%" stopColor="#d7dfd9" />
+      </linearGradient>
+      <linearGradient id={metalId} x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#7d8d94" /><stop offset="20%" stopColor="#c7d2d5" /><stop offset="55%" stopColor="#edf1f2" /><stop offset="100%" stopColor="#86989e" />
+      </linearGradient>
+    </defs>
 
-      <g pointerEvents="none" fontFamily="sans-serif">
-        <text x="0" y="-131" fill="#a7e0f3" fontSize="13" fontWeight="900" letterSpacing="1.6" textAnchor="middle">DELMI AC-2</text>
-        <text x="0" y="-117" fill="#93a9b3" fontSize="6.5" fontWeight="700" letterSpacing="0.5" textAnchor="middle">TWO-DOOR TRAINING CONTROLLER</text>
-        <text x="0" y="-195" fill="#a5b9c2" fontSize="7" fontWeight="800" textAnchor="middle">12V DC INPUT</text>
-        <text x="-105" y="-116" fill="#73cdb9" fontSize="7.5" fontWeight="900" textAnchor="middle">READER 1</text>
-        <text x="105" y="-116" fill="#73cdb9" fontSize="7.5" fontWeight="900" textAnchor="middle">READER 2</text>
-        <text x="-110" y="64" fill="#73cdb9" fontSize="7.5" fontWeight="900" textAnchor="middle">DOOR 1 INPUTS</text>
-        <text x="110" y="64" fill="#73cdb9" fontSize="7.5" fontWeight="900" textAnchor="middle">DOOR 2 INPUTS</text>
-        <text x="-60" y="151" fill="#a5b9c2" fontSize="7" fontWeight="800" textAnchor="middle">LOCK 1 · DRY RELAY</text>
-        <text x="60" y="151" fill="#a5b9c2" fontSize="7" fontWeight="800" textAnchor="middle">LOCK 2 · DRY RELAY</text>
+    {/* Folded mounting plate and removable, light-colored controller cover. */}
+    <rect x="-173" y="-168" width="346" height="374" rx="10" fill={`url(#${metalId})`} stroke="#6e8189" strokeWidth="1.5" filter="drop-shadow(0 6px 10px rgba(0,0,0,0.5))" />
+    <rect x="-168" y="-163" width="336" height="363" rx="7" fill={`url(#${faceId})`} stroke="#d5ded9" />
+    <path d="M -159 -158 H 159 M -158 198 H 158" stroke="#ffffff" strokeWidth="1.2" opacity="0.8" pointerEvents="none" />
+    {[[-158, -151], [158, -151], [-158, 186], [158, 186]].map(([x, y]) => <g key={`${x}-${y}`} pointerEvents="none">
+      <circle cx={x} cy={y} r="4.4" fill="#9caeb2" stroke="#657980" strokeWidth="0.7" />
+      <line x1={x - 2.4} y1={y} x2={x + 2.4} y2={y} stroke="#43565d" strokeWidth="1.2" />
+    </g>)}
 
-        {/* Exposed traces make the connection groups visually distinct from the status display. */}
-        {[1, 2].map(door => {
-          const side = door === 1 ? -1 : 1;
-          return <g key={door} fill="none" stroke="#245c46" strokeWidth="1.1" opacity="0.55">
-            <path d={`M ${side * 158} -70 H ${side * 118} L ${side * 99} -51 V -19`} />
-            <path d={`M ${side * 158} -20 H ${side * 130} L ${side * 104} 6 V 26`} />
-            <path d={`M ${side * 155} 105 H ${side * 130} L ${side * 105} 126 H ${side * 73}`} />
-          </g>;
-        })}
-        <rect x="-47" y="-91" width="94" height="24" rx="4" fill="#0a141a" stroke="#264a53" />
-        <circle cx="-30" cy="-79" r="3" fill={powered ? '#34d399' : '#475569'} style={{ filter: powered ? 'drop-shadow(0 0 3px #34d399)' : undefined }} />
-        <text x="-21" y="-76" fill={powered ? '#a7f3d0' : '#94a3b8'} fontSize="7.5" fontWeight="800">{powered ? 'POWER / RUN' : 'POWER OFF'}</text>
-        {[1, 2].map(door => {
-          const active = Boolean(component.state[`relay${door}Active`]);
-          const status = String(component.state[`door${door}Status`] ?? (powered ? 'unmonitored' : 'unpowered'));
-          const alarm = alarmStatus(status);
-          const y = door === 1 ? -51 : 22;
-          return <g key={door}>
-            <rect x="-73" y={y} width="146" height="61" rx="5" fill={alarm ? '#2d1a19' : '#0a141a'} stroke={alarm ? '#a54b41' : '#264a53'} />
-            <text x="-59" y={y + 14} fill="#b9cdd5" fontSize="8" fontWeight="900">DOOR {door}</text>
-            <circle cx="43" cy={y + 11} r="3.2" fill={active ? '#fbbf24' : '#475569'} />
-            <text x="-59" y={y + 30} fill={active ? '#fcd34d' : '#8296a2'} fontSize="7.5" fontWeight="800">{active ? 'RELAY ENERGIZED' : 'RELAY AT REST'}</text>
-            <text x="-59" y={y + 46} fill={alarm ? '#fca5a5' : '#93b9ba'} fontSize="8" fontWeight="700">{accessDoorStatusLabel(status).toUpperCase()}</text>
-          </g>;
-        })}
-        <text x="0" y="111" fill="#83a4ae" fontSize="6.2" fontWeight="700" textAnchor="middle">CUSTOM PINOUT · WIEGAND EVENTS</text>
-        <text x="0" y="124" fill="#63818d" fontSize="6.1" textAnchor="middle">Select board to program &amp; inspect events</text>
-      </g>
+    <g pointerEvents="none" fontFamily="sans-serif">
+      <text x="0" y="-134" fill="#142e3d" fontSize="24" fontWeight="900" letterSpacing="0.5" textAnchor="middle">DELMI AC-2</text>
+      <text x="0" y="-119" fill="#556974" fontSize="8.7" fontWeight="700" letterSpacing="0.6" textAnchor="middle">TWO-DOOR TRAINING CONTROLLER</text>
+      <rect x="-103" y="-108" width="206" height="31" rx="5" fill={powered ? '#e2eee5' : '#e6e9e7'} stroke={powered ? '#96b9a0' : '#bdc9c6'} />
+      <circle cx="-85" cy="-92" r="4.2" fill={powered ? '#168a51' : '#80908f'} style={{ filter: powered ? 'drop-shadow(0 0 3px #55b57f)' : undefined }} />
+      <text x="-73" y="-88" fill={powered ? '#185336' : '#596e74'} fontSize="11" fontWeight="900">{powered ? '12V DC · POWER ON' : 'NO BOARD POWER'}</text>
 
-      {ACCESS_CONTROLLER_PINS.map(pin => {
-        const sideTerminal = Math.abs(pin.x) === 180;
-        const left = pin.x < 0;
-        const textX = sideTerminal ? (left ? -160 : 160) : pin.x;
-        const textY = sideTerminal ? pin.y + 3 : pin.y < 0 ? pin.y + 27 : pin.y - 16;
-        return <g key={pin.id}>
-          <Screw x={pin.x} y={pin.y} color={pin.id === 'pos' || pin.id === 'neg' ? '#42525e' : undefined} />
-          <text x={textX} y={textY} fill="#e3eef1" fontSize="8.5" fontWeight="800" fontFamily="monospace" textAnchor={sideTerminal ? (left ? 'start' : 'end') : 'middle'} pointerEvents="none">{pin.label}</text>
+      {/* Consistent color banks separate reader power/data, dry sensing loops and lock relays. */}
+      {([1, 2] as const).map(door => {
+        const x = door === 1 ? -190 : 112;
+        const center = door === 1 ? -151 : 151;
+        return <g key={door}>
+          <rect x={x} y="-112" width="78" height="150" rx="4" fill="#e0ede3" stroke="#9dbda8" />
+          <text x={center} y="-119" fill="#285a42" fontSize="9.5" fontWeight="900" textAnchor="middle">READER {door}</text>
+          <rect x={x} y="72" width="78" height="77" rx="4" fill="#e2edf5" stroke="#9ab7ca" />
+          <text x={center} y="62" fill="#325f7b" fontSize="9.5" fontWeight="900" textAnchor="middle">INPUTS {door} · DRY</text>
+          <rect x={door === 1 ? -107 : 13} y="163" width="94" height="38" rx="4" fill="#f0e3c8" stroke="#c9ae73" />
+          <text x={door === 1 ? -60 : 60} y="154" fill="#6d5223" fontSize="9.2" fontWeight="900" textAnchor="middle">LOCK {door} · DRY</text>
         </g>;
       })}
-      <g pointerEvents="none">
-        <rect x="-87" y="206" width="174" height="21" rx="5" fill="#08111a" stroke="#334155" />
-        <text x="0" y="220" fill="#d5e4ea" fontSize="9" fontWeight="800" textAnchor="middle">{component.label}</text>
-      </g>
+      <rect x="-48" y="-191" width="96" height="40" rx="4" fill="#e1e6e9" stroke="#93a5ad" />
+
+      {([1, 2] as const).map(door => {
+        const active = Boolean(component.state[`relay${door}Active`]);
+        const status = String(component.state[`door${door}Status`] ?? (powered ? 'unmonitored' : 'unpowered'));
+        const alarm = alarmStatus(status);
+        const remaining = Number(component.state[`unlockRemaining${door}`]);
+        const hasCountdown = active && Number.isFinite(remaining) && remaining >= 0;
+        const y = door === 1 ? -58 : 35;
+        return <g key={door}>
+          <rect x="-103" y={y} width="206" height="84" rx="6" fill="#172b36" stroke={alarm ? '#dc8274' : '#93a8ab'} strokeWidth={alarm ? '1.8' : '1'} />
+          <path d={`M -96 ${y + 27} H 96`} stroke="#334c59" strokeWidth="0.7" />
+          <text x="-87" y={y + 18} fill="#c1d6df" fontSize="11" fontWeight="900" letterSpacing="0.7">DOOR {door}</text>
+          <circle cx="86" cy={y + 14} r="3.5" fill={alarm ? '#fb8c80' : active ? '#fbbf24' : '#647d88'} />
+          <text x="-87" y={y + 44} fill={active ? '#fcd34d' : '#c7d5db'} fontSize="10.5" fontWeight="900">{active ? 'UNLOCK COMMAND' : 'RELAY AT REST'}</text>
+          {hasCountdown && <text x="87" y={y + 46} fill="#fcd34d" fontSize="18" fontWeight="900" fontFamily="monospace" textAnchor="end">{remaining}s</text>}
+          <text x="-87" y={y + 57} fill="#94b3c1" fontSize="9" fontWeight="700">{active ? 'COM–NO closed' : 'COM–NC closed'}</text>
+          <text x="-87" y={y + 75} fill={alarm ? '#fda99b' : '#a9d6c7'} fontSize="10" fontWeight="800">{accessDoorStatusLabel(status).toUpperCase()}</text>
+        </g>;
+      })}
+      <text x="0" y="139" fill="#4a6471" fontSize="8.2" fontWeight="700" textAnchor="middle">SELECT BOARD TO PROGRAM</text>
     </g>
-  );
+
+    {ACCESS_CONTROLLER_PINS.map(pin => {
+      const sideTerminal = Math.abs(pin.x) === 180;
+      const left = pin.x < 0;
+      const readerPin = pin.id.startsWith('reader');
+      const powerPin = pin.id === 'pos' || pin.id === 'neg';
+      const color = powerPin ? '#536b79' : readerPin ? '#347658' : sideTerminal ? '#427da3' : '#b58b3f';
+      const textX = sideTerminal ? (left ? -160 : 160) : pin.x;
+      const textY = sideTerminal ? pin.y + 3.8 : powerPin ? -156 : 198;
+      return <g key={pin.id}>
+        <Screw x={pin.x} y={pin.y} color={color} />
+        <text x={textX} y={textY} fill={readerPin ? '#214d37' : powerPin ? '#263e4b' : sideTerminal ? '#284e68' : '#60491f'} fontSize={sideTerminal ? '10.5' : '9'} fontWeight="900" fontFamily="monospace" textAnchor={sideTerminal ? (left ? 'start' : 'end') : 'middle'} pointerEvents="none">{pin.label}</text>
+      </g>;
+    })}
+    <g pointerEvents="none">
+      <rect x="-112" y="211" width="224" height="18" rx="4" fill="#102330" stroke="#78909c" />
+      <text x="0" y="224" fill="#dce9ef" fontSize={component.label.length > 28 ? '8' : '9'} fontWeight="800" textAnchor="middle">{component.label}</text>
+    </g>
+  </g>;
 };
 
 export const AccessReader: React.FC<{ component: CircuitComponent }> = ({ component }) => {
@@ -100,49 +111,73 @@ export const AccessReader: React.FC<{ component: CircuitComponent }> = ({ compon
   const feedback = String(component.state.feedback ?? 'idle');
   const green = powered && Boolean(component.state.ledActive);
   const buzzer = powered && Boolean(component.state.buzzerActive);
-  const bodyGradientId = `access-reader-${component.id}`;
-  const feedbackLabel = !powered ? 'NO 12V DC POWER'
-    : feedback === 'granted' ? 'ACCESS GRANTED'
-      : feedback === 'denied' ? 'ACCESS DENIED'
-        : feedback === 'wiring-fault' ? 'CHECK D0 / D1'
-          : 'READY TO SCAN';
+  const faceId = `access-reader-face-${component.id}`;
+  const edgeId = `access-reader-edge-${component.id}`;
+  const feedbackLabel = !powered ? 'NO READER POWER'
+    : feedback === 'granted' ? 'LAST: GRANTED'
+      : feedback === 'denied' ? 'LAST: DENIED'
+        : feedback === 'wiring-fault' ? 'WIRING FAULT'
+          : 'TAP TO TEST';
   const operate = () => { if (powered) scan(component.id); };
+  const selectCredential = (allow: boolean) => setComponentState(component.id, 'authorized', allow);
 
   return <g className="select-none">
     <defs>
-      <linearGradient id={bodyGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#111b25" /><stop offset="40%" stopColor="#25303a" /><stop offset="100%" stopColor="#111b25" />
+      <style>{`.access-reader-control:focus-visible { outline: none; } .access-reader-control:focus-visible .access-reader-control-outline { stroke: #bae6fd; stroke-width: 2.4px; }`}</style>
+      <linearGradient id={faceId} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#303b48" /><stop offset="42%" stopColor="#1b2632" /><stop offset="100%" stopColor="#0c1722" />
+      </linearGradient>
+      <linearGradient id={edgeId} x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#778b98" /><stop offset="12%" stopColor="#293c4b" /><stop offset="90%" stopColor="#233442" /><stop offset="100%" stopColor="#071119" />
       </linearGradient>
     </defs>
-    <rect x="-77" y="-75" width="154" height="149" rx="10" fill={`url(#${bodyGradientId})`} stroke="#586979" strokeWidth="1.8" filter="drop-shadow(0 4px 7px rgba(0,0,0,0.5))" />
-    <text x="0" y="-60" fill="#a9d9f1" fontSize="8.5" fontWeight="900" letterSpacing="1" textAnchor="middle" pointerEvents="none">DELMI READER</text>
-    <g className="device-control cursor-pointer" role="button" tabIndex={0}
-      aria-label={`Use ${authorized ? 'denied' : 'authorized'} credential on ${component.label}`} aria-pressed={authorized}
-      onPointerDown={event => event.stopPropagation()}
-      onClick={event => { event.stopPropagation(); setComponentState(component.id, 'authorized', !authorized); }}
-      onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); setComponentState(component.id, 'authorized', !authorized); } }}>
-      <rect x="-62" y="-51" width="124" height="21" rx="4" fill={authorized ? '#153b34' : '#441f23'} stroke={authorized ? '#33645a' : '#7e3c43'} />
-      <text x="0" y="-37" fill={authorized ? '#a7f3d0' : '#fda4af'} fontSize="7" fontWeight="800" textAnchor="middle">{authorized ? 'AUTHORIZED CARD' : 'DENIED CARD'} · ⇄</text>
+
+    {/* Slim wall enclosure with a protected scan face; the surround remains draggable. */}
+    <rect x="-65" y="-130" width="130" height="204" rx="13" fill={`url(#${edgeId})`} stroke="#748996" strokeWidth="1.2" filter="drop-shadow(3px 5px 8px rgba(0,0,0,0.6))" />
+    <rect x="-60" y="-127" width="120" height="197" rx="10" fill={`url(#${faceId})`} stroke="#304858" strokeWidth="0.7" />
+    <path d="M -51 -117 Q -51 -121 -47 -121 H 46" fill="none" stroke="#8295a5" strokeWidth="0.6" opacity="0.5" pointerEvents="none" />
+    <g pointerEvents="none">
+      <text x="0" y="-108" fill="#ddebf1" fontSize="13" fontWeight="900" letterSpacing="2.2" textAnchor="middle">DELMI</text>
+      <rect x="-43" y="-98" width="86" height="6" rx="3" fill="#071018" />
+      <rect x="-41" y="-97" width="82" height="4" rx="2" fill={!powered ? '#465764' : green ? '#38df91' : '#e55b65'} style={{ filter: green ? 'drop-shadow(0 0 3px #38df91)' : undefined }} />
+      <text x="0" y="-81" fill={powered ? '#96b8cc' : '#6f8595'} fontSize="7.8" fontWeight="800" letterSpacing="0.8" textAnchor="middle">{powered ? 'POWER ON' : 'POWER OFF'}</text>
     </g>
-    <g className={`device-control ${powered ? 'cursor-pointer' : 'cursor-not-allowed'}`} role="button" tabIndex={0}
+
+    <g className={`device-control access-reader-control ${powered ? 'cursor-pointer' : 'cursor-not-allowed'}`} role="button" tabIndex={0}
       aria-label={`Scan credential at ${component.label}`} aria-disabled={!powered}
       onPointerDown={event => event.stopPropagation()}
       onClick={event => { event.stopPropagation(); operate(); }}
       onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); operate(); } }}>
-      <rect x="-62" y="-23" width="124" height="56" rx="6" fill="#0a121a" stroke={powered ? '#3b5568' : '#23313f'} />
-      <rect x="-18" y="-11" width="24" height="17" rx="2" fill="none" stroke={powered ? '#9ac4d8' : '#43515c'} strokeWidth="1.6" transform="rotate(-8)" />
-      <path d="M 13 -10 Q 21 -3 13 4 M 19 -15 Q 33 -3 19 9" fill="none" stroke={powered ? '#9ac4d8' : '#43515c'} strokeWidth="1.5" strokeLinecap="round" />
-      <text x="0" y="24" fill={powered ? '#d6e9f3' : '#637582'} fontSize="9" fontWeight="900" letterSpacing="1.1" textAnchor="middle">SCAN CARD</text>
+      <rect className="access-reader-control-outline" x="-49" y="-73" width="98" height="79" rx="8" fill="#0d1a26" stroke={powered ? '#536e81' : '#344758'} strokeWidth="1.1" />
+      <circle cx="0" cy="-40" r="24" fill="#172b3b" stroke={powered ? '#638fa9' : '#405d70'} />
+      <rect x="-15" y="-50" width="24" height="18" rx="2.2" fill="none" stroke={powered ? '#d0e5f0' : '#697f8f'} strokeWidth="1.8" transform="rotate(-10 0 -40)" />
+      <line x1="-12" y1="-43" x2="0" y2="-45" stroke={powered ? '#d0e5f0' : '#697f8f'} strokeWidth="1.4" />
+      <path d="M 13 -49 Q 21 -41 13 -33 M 18 -54 Q 31 -41 18 -28" fill="none" stroke={powered ? '#a8d6ef' : '#526e83'} strokeWidth="1.5" strokeLinecap="round" />
+      <text x="0" y="-6" fill={powered ? '#d7eaf3' : '#718796'} fontSize="11" fontWeight="900" letterSpacing="0.5" textAnchor="middle">SCAN CARD</text>
     </g>
+
+    <text x="0" y="18" fill="#8ea5b5" fontSize="7.2" fontWeight="800" letterSpacing="0.6" textAnchor="middle" pointerEvents="none">TEST CREDENTIAL</text>
+    {([true, false] as const).map(allow => {
+      const selected = authorized === allow;
+      return <g key={String(allow)} className="device-control access-reader-control cursor-pointer" role="button" tabIndex={0}
+        aria-label={`Use ${allow ? 'authorized' : 'denied'} credential on ${component.label}`} aria-pressed={selected}
+        onPointerDown={event => event.stopPropagation()}
+        onClick={event => { event.stopPropagation(); selectCredential(allow); }}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); selectCredential(allow); } }}>
+        <rect className="access-reader-control-outline" x={allow ? -51 : 1} y="23" width="50" height="22" rx="4" fill={selected ? (allow ? '#226749' : '#863744') : '#091521'} stroke={selected ? (allow ? '#4b9272' : '#b56877') : '#385264'} />
+        <text x={allow ? -26 : 26} y="37" fill={selected ? '#f0faf7' : '#6e8494'} fontSize="8.8" fontWeight="900" textAnchor="middle">{allow ? 'ALLOW' : 'DENY'}</text>
+      </g>;
+    })}
     <g pointerEvents="none">
-      <circle cx="-57" cy="46" r="3" fill={!powered ? '#475569' : green ? '#34d399' : '#fb7185'} style={{ filter: green ? 'drop-shadow(0 0 3px #34d399)' : undefined }} />
-      <text x="-48" y="49" fill={!powered ? '#8193a1' : feedback === 'denied' || feedback === 'wiring-fault' ? '#fda4af' : '#bed6df'} fontSize="7" fontWeight="800">{feedbackLabel}</text>
-      <text x="0" y="63" fill={buzzer ? '#fcd34d' : '#718995'} fontSize="6.3" fontWeight="700" textAnchor="middle">{buzzer ? 'BUZZER ACTIVE' : '6-WIRE WIEGAND TRAINING READER'}</text>
+      <text x="0" y="59" fill={!powered ? '#7f929e' : feedback === 'denied' || feedback === 'wiring-fault' ? '#f2a0a9' : '#adc8d8'} fontSize="8.9" fontWeight="900" textAnchor="middle">{feedbackLabel}</text>
+      {[-12, -6, 0, 6, 12].map(x => <circle key={x} cx={x} cy="66" r="0.9" fill={buzzer ? '#fbbf24' : '#4a6071'} />)}
+      {buzzer && <text x="39" y="68" fill="#fbbf24" fontSize="6.3" fontWeight="900" textAnchor="middle">BEEP</text>}
+      <rect x="-76" y="74" width="152" height="24" rx="3" fill="#263e4c" stroke="#486371" />
     </g>
     {ACCESS_READER_PINS.map(pin => <g key={pin.id}>
-      <Screw x={pin.x} y={pin.y} />
-      <text x={pin.x} y="107" fill="#d5e4ea" fontSize="8" fontFamily="monospace" fontWeight="800" textAnchor="middle" pointerEvents="none">{pin.label}</text>
+      <Screw x={pin.x} y={pin.y} color="#36765b" />
+      <text x={pin.x} y="108" fill="#dce9ef" fontSize="8.6" fontFamily="monospace" fontWeight="900" textAnchor="middle" pointerEvents="none">{pin.label}</text>
     </g>)}
-    <text x="0" y="124" fill="#94a3b8" fontSize="8" fontWeight="700" textAnchor="middle" pointerEvents="none">{component.label}</text>
+    <text x="0" y="124" fill="#bacbd5" fontSize="8.5" fontWeight="800" textAnchor="middle" pointerEvents="none">{component.label}</text>
   </g>;
 };
