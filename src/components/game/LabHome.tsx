@@ -22,7 +22,6 @@ import {
 } from '../../customLab/componentCatalog';
 import { LAB_PRESETS, type LabPreset } from '../../customLab/presets';
 import { Logo } from './components/Logo';
-import { BenchPreview } from './BenchPreview';
 import { soundManager } from '../../audio/soundManager';
 
 const workflowSteps = [
@@ -65,7 +64,6 @@ export function LabHome() {
   const [pendingLaunch, setPendingLaunch] = useState<{ action: () => void } | null>(null);
 
   const hasBench = workspaceKind === 'electronics' && isCustomLab && benchComponents.length > 0;
-  const deviceCount = benchComponents.length;
 
   const requestLaunch = (action: () => void) => {
     soundManager.playButton();
@@ -79,6 +77,7 @@ export function LabHome() {
   };
 
   const openLab = () => requestLaunch(() => useGameStore.getState().openElectronicsWorkspace());
+  const openAccessLab = () => requestLaunch(() => useGameStore.getState().openAccessWorkspace());
 
   const handleLaunchPreset = (preset: LabPreset) => {
     if (preset.accessControllerExample) {
@@ -117,120 +116,79 @@ export function LabHome() {
             <Logo size="sm" />
             <div className="border-l border-white/10 pl-4">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-white tracking-tight">Circuit Lab</p>
+                <p className="text-sm font-semibold text-white tracking-tight">Training Labs</p>
                 <span className="rounded bg-sky-500/10 px-2 py-0.5 text-[10px] font-mono font-semibold text-sky-400 border border-sky-400/20">
                   v2.0
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">Industrial Low-Voltage Simulation Workbench</p>
+              <p className="text-xs text-slate-400 hidden sm:block">Electronics &amp; Access Control</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {hasBench && (
-              <div className="hidden md:flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-300 font-medium">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Active Bench: {deviceCount} {deviceCount === 1 ? 'device' : 'devices'}</span>
-              </div>
-            )}
-            
-            <button 
-              onClick={openLab}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-400 px-4 text-xs font-semibold text-slate-950 transition hover:bg-sky-300 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-            >
-              <span>{hasBench ? 'Resume Workbench' : 'Enter Electronics Lab'}</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
+          <a href="#labs" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-xs font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+            <span>Choose a lab</span>
+            <ArrowRight size={14} />
+          </a>
         </div>
       </header>
 
       <main className="mx-auto max-w-[1360px] px-6 pb-20 lg:px-10">
         
-        {/* HERO SECTION */}
-        <section className="grid items-center gap-12 pb-16 pt-12 md:pt-16 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14 lg:pb-24 lg:pt-20">
-          <div>
-            {/* Tagline Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-400/25 bg-sky-400/[0.08] px-3.5 py-1.5 text-xs font-medium text-sky-300 backdrop-blur-md">
-              <span className="h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
-              <span>Full Custom Workbench · Zero Restrictions</span>
-            </div>
+        <section id="labs" className="scroll-mt-24 pb-10 pt-8 sm:pb-12 sm:pt-10" aria-labelledby="labs-title">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">DELMI virtual training</p>
+          <h1 id="labs-title" className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Choose your lab</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">Build an electronics circuit or practice a complete access control installation.</p>
 
-            {/* Main Headline */}
-            <h1 className="max-w-xl text-[clamp(2.6rem,5.2vw,4.6rem)] font-extrabold leading-[1.05] tracking-tight text-white">
-              Your circuit.<br />
-              <span className="bg-gradient-to-r from-sky-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
-                Your way.
-              </span>
-            </h1>
-
-            {/* Subheading */}
-            <p className="mt-6 max-w-[480px] text-base leading-relaxed text-slate-300">
-              Build, wire, and test real-world low-voltage circuits with complete freedom. Place industrial relays, timers, and motors on an interactive workbench powered by a real Kirchhoff electrical engine.
-            </p>
-
-            {/* CTA Group */}
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <button onClick={openLab} className={buttonClass}>
-                <span>{hasBench ? 'Resume Your Workbench' : 'Open Custom Lab'}</span>
-                <ArrowRight size={18} />
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            <article className="flex flex-col rounded-2xl border border-sky-400/30 bg-gradient-to-br from-sky-500/[0.08] to-[#0c1320] p-5 sm:p-6" aria-labelledby="electronics-lab-title">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-300/25 bg-sky-400/10 text-sky-300"><Cpu size={24} /></div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-sky-300">Circuits &amp; diagnostics</p>
+                  <h2 id="electronics-lab-title" className="mt-1 text-2xl font-bold text-white">Electronics Lab</h2>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">Build, wire and test low-voltage circuits with power supplies, relays and electrical loads.</p>
+              <ul className="mt-4 space-y-2 text-xs text-slate-400">
+                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-sky-300" />Transformers, supplies, switches and relays</li>
+                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-sky-300" />Timers, motors, lights and sirens</li>
+                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-sky-300" />Live simulation and multimeter diagnostics</li>
+              </ul>
+              <button type="button" onClick={openLab} className={`${buttonClass} mt-6 w-full`}>
+                <span>Open Electronics Lab</span><ArrowRight size={18} />
               </button>
-              
-              <a 
-                href="#presets" 
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-5 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white"
-              >
-                <span>Browse Presets</span>
-                <Sliders size={16} />
-              </a>
-            </div>
+            </article>
 
-            {/* Status note */}
-            <p className="mt-4 text-xs text-slate-400 flex items-center gap-2">
-              <Check size={14} className="text-emerald-400" />
-              <span>
-                {hasBench 
-                  ? `Your workbench with ${deviceCount} devices is ready to continue in this session.` 
-                  : 'Starting fresh gives you a 120V/24V Transformer and 24V Regulated Supply.'}
-              </span>
-            </p>
-
-            {/* Feature Highlights Pills */}
-            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/[0.08] pt-6 text-xs text-slate-400">
-              <span className="flex items-center gap-2">
-                <Copy size={15} className="text-sky-400" /> 
-                <span>Repeat any device up to 32x</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <Gauge size={15} className="text-amber-400" /> 
-                <span>Dual-probe live multimeter</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <Undo2 size={15} className="text-emerald-400" /> 
-                <span>Instant undo & redo</span>
-              </span>
-            </div>
+            <article className="flex flex-col rounded-2xl border border-teal-400/30 bg-gradient-to-br from-teal-500/[0.08] to-[#0c1320] p-5 sm:p-6" aria-labelledby="access-lab-title">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-teal-300/25 bg-teal-400/10 text-teal-300"><ShieldCheck size={24} /></div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-teal-300">Readers &amp; doors</p>
+                  <h2 id="access-lab-title" className="mt-1 text-2xl font-bold text-white">Access Control Lab</h2>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">Wire and program a two-door training board using access control concepts from Atrium and RBH UNC100.</p>
+              <ul className="mt-4 space-y-2 text-xs text-slate-400">
+                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-teal-300" />DELMI AC-2 controller and credential readers</li>
+                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-teal-300" />Exit requests, door contacts, strikes and maglocks</li>
+                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-teal-300" />Unlock timers, door monitoring and access events</li>
+              </ul>
+              <button type="button" onClick={openAccessLab} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-teal-300 px-7 text-sm font-semibold text-slate-950 shadow-[0_6px_30px_-10px_rgba(94,234,212,0.4)] transition-all hover:-translate-y-0.5 hover:bg-teal-200 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080e18]">
+                <span>Open Access Control Lab</span><ArrowRight size={18} />
+              </button>
+            </article>
           </div>
-
-          {/* Interactive Bench Preview Showcase (Hero visual) */}
-          <BenchPreview />
+          <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-slate-400"><Layers size={15} className="mt-0.5 shrink-0 text-slate-500" /><span>Each lab keeps its own devices, wiring and Undo history. Switch labs and continue where you left off.</span></p>
         </section>
 
-        <section id="access-control" className="mb-14 rounded-2xl border border-teal-400/25 bg-teal-400/[0.05] p-6 sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-teal-300">Separate installation workspace</p>
-              <h2 className="mt-2 text-2xl font-bold text-white">Access control lab</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">Wire readers, request-to-exit devices, door contacts and locks. Program the DELMI AC-2 training controller using the shared concepts of Atrium and RBH UNC100.</p>
-              <p className="mt-2 text-xs text-slate-400">Your access and electronics benches keep separate devices, wiring and Undo history.</p>
-            </div>
-            <button onClick={() => requestLaunch(() => useGameStore.getState().openAccessWorkspace())} className="min-h-11 rounded-xl bg-teal-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-teal-200">Open access control lab</button>
-          </div>
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
+        <section id="access-control" className="scroll-mt-24 border-t border-white/[0.08] pb-12 pt-10">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300"><ShieldCheck size={14} /><span>Access Control Lab templates</span></div>
+          <h2 className="mt-2 text-2xl font-bold text-white">Practice a door installation.</h2>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
             {LAB_PRESETS.filter(preset => preset.category === 'Access Control').map(preset => <button key={preset.id} onClick={() => handleLaunchPreset(preset)} className="rounded-xl border border-white/10 bg-[#0b121e] p-4 text-left hover:border-teal-300/40">
               <span className="text-sm font-semibold text-white">{preset.title}</span>
               <span className="mt-2 block text-xs leading-relaxed text-slate-400">{preset.description}</span>
-              <span className="mt-3 block text-xs font-semibold text-teal-300">Load in access lab →</span>
+              <span className="mt-3 block text-xs font-semibold text-teal-300">Load in Access Control Lab →</span>
             </button>)}
           </div>
         </section>
@@ -241,14 +199,14 @@ export function LabHome() {
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">
                 <Sliders size={14} />
-                <span>Electronics & relays bench</span>
+                <span>Electronics Lab templates</span>
               </div>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                 Start with a curated template or blank slate.
               </h2>
             </div>
             <p className="text-xs text-slate-400 max-w-sm">
-              Click any template to immediately open the custom lab with those devices placed and ready to wire.
+              Choose a template to open Electronics Lab with its devices placed and ready to wire.
             </p>
           </div>
 
@@ -291,7 +249,7 @@ export function LabHome() {
                     onClick={() => handleLaunchPreset(preset)}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.05] py-2.5 px-4 text-xs font-semibold text-white transition-all group-hover:border-sky-400 group-hover:bg-sky-400 group-hover:text-slate-950"
                   >
-                    <span>Launch on Bench</span>
+                    <span>Load in Electronics Lab</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>
@@ -519,18 +477,18 @@ export function LabHome() {
           <div>
             <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold mb-2">
               <Sparkles size={16} />
-              <span>DELMI Virtual Workbench</span>
+              <span>Electronics Lab</span>
             </div>
             <h2 className="text-2xl font-extrabold text-white sm:text-3xl tracking-tight">
               Ready to wire your next circuit?
             </h2>
             <p className="mt-2 text-sm text-slate-300 max-w-xl">
-              Open your workbench now. The 120V/24V Transformer and 24V Regulated Supply are waiting for your connections.
+              Open your electronics bench with a 120V/24V transformer and regulated supply, then add devices and start wiring.
             </p>
           </div>
 
           <button onClick={openLab} className={`${buttonClass} shrink-0`}>
-            <span>{hasBench ? 'Resume Your Bench' : 'Launch Custom Lab'}</span>
+            <span>{hasBench ? 'Resume Electronics Bench' : 'Open Electronics Bench'}</span>
             <ArrowRight size={18} />
           </button>
         </section>
