@@ -2481,7 +2481,244 @@ export const Workspace: React.FC = () => {
           })()}
 
 
-        {/* 2. Wire connections layer */}
+        {/* 2. Device bodies layer */}
+          {components.map(comp => {
+          const isEnergized = isRunning && simulation.energizedComponents.has(comp.id);
+          const isFaulty = isRunning && simulation.faultLocation?.split(':')[0] === comp.id;
+          const componentPosition = getComponentCanvasPosition(comp);
+          const connectorScale = Math.max(comp.state.scale || SPLICE_CONNECTOR_DEFAULT_SCALE, SPLICE_CONNECTOR_DEFAULT_SCALE);
+          const connectorAtMinScale = connectorScale <= SPLICE_CONNECTOR_DEFAULT_SCALE;
+          const compScale = getComponentEffectiveScale(comp);
+          const graphicScaleTransform = comp.type !== 'junction' && compScale !== 1.0 ? `scale(${compScale})` : undefined;
+          const isDragging = draggedCompId === comp.id;
+          const dropBounds = getSelectionHighlightBounds(comp.type, compScale);
+
+          return (
+            <g
+              key={comp.id}
+              data-component-id={comp.id}
+              transform={`translate(${componentPosition.x}, ${componentPosition.y})`}
+              style={{
+                filter: isDragging
+                  ? `drop-shadow(0 16px 22px rgba(2, 6, 23, 0.7)) drop-shadow(0 2px 4px rgba(2, 6, 23, 0.5))`
+                  : undefined,
+                opacity: isDragging ? 0.94 : 1,
+                transition: 'opacity 120ms ease-out, filter 120ms ease-out'
+              }}
+              onPointerDown={(e) => {
+                handleCompPointerDown(e, comp);
+              }}
+              onPointerMove={handleCompPointerMove}
+              onPointerUp={handleCompPointerUp}
+              onPointerCancel={cancelDeviceDrag}
+              onLostPointerCapture={() => { if (dragSession.current) cancelDeviceDrag(); }}
+              onPointerOver={() => setHoveredCompId(comp.id)}
+              onPointerOut={() => setHoveredCompId(null)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (suppressDeviceClick.current) { suppressDeviceClick.current = false; return; }
+                if (sidebarOpen) setSidebarOpen(false);
+                setSelectedWireId(null);
+                if (comp.type === 'button_no' && comp.state.appearance === 'vis7039') {
+                  useGameStore.getState().pressButton(comp.id, true);
+                  window.setTimeout(() => useGameStore.getState().pressButton(comp.id, false), 180);
+                }
+                if (comp.type === 'access_controller') {
+                  setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
+                } else if (comp.type === 'timer_relay') {
+                  setSelectedAccessId(null);
+                  setSelectedCX12Id(null);
+                  setSelectedTimerId(comp.id);
+                } else if (comp.type === 'cx12plus') {
+                  setSelectedAccessId(null);
+                  setSelectedTimerId(null);
+                  setSelectedCX12Id(comp.id);
+                }
+                setSelectedCompId(comp.id);
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault(); event.stopPropagation();
+                if (drawingWireStart || probeMode) cancelLastWireStep();
+                else setSelectedCompId(comp.id);
+              }}
+              onKeyDown={(e) => {
+                if ((comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller') && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  if (comp.type === 'access_controller') {
+                    setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
+                  } else if (comp.type === 'timer_relay') {
+                    setSelectedAccessId(null);
+                    setSelectedCX12Id(null);
+                    setSelectedTimerId(comp.id);
+                  } else {
+                    setSelectedAccessId(null);
+                    setSelectedTimerId(null);
+                    setSelectedCX12Id(comp.id);
+                  }
+                }
+              }}
+              role={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? 'button' : undefined}
+              aria-label={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? `Configure ${comp.label}` : undefined}
+              tabIndex={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? 0 : undefined}
+              className="cursor-grab active:cursor-grabbing group"
+            >
+              {/* Landing pad: the slot the device drops into, drawn under it */}
+              {isDragging && (
+                <rect
+                  x={dropBounds.x - 4}
+                  y={dropBounds.y - 4}
+                  width={dropBounds.w + 8}
+                  height={dropBounds.h + 8}
+                  rx="12"
+                  fill="rgba(59, 130, 246, 0.10)"
+                  stroke="rgba(96, 165, 250, 0.85)"
+                  strokeWidth="1.5"
+                  strokeDasharray="7,5"
+                  className="pointer-events-none"
+                />
+              )}
+
+              {/* Clean selection border outline when selected (move/drag indicator) */}
+              {selectedCompId === comp.id && (
+                <rect
+                  x={getSelectionHighlightBounds(comp.type, compScale).x}
+                  y={getSelectionHighlightBounds(comp.type, compScale).y}
+                  width={getSelectionHighlightBounds(comp.type, compScale).w}
+                  height={getSelectionHighlightBounds(comp.type, compScale).h}
+                  rx="8"
+                  fill="none"
+                  stroke="#3b82f6"
+                  strokeWidth="2.5"
+                  className="pointer-events-none"
+                  style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
+                />
+              )}
+
+              {/* Highlight bounding box if diagnostic fault is here */}
+              {isFaulty && (
+                <rect
+                  x="-55"
+                  y="-55"
+                  width="110"
+                  height="110"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="3.5"
+                  strokeDasharray="4,4"
+                  rx="6"
+                  className="animate-pulse"
+                />
+              )}
+
+              {/* Highlight selection glow */}
+              <rect
+                x="-52"
+                y="-52"
+                width="104"
+                height="104"
+                fill="transparent"
+                stroke="rgba(99, 102, 241, 0.25)"
+                strokeWidth="1.5"
+                rx="6"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              />
+
+              {comp.type === 'timer_relay' && selectedTimerId === comp.id && (
+                <g pointerEvents="none">
+                  <rect x="-55" y="-65" width="110" height="130" rx="7" fill="none" stroke="#38bdf8" strokeWidth="1.4" strokeDasharray="4 3" />
+                  <g transform="translate(0, -71)">
+                    <rect x="-32" y="-7" width="64" height="14" rx="7" fill="#082f49" stroke="#38bdf8" strokeWidth="0.8" />
+                    <text x="0" y="2.5" fill="#bae6fd" fontSize="7" fontWeight="900" textAnchor="middle">6062 SETTINGS</text>
+                  </g>
+                </g>
+              )}
+
+              {comp.type === 'cx12plus' && selectedCX12Id === comp.id && (
+                <g pointerEvents="none">
+                  <rect x="-130" y="-69" width="260" height="187" rx="8" fill="none" stroke="#38bdf8" strokeWidth="1.4" strokeDasharray="4 3" />
+                  <g transform="translate(0, -76)">
+                    <rect x="-46" y="-7" width="92" height="14" rx="7" fill="#082f49" stroke="#38bdf8" strokeWidth="0.8" />
+                    <text x="0" y="2.5" fill="#bae6fd" fontSize="7" fontWeight="900" textAnchor="middle">DOOR SETUP</text>
+                  </g>
+                </g>
+              )}
+
+              {/* Specific component graphic with scale transform */}
+              <g transform={graphicScaleTransform}>
+                <ComponentRenderer component={comp} isEnergized={isEnergized} />
+              </g>
+
+              {/* Sleek, stable control tray (Zoom-Out, Zoom-In, Delete) for custom splice connectors when hovered */}
+              {hoveredCompId === comp.id && comp.type === 'junction' && (
+                <g
+                  transform="translate(0, -22)"
+                  className="connector-control cursor-default"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerMove={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Background container pill */}
+                  <rect x="-33" y="-10" width="66" height="20" rx="10" fill="#1e293b" stroke="#334155" strokeWidth="1.2" />
+
+                  {/* Zoom Out Button (-) */}
+                  <g
+                    className={`connector-control transition-all ${
+                      connectorAtMinScale ? 'cursor-not-allowed opacity-35' : 'cursor-pointer hover:brightness-125'
+                    }`}
+                    transform="translate(-20, 0)"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!connectorAtMinScale) {
+                        resizeSpliceConnector(comp.id, connectorScale, -0.1);
+                      }
+                    }}
+                  >
+                    <title>{connectorAtMinScale ? 'Connector is at minimum size' : 'Zoom Out Connector'}</title>
+                    <circle cx="0" cy="0" r="7" fill="#334155" />
+                    <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
+                  </g>
+
+                  {/* Zoom In Button (+) */}
+                  <g
+                    className="connector-control cursor-pointer hover:brightness-125 transition-all"
+                    transform="translate(0, 0)"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resizeSpliceConnector(comp.id, connectorScale, 0.1);
+                    }}
+                  >
+                    <title>Zoom In Connector</title>
+                    <circle cx="0" cy="0" r="7" fill="#334155" />
+                    <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
+                    <line x1="0" y1="-3" x2="0" y2="3" stroke="#ffffff" strokeWidth="1.2" />
+                  </g>
+
+                  {/* Delete Button (x) */}
+                  <g
+                    className="connector-control cursor-pointer hover:brightness-125 transition-all"
+                    transform="translate(20, 0)"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeComponent(comp.id);
+                      setHoveredCompId(null);
+                    }}
+                  >
+                    <title>Delete Connector</title>
+                    <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#7f1d1d" strokeWidth="0.8" />
+                    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#ffffff" strokeWidth="1.2" />
+                    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#ffffff" strokeWidth="1.2" />
+                  </g>
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {/* 3. Wire connections layer (renders on top of device bodies so wires never hide behind labels or components) */}
         {wires.map((wire, index) => {
           const pathD = getWirePathWithCrossings(index, wires);
           const isSelected = selectedWireId === wire.id;
@@ -2512,6 +2749,8 @@ export const Workspace: React.FC = () => {
                 aria-label="Select or drag wire route"
                 className="cursor-grab active:cursor-grabbing"
                 onPointerDown={(e) => {
+                  const elUnder = typeof document !== "undefined" ? document.elementsFromPoint(e.clientX, e.clientY) : [];
+                  if (elUnder.some(el => el.closest(".device-control, .connector-control, .terminal-hitbox"))) return;
                   if (e.button === 0 && !drawingWireStart && !e.shiftKey) {
                     beginWireRouteDrag(e, wire, null);
                   }
@@ -2519,6 +2758,8 @@ export const Workspace: React.FC = () => {
                 onPointerMove={handleWireRouteDragMove}
                 onPointerUp={handleWireRouteDragEnd}
                 onClick={(e) => {
+                  const elUnder = typeof document !== "undefined" ? document.elementsFromPoint(e.clientX, e.clientY) : [];
+                  if (elUnder.some(el => el.closest(".device-control, .connector-control, .terminal-hitbox"))) return;
                   e.stopPropagation();
                   if (wireDragMovedRef.current) {
                     wireDragMovedRef.current = false;
@@ -2782,243 +3023,6 @@ export const Workspace: React.FC = () => {
                   </g>
                 );
               })}
-            </g>
-          );
-        })}
-
-          {/* Device bodies sit above wires so crossing wires cannot steal control clicks. */}
-          {components.map(comp => {
-          const isEnergized = isRunning && simulation.energizedComponents.has(comp.id);
-          const isFaulty = isRunning && simulation.faultLocation?.split(':')[0] === comp.id;
-          const componentPosition = getComponentCanvasPosition(comp);
-          const connectorScale = Math.max(comp.state.scale || SPLICE_CONNECTOR_DEFAULT_SCALE, SPLICE_CONNECTOR_DEFAULT_SCALE);
-          const connectorAtMinScale = connectorScale <= SPLICE_CONNECTOR_DEFAULT_SCALE;
-          const compScale = getComponentEffectiveScale(comp);
-          const graphicScaleTransform = comp.type !== 'junction' && compScale !== 1.0 ? `scale(${compScale})` : undefined;
-          const isDragging = draggedCompId === comp.id;
-          const dropBounds = getSelectionHighlightBounds(comp.type, compScale);
-
-          return (
-            <g
-              key={comp.id}
-              data-component-id={comp.id}
-              transform={`translate(${componentPosition.x}, ${componentPosition.y})`}
-              style={{
-                filter: isDragging
-                  ? `drop-shadow(0 16px 22px rgba(2, 6, 23, 0.7)) drop-shadow(0 2px 4px rgba(2, 6, 23, 0.5))`
-                  : undefined,
-                opacity: isDragging ? 0.94 : 1,
-                transition: 'opacity 120ms ease-out, filter 120ms ease-out'
-              }}
-              onPointerDown={(e) => {
-                handleCompPointerDown(e, comp);
-              }}
-              onPointerMove={handleCompPointerMove}
-              onPointerUp={handleCompPointerUp}
-              onPointerCancel={cancelDeviceDrag}
-              onLostPointerCapture={() => { if (dragSession.current) cancelDeviceDrag(); }}
-              onPointerOver={() => setHoveredCompId(comp.id)}
-              onPointerOut={() => setHoveredCompId(null)}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (suppressDeviceClick.current) { suppressDeviceClick.current = false; return; }
-                if (sidebarOpen) setSidebarOpen(false);
-                setSelectedWireId(null);
-                if (comp.type === 'button_no' && comp.state.appearance === 'vis7039') {
-                  useGameStore.getState().pressButton(comp.id, true);
-                  window.setTimeout(() => useGameStore.getState().pressButton(comp.id, false), 180);
-                }
-                if (comp.type === 'access_controller') {
-                  setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
-                } else if (comp.type === 'timer_relay') {
-                  setSelectedAccessId(null);
-                  setSelectedCX12Id(null);
-                  setSelectedTimerId(comp.id);
-                } else if (comp.type === 'cx12plus') {
-                  setSelectedAccessId(null);
-                  setSelectedTimerId(null);
-                  setSelectedCX12Id(comp.id);
-                }
-                setSelectedCompId(comp.id);
-              }}
-              onContextMenu={(event) => {
-                event.preventDefault(); event.stopPropagation();
-                if (drawingWireStart || probeMode) cancelLastWireStep();
-                else setSelectedCompId(comp.id);
-              }}
-              onKeyDown={(e) => {
-                if ((comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller') && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  if (comp.type === 'access_controller') {
-                    setSelectedTimerId(null); setSelectedCX12Id(null); setSelectedAccessId(comp.id);
-                  } else if (comp.type === 'timer_relay') {
-                    setSelectedAccessId(null);
-                    setSelectedCX12Id(null);
-                    setSelectedTimerId(comp.id);
-                  } else {
-                    setSelectedAccessId(null);
-                    setSelectedTimerId(null);
-                    setSelectedCX12Id(comp.id);
-                  }
-                }
-              }}
-              role={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? 'button' : undefined}
-              aria-label={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? `Configure ${comp.label}` : undefined}
-              tabIndex={comp.type === 'timer_relay' || comp.type === 'cx12plus' || comp.type === 'access_controller' ? 0 : undefined}
-              className="cursor-grab active:cursor-grabbing group"
-            >
-              {/* Landing pad: the slot the device drops into, drawn under it */}
-              {isDragging && (
-                <rect
-                  x={dropBounds.x - 4}
-                  y={dropBounds.y - 4}
-                  width={dropBounds.w + 8}
-                  height={dropBounds.h + 8}
-                  rx="12"
-                  fill="rgba(59, 130, 246, 0.10)"
-                  stroke="rgba(96, 165, 250, 0.85)"
-                  strokeWidth="1.5"
-                  strokeDasharray="7,5"
-                  className="pointer-events-none"
-                />
-              )}
-
-              {/* Clean selection border outline when selected (move/drag indicator) */}
-              {selectedCompId === comp.id && (
-                <rect
-                  x={getSelectionHighlightBounds(comp.type, compScale).x}
-                  y={getSelectionHighlightBounds(comp.type, compScale).y}
-                  width={getSelectionHighlightBounds(comp.type, compScale).w}
-                  height={getSelectionHighlightBounds(comp.type, compScale).h}
-                  rx="8"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="2.5"
-                  className="pointer-events-none"
-                  style={{ filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.5))' }}
-                />
-              )}
-
-              {/* Highlight bounding box if diagnostic fault is here */}
-              {isFaulty && (
-                <rect
-                  x="-55"
-                  y="-55"
-                  width="110"
-                  height="110"
-                  fill="none"
-                  stroke="#ef4444"
-                  strokeWidth="3.5"
-                  strokeDasharray="4,4"
-                  rx="6"
-                  className="animate-pulse"
-                />
-              )}
-
-              {/* Highlight selection glow */}
-              <rect
-                x="-52"
-                y="-52"
-                width="104"
-                height="104"
-                fill="transparent"
-                stroke="rgba(99, 102, 241, 0.25)"
-                strokeWidth="1.5"
-                rx="6"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-
-              {comp.type === 'timer_relay' && selectedTimerId === comp.id && (
-                <g pointerEvents="none">
-                  <rect x="-55" y="-65" width="110" height="130" rx="7" fill="none" stroke="#38bdf8" strokeWidth="1.4" strokeDasharray="4 3" />
-                  <g transform="translate(0, -71)">
-                    <rect x="-32" y="-7" width="64" height="14" rx="7" fill="#082f49" stroke="#38bdf8" strokeWidth="0.8" />
-                    <text x="0" y="2.5" fill="#bae6fd" fontSize="7" fontWeight="900" textAnchor="middle">6062 SETTINGS</text>
-                  </g>
-                </g>
-              )}
-
-              {comp.type === 'cx12plus' && selectedCX12Id === comp.id && (
-                <g pointerEvents="none">
-                  <rect x="-130" y="-69" width="260" height="187" rx="8" fill="none" stroke="#38bdf8" strokeWidth="1.4" strokeDasharray="4 3" />
-                  <g transform="translate(0, -76)">
-                    <rect x="-46" y="-7" width="92" height="14" rx="7" fill="#082f49" stroke="#38bdf8" strokeWidth="0.8" />
-                    <text x="0" y="2.5" fill="#bae6fd" fontSize="7" fontWeight="900" textAnchor="middle">DOOR SETUP</text>
-                  </g>
-                </g>
-              )}
-
-              {/* Specific component graphic with scale transform */}
-              <g transform={graphicScaleTransform}>
-                <ComponentRenderer component={comp} isEnergized={isEnergized} />
-              </g>
-
-              {/* Sleek, stable control tray (Zoom-Out, Zoom-In, Delete) for custom splice connectors when hovered */}
-              {hoveredCompId === comp.id && comp.type === 'junction' && (
-                <g
-                  transform="translate(0, -22)"
-                  className="connector-control cursor-default"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onPointerMove={(e) => e.stopPropagation()}
-                  onPointerUp={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Background container pill */}
-                  <rect x="-33" y="-10" width="66" height="20" rx="10" fill="#1e293b" stroke="#334155" strokeWidth="1.2" />
-
-                  {/* Zoom Out Button (-) */}
-                  <g
-                    className={`connector-control transition-all ${
-                      connectorAtMinScale ? 'cursor-not-allowed opacity-35' : 'cursor-pointer hover:brightness-125'
-                    }`}
-                    transform="translate(-20, 0)"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!connectorAtMinScale) {
-                        resizeSpliceConnector(comp.id, connectorScale, -0.1);
-                      }
-                    }}
-                  >
-                    <title>{connectorAtMinScale ? 'Connector is at minimum size' : 'Zoom Out Connector'}</title>
-                    <circle cx="0" cy="0" r="7" fill="#334155" />
-                    <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
-                  </g>
-
-                  {/* Zoom In Button (+) */}
-                  <g
-                    className="connector-control cursor-pointer hover:brightness-125 transition-all"
-                    transform="translate(0, 0)"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      resizeSpliceConnector(comp.id, connectorScale, 0.1);
-                    }}
-                  >
-                    <title>Zoom In Connector</title>
-                    <circle cx="0" cy="0" r="7" fill="#334155" />
-                    <line x1="-3" y1="0" x2="3" y2="0" stroke="#ffffff" strokeWidth="1.2" />
-                    <line x1="0" y1="-3" x2="0" y2="3" stroke="#ffffff" strokeWidth="1.2" />
-                  </g>
-
-                  {/* Delete Button (x) */}
-                  <g
-                    className="connector-control cursor-pointer hover:brightness-125 transition-all"
-                    transform="translate(20, 0)"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeComponent(comp.id);
-                      setHoveredCompId(null);
-                    }}
-                  >
-                    <title>Delete Connector</title>
-                    <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#7f1d1d" strokeWidth="0.8" />
-                    <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" stroke="#ffffff" strokeWidth="1.2" />
-                    <line x1="2.5" y1="-2.5" x2="-2.5" y2="2.5" stroke="#ffffff" strokeWidth="1.2" />
-                  </g>
-                </g>
-              )}
             </g>
           );
         })}

@@ -13,7 +13,11 @@ import {
   ShieldCheck, 
   Sparkles, 
   Sliders, 
-  Search
+  Search,
+  Lock,
+  Unlock,
+  KeyRound,
+  FlaskConical
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { 
@@ -23,6 +27,11 @@ import {
 import { LAB_PRESETS, type LabPreset } from '../../customLab/presets';
 import { Logo } from './components/Logo';
 import { soundManager } from '../../audio/soundManager';
+import { 
+  isLabUnlocked, 
+  lockLabs 
+} from '../../utils/betaAuth';
+import { BetaAccessModal } from './BetaAccessModal';
 
 const workflowSteps = [
   {
@@ -61,38 +70,72 @@ export function LabHome() {
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [pendingLaunch, setPendingLaunch] = useState<{ action: () => void } | null>(null);
+
+  // Access Auth State for both labs
+  const [unlocked, setUnlocked] = useState(() => isLabUnlocked());
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('Enter Access Code');
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const hasBench = workspaceKind === 'electronics' && isCustomLab && benchComponents.length > 0;
 
-  const requestLaunch = (action: () => void) => {
-    soundManager.playButton();
-    setPendingLaunch({ action });
-  };
-
-  const confirmLaunch = () => {
-    const action = pendingLaunch?.action;
-    setPendingLaunch(null);
-    action?.();
-  };
-
-  const openLab = () => requestLaunch(() => useGameStore.getState().openElectronicsWorkspace());
-  const openAccessLab = () => requestLaunch(() => useGameStore.getState().openAccessWorkspace());
-
-  const handleLaunchPreset = (preset: LabPreset) => {
-    if (preset.accessControllerExample) {
-      requestLaunch(() => useGameStore.getState().loadAccessControllerExample());
-    } else if (preset.cx12ExampleId) {
-      requestLaunch(() => {
-        loadCX12Example(preset.cx12ExampleId!, preset.category === 'Access Control' ? 'access' : 'electronics');
-      });
+  // Gated execution helper: both labs require code
+  const executeGatedAction = (action: () => void, title = 'Enter Access Code') => {
+    if (isLabUnlocked()) {
+      soundManager.playButton();
+      setUnlocked(true);
+      action();
     } else {
-      requestLaunch(() => startCustomLab(preset.deviceCatalogIds, preset.category === 'Access Control' ? 'access' : 'electronics'));
+      soundManager.playButton();
+      setModalTitle(title);
+      setPendingAction(() => action);
+      setAuthModalOpen(true);
     }
   };
 
+  const openLab = () => {
+    executeGatedAction(() => {
+      useGameStore.getState().openElectronicsWorkspace();
+    }, 'Electronics Lab');
+  };
+
+  const openAccessLab = () => {
+    executeGatedAction(() => {
+      useGameStore.getState().openAccessWorkspace();
+    }, 'Access Control Lab (Beta)');
+  };
+
+  const handleLock = () => {
+    soundManager.playButton();
+    lockLabs();
+    setUnlocked(false);
+  };
+
+  const handleLaunchPreset = (preset: LabPreset) => {
+    const isAccess = preset.category === 'Access Control' || preset.accessControllerExample;
+    executeGatedAction(() => {
+      if (isAccess) {
+        if (preset.accessControllerExample) {
+          useGameStore.getState().loadAccessControllerExample();
+        } else if (preset.cx12ExampleId) {
+          loadCX12Example(preset.cx12ExampleId!, 'access');
+        } else {
+          startCustomLab(preset.deviceCatalogIds, 'access');
+        }
+      } else {
+        if (preset.cx12ExampleId) {
+          loadCX12Example(preset.cx12ExampleId!, 'electronics');
+        } else {
+          startCustomLab(preset.deviceCatalogIds, 'electronics');
+        }
+      }
+    }, isAccess ? 'Access Control Lab (Beta)' : 'Electronics Lab');
+  };
+
   const handleAddDeviceAndOpen = (optionId: string) => {
-    requestLaunch(() => startCustomLab([optionId]));
+    executeGatedAction(() => {
+      startCustomLab([optionId]);
+    }, 'Electronics Lab');
   };
 
   const filteredDevices = electronicsOptions.filter(device => {
@@ -125,75 +168,171 @@ export function LabHome() {
             </div>
           </div>
 
-          <a href="#labs" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-xs font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
-            <span>Choose a lab</span>
-            <ArrowRight size={14} />
-          </a>
+          <div className="flex items-center gap-3">
+            {unlocked ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                  <Unlock size={12} />
+                  <span>Unlocked</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLock}
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+                  title="Lock access"
+                >
+                  Lock
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playButton();
+                  setModalTitle('Enter Access Code');
+                  setAuthModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs text-slate-300 hover:text-white transition"
+              >
+                <KeyRound size={13} />
+                <span>Enter Code</span>
+              </button>
+            )}
+
+            <button 
+              type="button"
+              onClick={openLab}
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-sky-400 px-4 text-xs font-bold text-slate-950 transition hover:bg-sky-300 shadow-[0_4px_16px_-4px_rgba(56,189,248,0.4)]"
+            >
+              <span>Launch Electronics Lab</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-[1360px] px-6 pb-20 lg:px-10">
         
-        <section id="labs" className="scroll-mt-24 pb-10 pt-8 sm:pb-12 sm:pt-10" aria-labelledby="labs-title">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">DELMI virtual training</p>
+        {/* LAB SELECTION HERO SECTION: ELECTRONICS LAB AT TOP */}
+        <section id="labs" className="scroll-mt-24 pb-8 pt-8 sm:pb-10 sm:pt-10" aria-labelledby="labs-title">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">DELMI virtual training</p>
           <h1 id="labs-title" className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Choose your lab</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">Build an electronics circuit or practice a complete access control installation.</p>
+          <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-slate-300">
+            Build circuits in the primary <span className="text-sky-300 font-semibold">Electronics Lab</span>, or practice installations in the <span className="text-amber-400 font-semibold">Access Control Lab (Beta)</span> below.
+          </p>
 
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <article className="flex flex-col rounded-2xl border border-sky-400/30 bg-gradient-to-br from-sky-500/[0.08] to-[#0c1320] p-5 sm:p-6" aria-labelledby="electronics-lab-title">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-300/25 bg-sky-400/10 text-sky-300"><Cpu size={24} /></div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-sky-300">Circuits &amp; diagnostics</p>
-                  <h2 id="electronics-lab-title" className="mt-1 text-2xl font-bold text-white">Electronics Lab</h2>
+          {/* 1. PRIMARY LAB AT TOP: ELECTRONICS LAB (PROMINENT, GLOWING, EASY ACCESS) */}
+          <div className="mt-6">
+            <article className="relative overflow-hidden rounded-3xl border-2 border-sky-400/40 bg-gradient-to-br from-sky-500/[0.12] via-[#0b1322] to-[#070b13] p-6 sm:p-8 shadow-[0_12px_45px_-10px_rgba(56,189,248,0.3)] transition hover:border-sky-400/60" aria-labelledby="electronics-lab-title">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="max-w-3xl">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-400/15 px-3 py-1 text-[11px] font-semibold text-sky-300 border border-sky-400/30">
+                      <Sparkles size={13} />
+                      PRIMARY WORKBENCH · READY TO WIRE
+                    </span>
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                      Circuits &amp; Diagnostics
+                    </span>
+                  </div>
+
+                  <div className="mt-3.5 flex items-center gap-3.5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-sky-300/30 bg-sky-400/15 text-sky-300 shadow-inner">
+                      <Cpu size={26} />
+                    </div>
+                    <div>
+                      <h2 id="electronics-lab-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Electronics Lab
+                      </h2>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-relaxed text-slate-300 max-w-2xl">
+                    Build, wire and test low-voltage circuits with transformers, 24V regulated DC power supplies, ice-cube relays, timers and sirens. Features real-time Kirchhoff physics and True-RMS multimeter diagnostics.
+                  </p>
+
+                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-300">
+                    <div className="flex items-center gap-2 rounded-xl bg-white/[0.035] border border-white/5 px-3 py-2">
+                      <Check size={15} className="shrink-0 text-sky-300" />
+                      <span>Supplies, switches &amp; relays</span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-xl bg-white/[0.035] border border-white/5 px-3 py-2">
+                      <Check size={15} className="shrink-0 text-sky-300" />
+                      <span>Timers, motors &amp; sirens</span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-xl bg-white/[0.035] border border-white/5 px-3 py-2">
+                      <Check size={15} className="shrink-0 text-sky-300" />
+                      <span>Live simulation &amp; multimeter</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end justify-center gap-3 shrink-0 lg:pl-6 lg:border-l lg:border-white/10">
+                  <button
+                    type="button"
+                    onClick={openLab}
+                    className="inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl bg-sky-400 px-8 text-base font-bold text-slate-950 shadow-[0_8px_35px_-8px_rgba(56,189,248,0.6)] transition-all hover:bg-sky-300 hover:shadow-[0_12px_45px_-6px_rgba(56,189,248,0.75)] hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+                  >
+                    {!unlocked && <Lock size={18} />}
+                    <span>{hasBench ? 'Resume Electronics Lab' : 'Open Electronics Lab'}</span>
+                    <ArrowRight size={20} />
+                  </button>
                 </div>
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-slate-300">Build, wire and test low-voltage circuits with power supplies, relays and electrical loads.</p>
-              <ul className="mt-4 space-y-2 text-xs text-slate-400">
-                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-sky-300" />Transformers, supplies, switches and relays</li>
-                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-sky-300" />Timers, motors, lights and sirens</li>
-                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-sky-300" />Live simulation and multimeter diagnostics</li>
-              </ul>
-              <button type="button" onClick={openLab} className={`${buttonClass} mt-6 w-full`}>
-                <span>Open Electronics Lab</span><ArrowRight size={18} />
-              </button>
             </article>
+          </div>
 
-            <article className="flex flex-col rounded-2xl border border-teal-400/30 bg-gradient-to-br from-teal-500/[0.08] to-[#0c1320] p-5 sm:p-6" aria-labelledby="access-lab-title">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-teal-300/25 bg-teal-400/10 text-teal-300"><ShieldCheck size={24} /></div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-teal-300">Readers &amp; doors</p>
-                  <h2 id="access-lab-title" className="mt-1 text-2xl font-bold text-white">Access Control Lab</h2>
+          {/* 2. PUT DOWN: ACCESS CONTROL LAB (BETA ONLY) */}
+          <div className="mt-5">
+            <article className="relative overflow-hidden rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/[0.06] via-[#0c1422] to-[#090e18] p-5 sm:p-6 transition hover:border-amber-400/50" aria-labelledby="access-lab-title">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-300">
+                    {unlocked ? <ShieldCheck size={22} className="text-teal-300" /> : <Lock size={22} />}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded bg-amber-400/15 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-400 border border-amber-400/30">
+                        BETA ONLY
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        Readers &amp; Doors
+                      </span>
+                    </div>
+                    <h2 id="access-lab-title" className="mt-1 text-xl font-bold text-white flex items-center gap-2">
+                      <span>Access Control Lab</span>
+                      <span className="text-xs font-normal text-amber-300/80">(Private Beta)</span>
+                    </h2>
+                    <p className="mt-1 text-xs text-slate-300 max-w-xl">
+                      Wire and program a two-door installation bench with DELMI AC-2 controller, readers, REX, door contacts and magnetic locks.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action button */}
+                <div className="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0">
+                  <button
+                    type="button"
+                    onClick={openAccessLab}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal-300 px-5 text-xs font-bold text-slate-950 shadow-[0_4px_20px_-5px_rgba(94,234,212,0.4)] transition hover:bg-teal-200 hover:-translate-y-0.5"
+                  >
+                    {!unlocked && <Lock size={14} />}
+                    <span>Open Access Control Lab (Beta)</span>
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-slate-300">Wire and program a two-door training board using access control concepts from Atrium and RBH UNC100.</p>
-              <ul className="mt-4 space-y-2 text-xs text-slate-400">
-                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-teal-300" />DELMI AC-2 controller and credential readers</li>
-                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-teal-300" />Exit requests, door contacts, strikes and maglocks</li>
-                <li className="flex items-center gap-2"><Check size={14} className="shrink-0 text-teal-300" />Unlock timers, door monitoring and access events</li>
-              </ul>
-              <button type="button" onClick={openAccessLab} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-teal-300 px-7 text-sm font-semibold text-slate-950 shadow-[0_6px_30px_-10px_rgba(94,234,212,0.4)] transition-all hover:-translate-y-0.5 hover:bg-teal-200 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080e18]">
-                <span>Open Access Control Lab</span><ArrowRight size={18} />
-              </button>
             </article>
           </div>
-          <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-slate-400"><Layers size={15} className="mt-0.5 shrink-0 text-slate-500" /><span>Each lab keeps its own devices, wiring and Undo history. Switch labs and continue where you left off.</span></p>
+
+          <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-slate-400">
+            <Layers size={15} className="mt-0.5 shrink-0 text-slate-500" />
+            <span>Each lab keeps its own devices, wiring and Undo history. Switch labs and continue where you left off.</span>
+          </p>
         </section>
 
-        <section id="access-control" className="scroll-mt-24 border-t border-white/[0.08] pb-12 pt-10">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300"><ShieldCheck size={14} /><span>Access Control Lab templates</span></div>
-          <h2 className="mt-2 text-2xl font-bold text-white">Practice a door installation.</h2>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {LAB_PRESETS.filter(preset => preset.category === 'Access Control').map(preset => <button key={preset.id} onClick={() => handleLaunchPreset(preset)} className="rounded-xl border border-white/10 bg-[#0b121e] p-4 text-left hover:border-teal-300/40">
-              <span className="text-sm font-semibold text-white">{preset.title}</span>
-              <span className="mt-2 block text-xs leading-relaxed text-slate-400">{preset.description}</span>
-              <span className="mt-3 block text-xs font-semibold text-teal-300">Load in Access Control Lab →</span>
-            </button>)}
-          </div>
-        </section>
-
-        {/* SECTION 1: QUICK START PRESETS */}
+        {/* SECTION 1: ELECTRONICS LAB TEMPLATES */}
         <section id="presets" className="scroll-mt-20 border-t border-white/[0.08] pt-14 pb-14">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
             <div>
@@ -258,7 +397,7 @@ export function LabHome() {
           </div>
         </section>
 
-        {/* SECTION 2: DEVICE CATALOG & COMPONENT EXPLORER */}
+        {/* SECTION 2: MODULAR DEVICE CATALOG */}
         <section id="components" className="scroll-mt-20 border-t border-white/[0.08] pt-14 pb-14">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
             <div>
@@ -370,7 +509,7 @@ export function LabHome() {
               </h2>
             </div>
             <span className="text-xs text-slate-400 font-mono">
-              Engineered for precision wiring & diagnostics
+              Engineered for precision wiring &amp; diagnostics
             </span>
           </div>
 
@@ -432,7 +571,7 @@ export function LabHome() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
                 <div className="flex items-center gap-3 text-emerald-300 mb-3">
                   <Cable size={18} />
-                  <h4 className="text-sm font-bold text-white">Wire Nuts & Splice Connectors</h4>
+                  <h4 className="text-sm font-bold text-white">Wire Nuts &amp; Splice Connectors</h4>
                 </div>
                 <p className="text-xs leading-relaxed text-slate-400">
                   Splice into any existing wire mid-run with wire nuts. Route complex branch circuits, parallel loads, and daisy-chained switches cleanly.
@@ -472,8 +611,56 @@ export function LabHome() {
           </div>
         </section>
 
-        {/* SECTION 5: FINAL CALL TO ACTION BANNER */}
-        <section className="mt-8 flex flex-col justify-between gap-6 rounded-3xl border border-sky-400/25 bg-gradient-to-r from-sky-500/10 via-[#0d1624] to-indigo-500/10 p-8 sm:flex-row sm:items-center sm:p-10 shadow-2xl">
+        {/* SECTION 5: ACCESS CONTROL LAB (BETA ONLY) TEMPLATES - PUT DOWN */}
+        <section id="access-control" className="scroll-mt-24 border-t border-amber-400/20 pb-14 pt-12">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 items-center gap-1.5 rounded-full bg-amber-400/15 px-2.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 border border-amber-400/30">
+                <FlaskConical size={12} />
+                Beta Lab Only
+              </span>
+            </div>
+          </div>
+          <h2 className="mt-1 text-2xl font-bold text-white sm:text-3xl">Access Control Lab Templates</h2>
+          <p className="mt-2 text-xs leading-relaxed text-slate-300 max-w-xl">
+            Pre-wired door access boards with readers, request-to-exit (REX) buttons, and maglock/strike hardware.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {LAB_PRESETS.filter(preset => preset.category === 'Access Control').map(preset => (
+              <button 
+                key={preset.id} 
+                onClick={() => handleLaunchPreset(preset)} 
+                className="group relative flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0b121e] p-5 text-left transition hover:border-amber-400/40 hover:bg-[#0e1727]"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="rounded bg-amber-400/10 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase text-amber-400 border border-amber-400/20">
+                      Beta
+                    </span>
+                    {!unlocked && (
+                      <span className="flex items-center gap-1 text-[10px] font-mono text-slate-400">
+                        <Lock size={11} className="text-amber-400/80" />
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
+                    {preset.title}
+                  </span>
+                  <span className="mt-2 block text-xs leading-relaxed text-slate-400">
+                    {preset.description}
+                  </span>
+                </div>
+                <span className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-amber-300 group-hover:text-amber-200">
+                  <span>Load in Access Control Lab</span>
+                  <ArrowRight size={13} />
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 6: FINAL CALL TO ACTION BANNER */}
+        <section className="mt-6 flex flex-col justify-between gap-6 rounded-3xl border border-sky-400/25 bg-gradient-to-r from-sky-500/10 via-[#0d1624] to-indigo-500/10 p-8 sm:flex-row sm:items-center sm:p-10 shadow-2xl">
           <div>
             <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold mb-2">
               <Sparkles size={16} />
@@ -488,6 +675,7 @@ export function LabHome() {
           </div>
 
           <button onClick={openLab} className={`${buttonClass} shrink-0`}>
+            {!unlocked && <Lock size={18} />}
             <span>{hasBench ? 'Resume Electronics Bench' : 'Open Electronics Bench'}</span>
             <ArrowRight size={18} />
           </button>
@@ -501,37 +689,41 @@ export function LabHome() {
             <Logo size="sm" variant="icon-only" />
             <div>
               <p className="font-semibold text-slate-300">DELMI Circuit Lab</p>
-              <p className="text-[11px] text-slate-400">Low-Voltage Systems & Security Automation Workbench</p>
+              <p className="text-[11px] text-slate-400">Low-Voltage Systems &amp; Security Automation Workbench</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-6 text-[11px] text-slate-400">
             <span>Real-time Kirchhoff Engine</span>
             <span>·</span>
-            <span>Up to 32 Modular Devices</span>
+            <span>Modular Device Catalog</span>
             <span>·</span>
             <span>Full Multimeter Diagnostics</span>
           </div>
         </div>
       </footer>
 
-      {pendingLaunch && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/75 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="lab-warning-title">
-          <div className="w-full max-w-md rounded-2xl border border-amber-400/25 bg-[#101722] p-6 shadow-2xl">
-            <div className="flex items-center gap-3 text-amber-300">
-              <ShieldCheck className="h-6 w-6 shrink-0" />
-              <h2 id="lab-warning-title" className="text-lg font-semibold text-white">Before you enter the lab</h2>
-            </div>
-            <p className="mt-4 text-sm leading-6 text-slate-300">
-              This simulator is still in development and can make mistakes. Always verify against the manufacturer&apos;s documentation before wiring real equipment.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setPendingLaunch(null)} className="h-10 rounded-xl px-4 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white">Cancel</button>
-              <button type="button" onClick={confirmLaunch} autoFocus className="h-10 rounded-xl bg-amber-400 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-300">I understand — enter lab</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Access Code Login Modal */}
+      <BetaAccessModal
+        isOpen={authModalOpen}
+        onClose={() => {
+          setAuthModalOpen(false);
+          setPendingAction(null);
+        }}
+        onSuccess={() => {
+          setUnlocked(true);
+          setAuthModalOpen(false);
+          if (pendingAction) {
+            const action = pendingAction;
+            setPendingAction(null);
+            action();
+          } else {
+            useGameStore.getState().openElectronicsWorkspace();
+          }
+        }}
+        title={modalTitle}
+        description="Please enter your access code to open the lab."
+      />
     </div>
   );
 }
