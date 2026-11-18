@@ -807,13 +807,26 @@ export const buildCustomLabComponents = (selectedIds: string[]): CircuitComponen
   return components;
 };
 
-/** Only installation devices appear in the dedicated access-control library. */
+/** Devices exclusive to the dedicated access controller training bench. */
+export const ACCESS_CONTROL_EXCLUSIVE_IDS = new Set([
+  'delmi_access_controller',
+  'delmi_wiegand_reader'
+]);
+
+/** Installation devices featured in the access-control library. */
 export const ACCESS_CONTROL_CATALOG_IDS = new Set([
   'delmi_access_controller', 'delmi_wiegand_reader', 'visionis_vis7039', 'wave_sensor',
   'nascom_n282txg', 'emergency_pull_station', 'maglock_fail_safe', 'sm500_maglock',
   'door_strike_fail_secure', 'door_strike_fail_safe', 'automatic_door_operator', 'cx12plus',
   'powered_request_momentary', 'powered_request_maintained'
 ]);
+
+/**
+ * Returns available components for a workspace.
+ * Access Control Lab features dedicated installation devices.
+ * Electronics Lab contains the complete modular workbench library (including door strikes,
+ * maglocks, pull stations, and timers), excluding only the proprietary two-door controller board.
+ */
 export const getWorkspaceOptions = (kind: 'electronics' | 'access') => customLabOptions.filter(option =>
   kind === 'access' ? ACCESS_CONTROL_CATALOG_IDS.has(option.id)
-    : !ACCESS_CONTROL_CATALOG_IDS.has(option.id));
+    : !ACCESS_CONTROL_EXCLUSIVE_IDS.has(option.id));

@@ -5,7 +5,7 @@ import { useGameStore } from '../src/store/useGameStore';
 import { soundManager } from '../src/audio/soundManager';
 import { accessControllerTerminals, accessReaderTerminals, DEFAULT_ACCESS_CONTROLLER_CONFIG } from '../src/components/game/components/accessControllerPinout';
 import { solveCircuit } from '../src/simulation/circuitSolver';
-import { ACCESS_CONTROL_CATALOG_IDS, getWorkspaceOptions } from '../src/customLab/componentCatalog';
+import { ACCESS_CONTROL_EXCLUSIVE_IDS, getWorkspaceOptions } from '../src/customLab/componentCatalog';
 
 soundManager.setMuted(true);
 const originalNow = Date.now;
@@ -81,7 +81,9 @@ try {
   assert.equal(state().workspaceKind, 'electronics'); assert.equal(state().isCustomLab, true);
   assert(state().components.every(item => ['ac_source', 'transformer', 'power_supply'].includes(item.type)), 'electronics starts with clean power stack');
   assert.equal(state().wires.length, 0);
-  assert(getWorkspaceOptions('electronics').every(option => !ACCESS_CONTROL_CATALOG_IDS.has(option.id)), 'electronics library excludes every access-control device');
+  assert(getWorkspaceOptions('electronics').every(option => !ACCESS_CONTROL_EXCLUSIVE_IDS.has(option.id)), 'electronics library excludes controller-exclusive devices');
+  assert(getWorkspaceOptions('electronics').some(option => option.id === 'door_strike_fail_secure'), 'electronics library includes door strikes');
+  assert(getWorkspaceOptions('electronics').some(option => option.id === 'emergency_pull_station'), 'electronics library includes pull stations');
   load(); relays(false, false); assert.equal(device('reader1').state.powered, true);
   scan(1); relays(true, false); assert.equal(device('reader1').state.feedback, 'granted');
   assert.equal(device('reader1').state.ledActive, true); assert.equal(device('reader1').state.buzzerActive, true);
@@ -178,7 +180,7 @@ try {
   state().loadCX12Example('standard', 'access'); assert.equal(state().workspaceKind, 'access');
   state().undo(); assert(device('ac2_board'), 'access legacy examples Undo remains in access bench');
   state().openElectronicsWorkspace(); assert(device('board')); assert.equal(device('board').x, 125);
-  for (const id of ACCESS_CONTROL_CATALOG_IDS) assert.equal(state().addCustomLabComponent(id), null, `${id} stays in access workspace`);
+  for (const id of ACCESS_CONTROL_EXCLUSIVE_IDS) assert.equal(state().addCustomLabComponent(id), null, `${id} stays in access workspace`);
   const preservedElectronicsHistoryLength = state().history.length;
   state().loadCX12Example('standard'); assert.equal(state().workspaceKind, 'access', 'door installation examples default to access workspace');
   state().openElectronicsWorkspace(); assert.equal(device('board').x, 125);
